@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
@@ -64,7 +64,7 @@ export default function AppDashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Icon Sidebar */}
         <div className="w-14 shrink-0 border-r border-panel-border bg-black/40 flex flex-col items-center py-4 space-y-2 z-20">
           {sidebarItems.map((item) => {
@@ -74,7 +74,7 @@ export default function AppDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActivePanel(isActive ? null : item.id)}
-                className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center space-y-1 transition-all ${
+                className={`w-11 h-11 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all ${
                   isActive
                     ? "bg-cyber-cyan/15 border border-cyber-cyan text-cyber-cyan"
                     : "border border-panel-border text-gray-500 hover:text-gray-200 hover:border-gray-500"
@@ -89,23 +89,31 @@ export default function AppDashboard() {
         </div>
 
         {/* Left Panel (conditional) */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {activePanel && (
-            <div className="w-80 shrink-0 border-r border-panel-border bg-black/60 flex flex-col overflow-hidden z-20">
+            <motion.div
+              key={activePanel}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+              className="w-80 shrink-0 border-r border-panel-border bg-black/60 flex flex-col min-h-0 h-full overflow-hidden z-30"
+            >
               {activePanel === "ai" && <AiInsightEngine />}
               {activePanel === "graph" && <KnowledgeGraph />}
               {activePanel === "cards" && <ExplorationCards />}
               {activePanel === "layers" && (
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2">
                   <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
         {/* Globe Center */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden z-0 isolate">
+          <div className="absolute inset-0">
           <GlobeController
             mapboxToken={mapboxToken}
             activeCountryId={activeCountryId}
@@ -114,6 +122,7 @@ export default function AppDashboard() {
             onSelectCountry={setActiveCountryId}
             onMapboxAuthError={() => setMapboxToken("")}
           />
+          </div>
 
           {/* Timeline at bottom */}
           <div className="absolute bottom-4 left-4 right-4 z-20">

@@ -33,18 +33,20 @@ export default function HoloGlobe({
     if (!containerRef.current) return;
 
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight || 500;
+    const width = Math.max(container.clientWidth, 2);
+    const height = Math.max(container.clientHeight, 2);
 
     // 1. Scene & Camera Setup
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x030408, 0.015);
+    // Light fog only — previous density (0.015) fully obscured the globe at camera distance
+    scene.fog = new THREE.FogExp2(0x030408, 0.00035);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.z = 250;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x030408, 1);
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
@@ -70,7 +72,7 @@ export default function HoloGlobe({
       color: 0x00f0ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.28,
     });
     const gridMesh = new THREE.Mesh(gridGeo, gridMat);
     scene.add(gridMesh);
@@ -347,10 +349,7 @@ export default function HoloGlobe({
     container.addEventListener("click", handleClick);
 
     // 7. Animation Loop
-    let animationFrameId: number;
     const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-
       // Apply drag momentum/inertia or slow self-rotation
       if (!isDragging) {
         gridMesh.rotation.y += rotationVelocity.y;
@@ -373,7 +372,7 @@ export default function HoloGlobe({
       // Pulse markers
       const time = Date.now() * 0.003;
       markersGroup.children.forEach((mesh) => {
-        if (mesh instanceof THREE.Mesh && mesh.geometry instanceof THREE.RingGeometry) {
+        if (mesh instanceof THREE.Mesh && mesh.geometry.type === "RingGeometry") {
           const scale = 1 + Math.sin(time) * 0.08;
           mesh.scale.set(scale, scale, 1);
         }
@@ -394,17 +393,20 @@ export default function HoloGlobe({
 
       renderer.render(scene, camera);
     };
-    animate();
+    renderer.setAnimationLoop(animate);
 
     // 8. Handle Resize
     const handleResize = () => {
       const w = container.clientWidth;
-      const h = container.clientHeight || 500;
+      const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
+    handleResize();
 
     // 9. React to Props Updates (Rebuild markers and routes if active state shifts)
     let prevActiveCountry = activeCountryId;
@@ -434,13 +436,13 @@ export default function HoloGlobe({
 
     // Clean Up
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      renderer.setAnimationLoop(null);
       clearInterval(intervalId);
+      resizeObserver.disconnect();
       container.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
       container.removeEventListener("click", handleClick);
-      window.removeEventListener("resize", handleResize);
       renderer.dispose();
       oceanGeo.dispose();
       oceanMat.dispose();
@@ -455,8 +457,8 @@ export default function HoloGlobe({
   }, [onSelectCountry, onSelectCivilization]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px]">
-      <div ref={containerRef} className="w-full h-full min-h-[500px] select-none cursor-grab active:cursor-grabbing" />
+    <div className="absolute inset-0">
+      <div ref={containerRef} className="absolute inset-0 select-none cursor-grab active:cursor-grabbing" />
       
       {/* Interactive Tooltip Overlay */}
       {hoveredName && (

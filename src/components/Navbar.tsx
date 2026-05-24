@@ -82,10 +82,10 @@ export default function Navbar({
             <Globe className="w-4 h-4 text-cyber-cyan animate-pulse" />
           </div>
           <div>
-            <h1 className="text-white text-sm font-bold tracking-widest neon-text-cyan">
+            <span className="block text-white text-sm font-bold tracking-widest neon-text-cyan">
               EARTH INTELLIGENCE
-            </h1>
-            <p className="text-[8px] text-gray-500 tracking-tight">CIVILIZATION TELEMETRY SYSTEM v1.2</p>
+            </span>
+            <span className="block text-[8px] text-gray-500 tracking-tight">CIVILIZATION TELEMETRY SYSTEM v1.2</span>
           </div>
         </Link>
       </div>

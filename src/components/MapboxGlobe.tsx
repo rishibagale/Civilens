@@ -285,8 +285,8 @@ export default function MapboxGlobe({
   }, [activeEra, activeLayers, activeCountryId, updateTimelineAndLayers]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden border border-panel-border">
-      <div ref={mapContainerRef} className="w-full h-full min-h-[500px]" />
+    <div className="absolute inset-0 overflow-hidden">
+      <div ref={mapContainerRef} className="absolute inset-0" />
 
       <div className="absolute bottom-4 left-4 bg-panel-bg/90 backdrop-blur border border-panel-border px-3 py-2 rounded font-mono text-[9px] text-gray-400 pointer-events-none">
         <div className="flex items-center space-x-1.5 mb-0.5">

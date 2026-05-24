@@ -23,7 +23,6 @@ export default function GlobeController({
   onSelectCivilization,
   onMapboxAuthError,
 }: GlobeControllerProps) {
-  // Check if Mapbox token is configured
   const hasToken = mapboxToken && mapboxToken.trim().startsWith("pk.");
 
   if (hasToken) {
@@ -40,7 +39,6 @@ export default function GlobeController({
     );
   }
 
-  // Fallback to beautiful holographic Three.js globe
   return (
     <HoloGlobe
       activeCountryId={activeCountryId}

@@ -20,8 +20,9 @@ function HeroGlobe() {
     const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
     camera.position.z = 220;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x030408, 1);
     renderer.setSize(W, H);
     el.appendChild(renderer.domElement);
 
@@ -44,7 +45,7 @@ function HeroGlobe() {
     // Grid wireframe
     const grid = new THREE.Mesh(
       new THREE.SphereGeometry(R, 36, 36),
-      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.08 })
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.22 })
     );
     scene.add(grid);
 
@@ -71,8 +72,14 @@ function HeroGlobe() {
     );
 
     // Accent lights
-    scene.add(Object.assign(new THREE.DirectionalLight(0x00f0ff, 1.5), { position: new THREE.Vector3(120, 60, 120) }));
-    scene.add(Object.assign(new THREE.DirectionalLight(0xbd00ff, 0.9), { position: new THREE.Vector3(-120, -60, -120) }));
+    const cyanLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
+    cyanLight.position.set(120, 60, 120);
+    scene.add(cyanLight);
+
+    const violetLight = new THREE.DirectionalLight(0xbd00ff, 0.9);
+    violetLight.position.set(-120, -60, -120);
+    scene.add(violetLight);
+
     scene.add(new THREE.AmbientLight(0xffffff, 0.1));
 
     // Orbiting sample city dots
@@ -107,33 +114,35 @@ function HeroGlobe() {
       cityGroup.add(dot);
     });
 
-    let id: number;
     const animate = () => {
-      id = requestAnimationFrame(animate);
       grid.rotation.y += 0.0014;
       oceanMesh.rotation.y += 0.0014;
       cityGroup.rotation.y += 0.0014;
       renderer.render(scene, camera);
     };
-    animate();
+    renderer.setAnimationLoop(animate);
 
     const onResize = () => {
-      const w = el.clientWidth, h = el.clientHeight;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener("resize", onResize);
+    const resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(el);
+    onResize();
 
     return () => {
-      cancelAnimationFrame(id);
-      window.removeEventListener("resize", onResize);
+      renderer.setAnimationLoop(null);
+      resizeObserver.disconnect();
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
   }, []);
 
-  return <div ref={mountRef} className="absolute inset-0 pointer-events-none" />;
+  return <div ref={mountRef} className="absolute inset-0 pointer-events-none min-h-[320px]" />;
 }
 
 // ─── Feature sections ──────────────────────────────────────────────────────
