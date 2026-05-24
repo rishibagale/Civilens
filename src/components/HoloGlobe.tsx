@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { countriesData } from "@/data/countriesData";
 import { civilizationsData } from "@/data/civilizationsData";
+import { continentOutlines } from "@/data/continentOutlines";
 
 interface HoloGlobeProps {
   activeCountryId: string | null;
@@ -64,7 +65,6 @@ export default function HoloGlobe({
       opacity: 0.85,
     });
     const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
-    scene.add(oceanMesh);
 
     // Wireframe Globe (for futuristic digital grid)
     const gridGeo = new THREE.SphereGeometry(radius, 40, 40);
@@ -75,7 +75,25 @@ export default function HoloGlobe({
       opacity: 0.28,
     });
     const gridMesh = new THREE.Mesh(gridGeo, gridMat);
-    scene.add(gridMesh);
+
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+    globeGroup.add(oceanMesh, gridMesh);
+
+    // Starfield (static background)
+    const starCount = 2200;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i++) {
+      starPos[i] = (Math.random() - 0.5) * 900;
+    }
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    scene.add(
+      new THREE.Points(
+        starGeo,
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.65, transparent: true, opacity: 0.5 })
+      )
+    );
 
     // Atmosphere Ring (Outer Glow)
     const atmosGeo = new THREE.RingGeometry(radius + 0.1, radius + 4, 64);
@@ -111,9 +129,24 @@ export default function HoloGlobe({
       return new THREE.Vector3(x, y, z);
     }
 
+    // Stylized continent coastlines (no map API)
+    const continentsGroup = new THREE.Group();
+    const continentMat = new THREE.LineBasicMaterial({
+      color: 0x39ff14,
+      transparent: true,
+      opacity: 0.5,
+    });
+    continentOutlines.forEach((ring) => {
+      const pts = ring.map(([lat, lng]) => latLngToVector3(lat, lng, radius + 0.15));
+      if (pts.length > 2) pts.push(pts[0].clone());
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      continentsGroup.add(new THREE.Line(geo, continentMat));
+    });
+    globeGroup.add(continentsGroup);
+
     // 5. Interactive Country Markers & Raycasting Setup
     const markersGroup = new THREE.Group();
-    scene.add(markersGroup);
+    globeGroup.add(markersGroup);
 
     const markersDataMap = new Map<string, { id: string; name: string; isCountry: boolean }>();
 
@@ -220,7 +253,15 @@ export default function HoloGlobe({
     // Helper to create curved arcs on the globe
     const animatedDots: Array<{ mesh: THREE.Mesh; curve: THREE.QuadraticBezierCurve3; speed: number; progress: number }> = [];
     const arcsGroup = new THREE.Group();
-    scene.add(arcsGroup);
+    globeGroup.add(arcsGroup);
+
+    let flyTarget: { x: number; y: number } | null = null;
+    function setFlyTarget(lat: number, lng: number) {
+      flyTarget = {
+        x: THREE.MathUtils.degToRad(lat) * 0.92,
+        y: THREE.MathUtils.degToRad(-lng - 90),
+      };
+    }
 
     function createArc(p1: [number, number], p2: [number, number], colorCode: number, dashed = false) {
       const start = latLngToVector3(p1[0], p1[1], radius);
@@ -299,15 +340,9 @@ export default function HoloGlobe({
         y: e.clientY - previousMousePosition.y,
       };
 
-      // Rotate group grids
-      gridMesh.rotation.y += deltaMove.x * 0.005;
-      gridMesh.rotation.x += deltaMove.y * 0.005;
-      oceanMesh.rotation.y += deltaMove.x * 0.005;
-      oceanMesh.rotation.x += deltaMove.y * 0.005;
-      markersGroup.rotation.y += deltaMove.x * 0.005;
-      markersGroup.rotation.x += deltaMove.y * 0.005;
-      arcsGroup.rotation.y += deltaMove.x * 0.005;
-      arcsGroup.rotation.x += deltaMove.y * 0.005;
+      flyTarget = null;
+      globeGroup.rotation.y += deltaMove.x * 0.005;
+      globeGroup.rotation.x += deltaMove.y * 0.005;
 
       // Add velocity for momentum when released
       rotationVelocity.y = deltaMove.x * 0.001;
@@ -351,21 +386,18 @@ export default function HoloGlobe({
     // 7. Animation Loop
     const animate = () => {
       // Apply drag momentum/inertia or slow self-rotation
-      if (!isDragging) {
-        gridMesh.rotation.y += rotationVelocity.y;
-        gridMesh.rotation.x += rotationVelocity.x;
-        oceanMesh.rotation.y += rotationVelocity.y;
-        oceanMesh.rotation.x += rotationVelocity.x;
-        markersGroup.rotation.y += rotationVelocity.y;
-        markersGroup.rotation.x += rotationVelocity.x;
-        arcsGroup.rotation.y += rotationVelocity.y;
-        arcsGroup.rotation.x += rotationVelocity.x;
+      if (flyTarget) {
+        globeGroup.rotation.x += (flyTarget.x - globeGroup.rotation.x) * 0.08;
+        globeGroup.rotation.y += (flyTarget.y - globeGroup.rotation.y) * 0.08;
+        rotationVelocity.y = 0;
+        rotationVelocity.x = 0;
+      } else if (!isDragging) {
+        globeGroup.rotation.y += rotationVelocity.y;
+        globeGroup.rotation.x += rotationVelocity.x;
 
-        // Decelerate slightly
         rotationVelocity.y *= 0.95;
         rotationVelocity.x *= 0.95;
 
-        // Maintain extremely slow drift
         if (Math.abs(rotationVelocity.y) < 0.0015) rotationVelocity.y = 0.0012;
       }
 
@@ -423,7 +455,13 @@ export default function HoloGlobe({
         prevActiveCountry = propsRef.current.activeCountryId;
         prevActiveEra = propsRef.current.activeEra;
         prevActiveLayers = layersStr;
-        
+
+        const countryId = propsRef.current.activeCountryId;
+        if (countryId && countriesData[countryId]) {
+          const c = countriesData[countryId];
+          setFlyTarget(c.coordinates[0], c.coordinates[1]);
+        }
+
         // Clean out old arcs
         while (arcsGroup.children.length > 0) {
           arcsGroup.remove(arcsGroup.children[0]);
@@ -460,7 +498,15 @@ export default function HoloGlobe({
     <div className="absolute inset-0">
       <div ref={containerRef} className="absolute inset-0 select-none cursor-grab active:cursor-grabbing" />
       
-      {/* Interactive Tooltip Overlay */}
+      <div className="absolute bottom-4 right-4 bg-panel-bg/90 backdrop-blur border border-panel-border px-3 py-2 rounded font-mono text-[9px] text-gray-400 pointer-events-none">
+        <div className="flex items-center space-x-1.5 mb-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyber-green animate-pulse" />
+          <span className="text-white">HOLOGRAPHIC GLOBE</span>
+        </div>
+        <div>ENGINE: THREE.JS · NO API KEY</div>
+        <div>DRAG TO ORBIT · CLICK MARKERS</div>
+      </div>
+
       {hoveredName && (
         <div className="absolute pointer-events-none bg-panel-bg backdrop-blur border border-cyber-cyan/50 text-white font-mono px-3 py-1.5 rounded-md text-xs shadow-lg shadow-black/80 left-1/2 -translate-x-1/2 top-4 animate-pulse">
           <span className="text-cyber-cyan font-semibold">📡 TARGET DETECTED:</span> {hoveredName}

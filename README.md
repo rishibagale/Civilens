@@ -1,6 +1,6 @@
 # Earth Intelligence (Curios)
 
-Interactive exploration app connecting geography, climate, migration, anthropology, and civilization — built with Next.js 16, Three.js, and optional Mapbox GL.
+Interactive exploration app connecting geography, climate, migration, anthropology, and civilization — built with **Next.js 16** and a **free Three.js holographic globe** (no Mapbox, no API keys).
 
 ## Getting Started
 
@@ -11,17 +11,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) for the landing page, then **Start Exploring** for the dashboard at `/app`.
 
-### Mapbox (optional)
-
-Copy `.env.local.example` to `.env.local` and set your token:
-
-```
-NEXT_PUBLIC_MAPBOX_TOKEN=pk.your_token_here
-```
-
-Without a valid token, the app uses a **Three.js holographic globe** automatically. Invalid tokens fall back to the same mode.
-
-Get a token at [mapbox.com](https://account.mapbox.com/).
+The globe is rendered entirely in the browser with WebGL: wireframe sphere, stylized continent outlines, country/civilization markers, trade routes, and migration arcs. **Nothing to pay for.**
 
 ## Scripts
 
@@ -34,6 +24,5 @@ Get a token at [mapbox.com](https://account.mapbox.com/).
 
 - Next.js 16 (App Router)
 - React 19
-- Three.js (fallback globe)
-- Mapbox GL JS (optional 3D globe)
+- Three.js (3D globe)
 - Framer Motion, Tailwind CSS 4

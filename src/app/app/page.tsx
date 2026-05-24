@@ -20,9 +20,6 @@ type EraType = "ancient" | "medieval" | "colonial" | "modern" | "future";
 type PanelType = "ai" | "graph" | "cards" | "layers" | null;
 
 export default function AppDashboard() {
-  const [mapboxToken, setMapboxToken] = useState(
-    process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
-  );
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
   const [activeLayers, setActiveLayers] = useState<string[]>(["trade_routes", "migration_flows"]);
@@ -56,12 +53,7 @@ export default function AppDashboard() {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden select-none">
       {/* Top Navbar */}
-      <Navbar
-        mapboxToken={mapboxToken}
-        setMapboxToken={setMapboxToken}
-        activeEra={activeEra}
-        onSearchSelect={handleSearchSelect}
-      />
+      <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
 
       {/* Main Content */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -115,12 +107,10 @@ export default function AppDashboard() {
         <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden z-0 isolate">
           <div className="absolute inset-0">
           <GlobeController
-            mapboxToken={mapboxToken}
             activeCountryId={activeCountryId}
             activeEra={activeEra}
             activeLayers={activeLayers}
             onSelectCountry={setActiveCountryId}
-            onMapboxAuthError={() => setMapboxToken("")}
           />
           </div>
 
@@ -135,7 +125,7 @@ export default function AppDashboard() {
               <span className="w-1 h-1 rounded-full bg-cyber-green animate-ping" />
               <span className="text-gray-400">RENDER ENGINE: ACTIVE</span>
             </div>
-            <div>PROJECTION: {mapboxToken ? "MAPBOX 3D GLOBE" : "WEBGL HOLOGRAPH"}</div>
+            <div>PROJECTION: WEBGL HOLOGRAPH (FREE)</div>
             <div>ERA: <span className="text-cyber-cyan uppercase">{activeEra}</span></div>
             <div>LAYERS: <span className="text-white">{activeLayers.length} ACTIVE</span></div>
           </div>
