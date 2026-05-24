@@ -106,7 +106,7 @@ export default function AppDashboard() {
 
         {/* Interactive Map Center (SimpleMap only) */}
         <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden z-0 isolate">
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0">
             <MapLibreGlobeGlobe />
           </div>
 
