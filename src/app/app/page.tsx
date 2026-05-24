@@ -24,6 +24,7 @@ export default function AppDashboard() {
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
   const [activeLayers, setActiveLayers] = useState<string[]>(["trade_routes", "migration_flows"]);
   const [activePanel, setActivePanel] = useState<PanelType>("ai");
+  const [globeEngine, setGlobeEngine] = useState<"maplibre" | "holo">("maplibre");
 
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
@@ -111,6 +112,7 @@ export default function AppDashboard() {
             activeEra={activeEra}
             activeLayers={activeLayers}
             onSelectCountry={setActiveCountryId}
+            onEngineChange={setGlobeEngine}
           />
           </div>
 
@@ -125,7 +127,10 @@ export default function AppDashboard() {
               <span className="w-1 h-1 rounded-full bg-cyber-green animate-ping" />
               <span className="text-gray-400">RENDER ENGINE: ACTIVE</span>
             </div>
-            <div>PROJECTION: WEBGL HOLOGRAPH (FREE)</div>
+            <div>
+              PROJECTION:{" "}
+              {globeEngine === "maplibre" ? "MAPLIBRE 3D GLOBE (FREE)" : "WEBGL HOLOGRAPH (FALLBACK)"}
+            </div>
             <div>ERA: <span className="text-cyber-cyan uppercase">{activeEra}</span></div>
             <div>LAYERS: <span className="text-white">{activeLayers.length} ACTIVE</span></div>
           </div>

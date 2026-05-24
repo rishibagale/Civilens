@@ -114,7 +114,7 @@ export default function Navbar({ activeEra, onSearchSelect }: NavbarProps) {
 
         <div className="hidden lg:flex flex-col text-right">
           <span className="text-gray-500">GLOBE ENGINE</span>
-          <span className="text-white">WEBGL · NO API KEY</span>
+          <span className="text-white">MAPLIBRE · FREE</span>
         </div>
 
         <div className="flex items-center space-x-2">
