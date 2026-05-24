@@ -7,7 +7,8 @@ import type { Feature, FeatureCollection, LineString } from "geojson";
 import { countriesData } from "@/data/countriesData";
 import { civilizationsData } from "@/data/civilizationsData";
 
-const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
+// Use a globe-enabled style for MapLibre 3D globe rendering
+const MAP_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth_globe.json";
 
 interface MapLibreGlobeProps {
   activeCountryId: string | null;
