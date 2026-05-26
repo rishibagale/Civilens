@@ -2,12 +2,15 @@
 
 import React from "react";
 import { Clock } from "lucide-react";
+import { historicalEvents } from "@/data/historicalEvents";
 
 type EraType = "ancient" | "medieval" | "colonial" | "modern" | "future";
 
 interface TimelineSliderProps {
   activeEra: EraType;
   onEraChange: (era: EraType) => void;
+  selectedEventId: string | null;
+  onSelectEvent: (id: string | null) => void;
 }
 
 interface EraItem {
@@ -18,7 +21,12 @@ interface EraItem {
   accent: string;
 }
 
-export default function TimelineSlider({ activeEra, onEraChange }: TimelineSliderProps) {
+export default function TimelineSlider({
+  activeEra,
+  onEraChange,
+  selectedEventId,
+  onSelectEvent,
+}: TimelineSliderProps) {
   const eras: EraItem[] = [
     {
       id: "ancient",
@@ -61,29 +69,29 @@ export default function TimelineSlider({ activeEra, onEraChange }: TimelineSlide
   const progressPct = (activeIndex / (eras.length - 1)) * 100;
 
   return (
-    <div className="w-full glass-panel px-6 py-4 font-mono">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <Clock className="w-4 h-4 text-cyber-cyan" />
-          <span className="text-[10px] text-white font-bold tracking-widest uppercase">Temporal Navigator</span>
+    <div className="w-full h-full flex flex-col font-mono bg-black/30 border-t border-panel-border overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between px-3 py-2 flex-shrink-0 border-b border-panel-border/50 gap-2">
+        <div className="flex items-center space-x-1.5">
+          <Clock className="w-3 h-3 text-cyber-cyan" />
+          <span className="text-[7px] text-white font-bold tracking-widest uppercase">TEMPORAL</span>
         </div>
-        <div className="text-[9px] text-gray-500 font-mono">
-          ACTIVE: <span className="text-cyber-cyan">{eras[activeIndex].span}</span>
+        <div className="text-[6.5px] text-gray-400 font-mono">
+          <span className="text-cyber-cyan uppercase">{eras[activeIndex].label}</span> / {eras[activeIndex].span}
         </div>
       </div>
 
-      {/* Era buttons with connecting line */}
-      <div className="relative">
+      {/* Compact Era Timeline */}
+      <div className="relative px-3 py-2 flex-shrink-0 border-b border-panel-border/50">
         {/* Progress Line */}
-        <div className="absolute top-5 left-0 right-0 h-[1px] bg-panel-border z-0" />
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-panel-border z-0" />
         <div
-          className="absolute top-5 left-0 h-[1px] bg-cyber-cyan z-0 transition-all duration-500"
+          className="absolute top-1/2 left-0 h-px bg-cyber-cyan z-0 transition-all duration-500"
           style={{ width: `${progressPct}%` }}
         />
 
-        {/* Era nodes */}
-        <div className="relative z-10 flex justify-between">
+        {/* Era nodes - Tiny Version */}
+        <div className="relative z-10 flex justify-between gap-1">
           {eras.map((era, idx) => {
             const isActive = era.id === activeEra;
             const isPast = idx < activeIndex;
@@ -92,46 +100,81 @@ export default function TimelineSlider({ activeEra, onEraChange }: TimelineSlide
               <button
                 key={era.id}
                 onClick={() => onEraChange(era.id)}
-                className="flex flex-col items-center group"
-                title={era.description}
+                className="group flex-1"
+                title={`${era.label} (${era.span}): ${era.description}`}
               >
-                {/* Node circle */}
                 <div
-                  className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 text-[9px] font-bold
+                  className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300 text-[6px] font-bold mx-auto
                     ${isActive
-                      ? `bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-[0_0_15px_rgba(0,240,255,0.4)] scale-110`
+                      ? `bg-cyber-cyan/25 border-cyber-cyan text-cyber-cyan shadow-[0_0_8px_rgba(0,240,255,0.3)]`
                       : isPast
-                        ? `bg-white/5 border-white/30 text-white/60`
-                        : `bg-black/30 border-panel-border text-gray-500 group-hover:border-gray-400 group-hover:text-gray-300`
+                        ? `bg-white/10 border-white/20 text-white/50`
+                        : `bg-black/50 border-panel-border text-gray-500 group-hover:border-gray-400`
                     }`}
                 >
                   {idx + 1}
                 </div>
-
-                {/* Label below node */}
-                <div className="mt-2 flex flex-col items-center">
-                  <span
-                    className={`text-[9px] font-bold tracking-wider transition-all duration-300 ${
-                      isActive ? era.accent.split(" ")[0] : isPast ? "text-white/50" : "text-gray-500 group-hover:text-gray-300"
-                    }`}
-                  >
-                    {era.label}
-                  </span>
-                  <span className="text-[7px] text-gray-600 mt-0.5 hidden md:block">{era.span}</span>
-                </div>
+                <span className="text-[6px] font-bold text-center mt-0.5 block truncate text-gray-500 group-hover:text-gray-300 transition-colors">
+                  {era.label}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Active era description */}
-      <div className="mt-4 pt-3 border-t border-panel-border/50">
-        <p className="text-[9px] text-gray-400 text-center leading-relaxed">
-          <span className="text-white font-semibold">{eras[activeIndex].label} ERA:</span>{" "}
-          {eras[activeIndex].description}
-        </p>
+      {/* Events Carousel - Takes all remaining space */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-2 py-1.5">
+        <div className="text-[6px] font-bold text-gray-400 tracking-widest uppercase mb-1 flex-shrink-0">
+          {historicalEvents[activeEra].length} events
+        </div>
+        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
+          <div className="flex gap-1.5 min-w-min h-full pb-1">
+            {historicalEvents[activeEra].length > 0 ? (
+              historicalEvents[activeEra].map((event) => {
+                const isSelected = selectedEventId === event.id;
+                const impactIcon = {
+                  major: "🔴",
+                  significant: "🟠",
+                  regional: "🔵",
+                }[event.impact];
+                
+                const impactColor = isSelected
+                  ? "border-cyber-cyan bg-cyber-cyan/15 ring-1 ring-cyber-cyan/50 shadow-[0_0_8px_rgba(0,240,255,0.2)] scale-[0.98]"
+                  : {
+                      major: "border-red-500/60 bg-red-500/8 hover:border-red-500",
+                      significant: "border-orange-500/60 bg-orange-500/8 hover:border-orange-500",
+                      regional: "border-cyan-500/60 bg-cyan-500/8 hover:border-cyan-500",
+                    }[event.impact];
+
+                return (
+                  <button
+                    key={event.id}
+                    onClick={() => onSelectEvent(isSelected ? null : event.id)}
+                    className={`flex-shrink-0 w-44 border rounded px-1.5 py-1 cursor-pointer transition-all duration-150 flex flex-col gap-0.5 hover:shadow-lg ${impactColor}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[6.5px] font-mono text-gray-400">{event.year}</span>
+                      <span className="text-[8px]">{impactIcon}</span>
+                    </div>
+                    <div className="text-[6.5px] font-semibold leading-tight line-clamp-2 text-white">
+                      {event.title}
+                    </div>
+                    {isSelected && (
+                      <div className="text-[5.5px] text-gray-300 leading-tight pt-0.5 border-t border-cyber-cyan/30 mt-0.5 text-left">
+                        {event.description}
+                      </div>
+                    )}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="text-[6px] text-gray-500 flex items-center">–</div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

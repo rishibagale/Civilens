@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Globe, CloudRain, Trees, Compass, HeartHandshake, Briefcase, BookOpen, Scroll, type LucideIcon } from "lucide-react";
 import { countriesData } from "@/data/countriesData";
+import { countryEraData } from "@/data/empireData";
+
 
 interface CountryPanelProps {
   countryId: string | null;
@@ -242,6 +244,44 @@ export default function CountryPanel({ countryId, onClose }: CountryPanelProps) 
               <p className="text-[11px] text-gray-300 leading-relaxed">
                 {data.anthropology.migrationHistory}
               </p>
+            </div>
+
+            {/* History by Era Section */}
+            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-4">
+              <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
+                <Scroll className="w-4 h-4 text-cyber-cyan" />
+                <h3 className="text-[10px] text-white font-bold tracking-wider">TERRITORIAL CONTROL BY ERA</h3>
+              </div>
+              <div className="space-y-4">
+                {["ancient", "medieval", "colonial", "modern"].map((era) => {
+                  const eraInfo = countryEraData.find(
+                    (d) => d.countryId === data.id && d.era === era
+                  );
+                  if (!eraInfo) return null;
+
+                  return (
+                    <div key={era} className="border-l-2 border-cyber-cyan/35 pl-3 py-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8.5px] text-cyber-cyan font-bold uppercase tracking-wider">{era} Era</span>
+                        <span className="text-[7.5px] text-gray-500">Pop: {eraInfo.populationEstimate > 0 ? eraInfo.populationEstimate.toLocaleString() : "N/A"}</span>
+                      </div>
+                      <div className="text-[10px] text-white font-semibold">
+                        Controlled By: <span className="text-cyber-violet font-bold">{eraInfo.controlledBy}</span>
+                      </div>
+                      {eraInfo.majorCities.length > 0 && (
+                        <div className="text-[8.5px] text-gray-400 mt-1">
+                          <span className="text-gray-500 uppercase text-[8px]">Major Cities:</span> {eraInfo.majorCities.join(", ")}
+                        </div>
+                      )}
+                      {eraInfo.historicalEvents.length > 0 && (
+                        <div className="text-[8.5px] text-gray-400">
+                          <span className="text-gray-500 uppercase text-[8px]">Key Events:</span> {eraInfo.historicalEvents.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Empires and Ethnic */}
