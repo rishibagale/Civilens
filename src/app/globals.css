@@ -175,35 +175,3 @@ body {
   color: var(--color-cyber-cyan) !important;
 }
 
-/* Custom Cyber Popups */
-.maplibregl-popup-content {
-  background: rgba(6, 8, 14, 0.95) !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(0, 240, 255, 0.25) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.1) !important;
-  border-radius: 6px !important;
-  padding: 0 !important;
-}
-
-.maplibregl-popup-anchor-top .maplibregl-popup-tip {
-  border-bottom-color: rgba(6, 8, 14, 0.95) !important;
-}
-.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: rgba(6, 8, 14, 0.95) !important;
-}
-.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: rgba(6, 8, 14, 0.95) !important;
-}
-.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: rgba(6, 8, 14, 0.95) !important;
-}
-.maplibregl-popup-close-button {
-  color: rgba(255, 255, 255, 0.6) !important;
-  padding: 4px 8px !important;
-}
-.maplibregl-popup-close-button:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  color: white !important;
-}
-
-

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { Feature, FeatureCollection, LineString, Polygon, MultiPolygon } from "geojson";
+import type { Feature, FeatureCollection, LineString } from "geojson";
 import { countriesData } from "@/data/countriesData";
 import { civilizationsData } from "@/data/civilizationsData";
 import { historicalCities } from "@/data/historicalCities";
@@ -197,10 +197,10 @@ export default function MapLibreGlobeGlobe({
       });
 
       if (empireFeatures.length > 0) {
-        const collection = {
+        const collection: FeatureCollection = {
           type: "FeatureCollection",
           features: empireFeatures,
-        } as any;
+        };
         map.addSource("ancient-civilizations-source", { type: "geojson", data: collection });
         map.addLayer({
           id: "ancient-civilizations-layer-fill",
@@ -260,10 +260,10 @@ export default function MapLibreGlobeGlobe({
       });
 
       if (climateFeatures.length > 0) {
-        const collection = {
+        const collection: FeatureCollection = {
           type: "FeatureCollection",
           features: climateFeatures,
-        } as any;
+        };
         map.addSource("climate-source", { type: "geojson", data: collection });
         map.addLayer({
           id: "climate-layer-fill",
@@ -318,10 +318,10 @@ export default function MapLibreGlobeGlobe({
       });
 
       if (biodiversityFeatures.length > 0) {
-        const collection = {
+        const collection: FeatureCollection = {
           type: "FeatureCollection",
           features: biodiversityFeatures,
-        } as any;
+        };
         map.addSource("biodiversity-source", { type: "geojson", data: collection });
         map.addLayer({
           id: "biodiversity-layer-fill",
@@ -617,10 +617,9 @@ export default function MapLibreGlobeGlobe({
         setIsLoading(false);
         setError(null);
 
-        const mapAny = map as any;
         try {
-          mapAny.setProjection?.({ type: "globe" });
-          mapAny.setFog?.({
+          (map as { setProjection?: (config: { type: string }) => void; setFog?: (config: Record<string, string | number>) => void }).setProjection?.({ type: "globe" });
+          (map as { setProjection?: (config: { type: string }) => void; setFog?: (config: Record<string, string | number>) => void }).setFog?.({
             color: "rgb(4, 6, 14)",
             "high-color": "rgb(0, 240, 255)",
             "horizon-blend": 0.08,
@@ -628,7 +627,7 @@ export default function MapLibreGlobeGlobe({
             "star-intensity": 0.6,
           });
           console.log("✓ Globe projection applied");
-        } catch (err) {
+        } catch {
           console.warn("Globe projection not available");
         }
 
@@ -644,7 +643,8 @@ export default function MapLibreGlobeGlobe({
       map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
     } catch (err) {
       console.error("Failed to initialize map:", err);
-      setError("Failed to initialize map");
+      // Defer setError to avoid synchronous setState in effect
+      setTimeout(() => setError("Failed to initialize map"), 0);
     }
 
     return () => {
@@ -653,7 +653,7 @@ export default function MapLibreGlobeGlobe({
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [updateMarkers, updateEraLayers]);
 
   useEffect(() => {
     updateMarkers();

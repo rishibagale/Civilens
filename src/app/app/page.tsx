@@ -24,7 +24,6 @@ export default function AppDashboard() {
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
   const [activeLayers, setActiveLayers] = useState<string[]>(["trade_routes", "migration_flows"]);
   const [activePanel, setActivePanel] = useState<PanelType>("ai");
-  const [globeEngine, setGlobeEngine] = useState<"maplibre" | "holo">("maplibre");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const toggleLayer = (id: string) => {
@@ -107,8 +106,8 @@ export default function AppDashboard() {
 
         {/* Interactive Map Center */}
         <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden z-0 isolate flex flex-col">
-          {/* Map Area - Primary Viewport (flex: 2) */}
-          <div className="flex-[2] relative min-h-0 min-w-0 overflow-hidden flex items-center justify-center">
+          {/* Map Area - Upper Section */}
+          <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden flex items-center justify-center pt-16">
             <div className="absolute inset-0">
               <MapLibreGlobeGlobe 
                 activeEra={activeEra}
@@ -120,24 +119,23 @@ export default function AppDashboard() {
                   if (civ) {
                     setActiveEra(civ.era);
                     setActiveCountryId(null);
-                    setSelectedEventId(null);
                   }
                 }}
                 selectedEventId={selectedEventId}
               />
             </div>
 
-            {/* Telemetry HUD overlays - Absolute positioned transparent overlay */}
-            <div className="absolute top-4 left-4 font-mono text-[8px] text-gray-500 pointer-events-none space-y-1 z-10 bg-black/40 backdrop-blur-sm px-3 py-2 rounded border border-panel-border/50">
+            {/* Telemetry HUD overlays */}
+            <div className="absolute top-4 left-4 font-mono text-[8px] text-gray-500 pointer-events-none space-y-1 z-10">
               <div className="flex items-center space-x-1.5">
                 <span className="w-1 h-1 rounded-full bg-cyber-green animate-ping" />
                 <span className="text-gray-400">RENDER ENGINE: MAPLIBRE (FREE)</span>
               </div>
-              <div className="text-gray-500">
+              <div>
                 PROJECTION: MAPLIBRE 3D GLOBE
               </div>
-              <div className="text-gray-500">ERA: <span className="text-cyber-cyan uppercase font-bold">{activeEra}</span></div>
-              <div className="text-gray-500">LAYERS: <span className="text-white font-bold">{activeLayers.length} ACTIVE</span></div>
+              <div>ERA: <span className="text-cyber-cyan uppercase">{activeEra}</span></div>
+              <div>LAYERS: <span className="text-white">{activeLayers.length} ACTIVE</span></div>
             </div>
 
             {/* Country Panel overlay */}
@@ -151,14 +149,11 @@ export default function AppDashboard() {
             </AnimatePresence>
           </div>
 
-          {/* Timeline at bottom - Compact Control Bar (flex: 1) */}
-          <div className="flex-1 min-h-0 shrink-0 p-3 border-t border-panel-border bg-black/20 overflow-hidden flex flex-col z-20">
+          {/* Timeline at bottom - Separate Container */}
+          <div className="shrink-0 p-4 border-t border-panel-border bg-black/20 z-20">
             <TimelineSlider 
               activeEra={activeEra} 
-              onEraChange={(era) => {
-                setActiveEra(era);
-                setSelectedEventId(null);
-              }} 
+              onEraChange={setActiveEra}
               selectedEventId={selectedEventId}
               onSelectEvent={setSelectedEventId}
             />

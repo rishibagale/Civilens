@@ -2,10 +2,9 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Globe, CloudRain, Trees, Compass, HeartHandshake, Briefcase, BookOpen, Scroll, type LucideIcon } from "lucide-react";
+import { X, Globe, CloudRain, Trees, Compass, HeartHandshake, Briefcase, BookOpen, Scroll, Clock, type LucideIcon } from "lucide-react";
 import { countriesData } from "@/data/countriesData";
 import { countryEraData } from "@/data/empireData";
-
 
 interface CountryPanelProps {
   countryId: string | null;
@@ -235,6 +234,68 @@ export default function CountryPanel({ countryId, onClose }: CountryPanelProps) 
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
+            {/* HISTORY BY ERA Timeline */}
+            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-4">
+              <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
+                <Clock className="w-4 h-4 text-cyber-cyan" />
+                <h3 className="text-[10px] text-white font-bold tracking-wider">HISTORY BY ERA</h3>
+              </div>
+
+              <div className="space-y-3">
+                {["ancient", "medieval", "colonial", "modern"].map((era) => {
+                  const eraRecord = countryEraData.find(
+                    (d) => d.countryId === countryId && d.era === era
+                  );
+                  if (!eraRecord) return null;
+
+                  const eraColors = {
+                    ancient: "border-amber-400/60 bg-amber-400/5",
+                    medieval: "border-orange-400/60 bg-orange-400/5",
+                    colonial: "border-rose-400/60 bg-rose-400/5",
+                    modern: "border-cyber-cyan/60 bg-cyber-cyan/5",
+                  };
+
+                  return (
+                    <div
+                      key={era}
+                      className={`border rounded p-3 space-y-2 ${eraColors[era as keyof typeof eraColors]}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-bold uppercase text-white">{era}</span>
+                        <span className="text-[8px] text-gray-400">
+                          {(eraRecord.populationEstimate / 1000000).toFixed(1)}M est. pop
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 uppercase text-[8px] block">Controlled By</span>
+                        <span className="text-[10px] text-cyber-cyan font-semibold">{eraRecord.controlledBy}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 uppercase text-[8px] block">Active Cities & Trade Centers</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {eraRecord.majorCities.map((city, i) => (
+                            <span key={i} className="text-[8px] bg-white/10 border border-white/20 text-gray-300 px-1.5 py-0.5 rounded">
+                              {city}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 uppercase text-[8px] block">Historic Events</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {eraRecord.historicalEvents.map((event, i) => (
+                            <span key={i} className="text-[8px] bg-cyber-violet/10 border border-cyber-violet/30 text-cyber-violet px-1.5 py-0.5 rounded">
+                              {event}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Historical Migration */}
             <div className="border border-panel-border bg-black/20 rounded p-4 space-y-3">
               <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
@@ -244,44 +305,6 @@ export default function CountryPanel({ countryId, onClose }: CountryPanelProps) 
               <p className="text-[11px] text-gray-300 leading-relaxed">
                 {data.anthropology.migrationHistory}
               </p>
-            </div>
-
-            {/* History by Era Section */}
-            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-4">
-              <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
-                <Scroll className="w-4 h-4 text-cyber-cyan" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">TERRITORIAL CONTROL BY ERA</h3>
-              </div>
-              <div className="space-y-4">
-                {["ancient", "medieval", "colonial", "modern"].map((era) => {
-                  const eraInfo = countryEraData.find(
-                    (d) => d.countryId === data.id && d.era === era
-                  );
-                  if (!eraInfo) return null;
-
-                  return (
-                    <div key={era} className="border-l-2 border-cyber-cyan/35 pl-3 py-1 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[8.5px] text-cyber-cyan font-bold uppercase tracking-wider">{era} Era</span>
-                        <span className="text-[7.5px] text-gray-500">Pop: {eraInfo.populationEstimate > 0 ? eraInfo.populationEstimate.toLocaleString() : "N/A"}</span>
-                      </div>
-                      <div className="text-[10px] text-white font-semibold">
-                        Controlled By: <span className="text-cyber-violet font-bold">{eraInfo.controlledBy}</span>
-                      </div>
-                      {eraInfo.majorCities.length > 0 && (
-                        <div className="text-[8.5px] text-gray-400 mt-1">
-                          <span className="text-gray-500 uppercase text-[8px]">Major Cities:</span> {eraInfo.majorCities.join(", ")}
-                        </div>
-                      )}
-                      {eraInfo.historicalEvents.length > 0 && (
-                        <div className="text-[8.5px] text-gray-400">
-                          <span className="text-gray-500 uppercase text-[8px]">Key Events:</span> {eraInfo.historicalEvents.join(", ")}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Empires and Ethnic */}
