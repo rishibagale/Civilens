@@ -11,6 +11,8 @@ export interface GraphLink {
   target: string;
   relationship: string;
   explanation: string;
+  strength?: 'strong' | 'medium' | 'weak'; // Weight of the causal link
+  direction?: 'forward' | 'bidirectional'; // Causal direction
 }
 
 export const graphNodes: GraphNode[] = [
@@ -112,72 +114,96 @@ export const graphLinks: GraphLink[] = [
     source: "climate_monsoon",
     target: "wet_rice_agri",
     relationship: "enables",
-    explanation: "Seasonal monsoon rainfall provides the massive volume of water required to flood fields for intensive rice farming."
+    explanation: "Seasonal monsoon rainfall provides the massive volume of water required to flood fields for intensive rice farming.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "wet_rice_agri",
     target: "pop_density_high",
     relationship: "supports",
-    explanation: "Wet rice yields significantly more calories per acre than wheat or barley, allowing land to support highly dense populations."
+    explanation: "Wet rice yields significantly more calories per acre than wheat or barley, allowing land to support highly dense populations.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "wet_rice_agri",
     target: "social_coop",
     relationship: "demands",
-    explanation: "Unlike wheat farming, which can be done individually, rice farming requires building dams and clearing canals collectively, necessitating high social cooperation."
+    explanation: "Unlike wheat farming, which can be done individually, rice farming requires building dams and clearing canals collectively, necessitating high social cooperation.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "pop_density_high",
     target: "central_state",
     relationship: "precipitates",
-    explanation: "Dense populations grouped along river plains require laws, court systems, and registries to arbitrate land rights and coordinate massive public works."
+    explanation: "Dense populations grouped along river plains require laws, court systems, and registries to arbitrate land rights and coordinate massive public works.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "volcanic_soil",
     target: "pop_density_high",
     relationship: "fertilizes",
-    explanation: "Volcanic ash continuously replenishes minerals in the soil, allowing generations to farm the same land intensively without depleting it."
+    explanation: "Volcanic ash continuously replenishes minerals in the soil, allowing generations to farm the same land intensively without depleting it.",
+    strength: 'medium',
+    direction: 'forward',
   },
   {
     source: "rugged_mountain",
     target: "defensive_fortress",
     relationship: "creates",
-    explanation: "Mountain passes and steep valleys act as natural choke points, allowing small militias to fend off larger imperial forces."
+    explanation: "Mountain passes and steep valleys act as natural choke points, allowing small militias to fend off larger imperial forces.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "rugged_mountain",
     target: "cultural_divergence",
     relationship: "enforces",
-    explanation: "Lack of easy land travel keeps clans physically separated, leading to rapid development of distinct languages and cultural practices."
+    explanation: "Lack of easy land travel keeps clans physically separated, leading to rapid development of distinct languages and cultural practices.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "defensive_fortress",
     target: "cultural_divergence",
     relationship: "protects",
-    explanation: "By keeping invading empires at bay, natural fortifications allow localized, minority cultures to survive for centuries without assimilation."
+    explanation: "By keeping invading empires at bay, natural fortifications allow localized, minority cultures to survive for centuries without assimilation.",
+    strength: 'medium',
+    direction: 'forward',
   },
   {
     source: "sea_straits",
     target: "ship_building",
     relationship: "incentivizes",
-    explanation: "When land is mountainous and deep water channels connect cities, populations build advanced boats to navigate their geography."
+    explanation: "When land is mountainous and deep water channels connect cities, populations build advanced boats to navigate their geography.",
+    strength: 'medium',
+    direction: 'forward',
   },
   {
     source: "ship_building",
     target: "trade_empires",
     relationship: "empowers",
-    explanation: "Mastery of open ocean shipping allows city-states to control narrow oceanic straits, taxing global trade networks to accumulate massive wealth."
+    explanation: "Mastery of open ocean shipping allows city-states to control narrow oceanic straits, taxing global trade networks to accumulate massive wealth.",
+    strength: 'strong',
+    direction: 'forward',
   },
   {
     source: "ship_building",
     target: "seafood_diet",
     relationship: "popularizes",
-    explanation: "Boats allow access to deep-sea fish, and the need for preservation on long oceanic journeys leads to culinary traditions of fermented/dried fish."
+    explanation: "Boats allow access to deep-sea fish, and the need for preservation on long oceanic journeys leads to culinary traditions of fermented/dried fish.",
+    strength: 'medium',
+    direction: 'forward',
   },
   {
     source: "trade_empires",
     target: "seafood_diet",
     relationship: "disseminates",
-    explanation: "Maritime merchants establish networks that carry cured fish and spices globally, institutionalizing maritime dietary practices."
+    explanation: "Maritime merchants establish networks that carry cured fish and spices globally, institutionalizing maritime dietary practices.",
+    strength: 'weak',
+    direction: 'forward',
   }
 ];

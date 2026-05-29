@@ -8,7 +8,8 @@ import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
 import CuriosityFeed from "@/components/CuriosityFeed";
-import { MessageSquare, Network, BookOpen, LayoutGrid, Lightbulb } from "lucide-react";
+import CausalChain from "@/components/CausalChain";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Lightbulb, Link2 } from "lucide-react";
 import { civilizationsData } from "@/data/civilizationsData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
 
@@ -18,7 +19,7 @@ const KnowledgeGraph = dynamic(() => import("@/components/KnowledgeGraph"), { ss
 const ExplorationCards = dynamic(() => import("@/components/ExplorationCards"), { ssr: false });
 
 type EraType = "ancient" | "medieval" | "colonial" | "modern" | "future";
-type PanelType = "ai" | "graph" | "cards" | "discover" | "layers" | null;
+type PanelType = "ai" | "graph" | "cards" | "discover" | "chains" | "layers" | null;
 
 export default function AppDashboard() {
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export default function AppDashboard() {
 
   const sidebarItems = [
     { id: "discover" as PanelType, icon: Lightbulb, label: "DISCOVER" },
+    { id: "chains" as PanelType, icon: Link2, label: "CHAINS" },
     { id: "ai" as PanelType, icon: MessageSquare, label: "AI ENGINE" },
     { id: "graph" as PanelType, icon: Network, label: "GRAPH" },
     { id: "cards" as PanelType, icon: BookOpen, label: "REPORTS" },
@@ -100,6 +102,18 @@ export default function AppDashboard() {
                     activeCountryId={activeCountryId}
                     activeEra={activeEra}
                     limit={8}
+                  />
+                </div>
+              )}
+              {activePanel === "chains" && (
+                <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col">
+                  <div className="border-b border-panel-border pb-3 mb-3">
+                    <h3 className="text-xs font-mono font-bold text-cyan-400 tracking-widest">CAUSAL CHAINS</h3>
+                    <p className="text-[10px] text-gray-600 mt-1">How geography determines civilization</p>
+                  </div>
+                  <CausalChain
+                    countryId={activeCountryId}
+                    era={activeEra}
                   />
                 </div>
               )}
