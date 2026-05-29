@@ -58,6 +58,18 @@ export default function MapLibreGlobeGlobe({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const propsRef = useRef({
+    onSelectCountry,
+    onSelectCivilization,
+  });
+
+  useEffect(() => {
+    propsRef.current = {
+      onSelectCountry,
+      onSelectCivilization,
+    };
+  }, [onSelectCountry, onSelectCivilization]);
+
   // Update layers based on era and active layers
   const updateEraLayers = useCallback(() => {
     const map = mapRef.current;
@@ -419,7 +431,10 @@ export default function MapLibreGlobeGlobe({
       `;
       el.appendChild(tooltip);
 
-      el.addEventListener("click", () => onSelectCountry?.(country.id));
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onSelectCountry?.(country.id);
+      });
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([country.coordinates[1], country.coordinates[0]])
@@ -447,7 +462,10 @@ export default function MapLibreGlobeGlobe({
         `;
         el.appendChild(tooltip);
 
-        el.addEventListener("click", () => onSelectCivilization?.(civ.id));
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          onSelectCivilization?.(civ.id);
+        });
 
         const marker = new maplibregl.Marker({ element: el })
           .setLngLat([civ.centerCoordinates[1], civ.centerCoordinates[0]])
@@ -641,6 +659,56 @@ export default function MapLibreGlobeGlobe({
       });
 
       map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+      map.on("click", (e) => {
+        const { lng, lat } = e.lngLat;
+        let closestCountry: string | null = null;
+        let minDistance = Infinity;
+
+        Object.values(countriesData).forEach((country) => {
+          const cLat = country.coordinates[0];
+          const cLng = country.coordinates[1];
+          const dLat = lat - cLat;
+          const dLng = lng - cLng;
+          let wrappedDLng = dLng;
+          while (wrappedDLng > 180) wrappedDLng -= 360;
+          while (wrappedDLng < -180) wrappedDLng += 360;
+
+          const distance = Math.sqrt(dLat * dLat + wrappedDLng * wrappedDLng);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestCountry = country.id;
+          }
+        });
+
+        // 8 degrees is a reasonable click range for a country on a globe (covers ~880km)
+        if (minDistance < 8 && closestCountry) {
+          propsRef.current.onSelectCountry?.(closestCountry);
+        }
+      });
+
+      map.on("mousemove", (e) => {
+        const { lng, lat } = e.lngLat;
+        let nearCountry = false;
+
+        for (const country of Object.values(countriesData)) {
+          const cLat = country.coordinates[0];
+          const cLng = country.coordinates[1];
+          const dLat = lat - cLat;
+          const dLng = lng - cLng;
+          let wrappedDLng = dLng;
+          while (wrappedDLng > 180) wrappedDLng -= 360;
+          while (wrappedDLng < -180) wrappedDLng += 360;
+
+          const distance = Math.sqrt(dLat * dLat + wrappedDLng * wrappedDLng);
+          if (distance < 8) {
+            nearCountry = true;
+            break;
+          }
+        }
+
+        map.getCanvas().style.cursor = nearCountry ? "pointer" : "";
+      });
     } catch (err) {
       console.error("Failed to initialize map:", err);
       // Defer setError to avoid synchronous setState in effect
@@ -662,6 +730,23 @@ export default function MapLibreGlobeGlobe({
   useEffect(() => {
     updateEraLayers();
   }, [activeEra, activeLayers, updateEraLayers]);
+
+  // Zoom/Fly-to Selected Country
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !activeCountryId) return;
+
+    const country = countriesData[activeCountryId];
+    if (country) {
+      map.flyTo({
+        center: [country.coordinates[1], country.coordinates[0]], // [lng, lat]
+        zoom: 3.2,
+        speed: 1.2,
+        curve: 1.4,
+        essential: true,
+      });
+    }
+  }, [activeCountryId]);
 
 
   return (
