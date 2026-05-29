@@ -7,7 +7,8 @@ import Navbar from "@/components/Navbar";
 import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
-import { MessageSquare, Network, BookOpen, LayoutGrid } from "lucide-react";
+import CuriosityFeed from "@/components/CuriosityFeed";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Lightbulb } from "lucide-react";
 import { civilizationsData } from "@/data/civilizationsData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
 
@@ -17,7 +18,7 @@ const KnowledgeGraph = dynamic(() => import("@/components/KnowledgeGraph"), { ss
 const ExplorationCards = dynamic(() => import("@/components/ExplorationCards"), { ssr: false });
 
 type EraType = "ancient" | "medieval" | "colonial" | "modern" | "future";
-type PanelType = "ai" | "graph" | "cards" | "layers" | null;
+type PanelType = "ai" | "graph" | "cards" | "discover" | "layers" | null;
 
 export default function AppDashboard() {
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function AppDashboard() {
   };
 
   const sidebarItems = [
+    { id: "discover" as PanelType, icon: Lightbulb, label: "DISCOVER" },
     { id: "ai" as PanelType, icon: MessageSquare, label: "AI ENGINE" },
     { id: "graph" as PanelType, icon: Network, label: "GRAPH" },
     { id: "cards" as PanelType, icon: BookOpen, label: "REPORTS" },
@@ -92,6 +94,15 @@ export default function AppDashboard() {
               transition={{ duration: 0.2 }}
               className="w-80 shrink-0 border-r border-panel-border bg-black/60 flex flex-col min-h-0 h-full overflow-hidden z-30"
             >
+              {activePanel === "discover" && (
+                <div className="flex-1 min-h-0 overflow-y-auto p-3">
+                  <CuriosityFeed
+                    activeCountryId={activeCountryId}
+                    activeEra={activeEra}
+                    limit={8}
+                  />
+                </div>
+              )}
               {activePanel === "ai" && <AiInsightEngine />}
               {activePanel === "graph" && <KnowledgeGraph />}
               {activePanel === "cards" && <ExplorationCards />}
