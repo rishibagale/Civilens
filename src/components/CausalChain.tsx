@@ -39,37 +39,61 @@ function ChainStepCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="relative"
+      transition={{ delay: index * 0.12 }}
+      className="relative group"
     >
       {/* Step card */}
       <motion.button
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.03, y: -2 }}
+        whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`w-full p-4 rounded-lg border backdrop-blur-xl transition-all text-left group bg-gradient-to-br ${config.bg} ${config.border}`}
+        className={`w-full p-4 rounded-lg border backdrop-blur-xl transition-all text-left bg-gradient-to-br ${config.bg} ${config.border} hover:shadow-lg hover:${config.border} hover:border-opacity-100`}
       >
         {/* Icon + Title */}
         <div className="flex items-start gap-3 mb-2">
-          <span className="text-xl shrink-0">{step.icon}</span>
+          <motion.span
+            className="text-xl shrink-0"
+            whileHover={{ scale: 1.2, rotate: 5 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            {step.icon}
+          </motion.span>
           <div className="flex-1 min-w-0">
-            <h4 className={`font-bold text-sm ${config.text} mb-0.5`}>{step.title}</h4>
-            <p className="text-xs text-gray-400">{step.category}</p>
+            <h4 className={`font-bold text-sm ${config.text} mb-0.5 group-hover:drop-shadow-lg transition-all`}>
+              {step.title}
+            </h4>
+            <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">{step.category}</p>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-[11px] text-gray-300 leading-relaxed mb-2">{step.description}</p>
+        <p className="text-[11px] text-gray-300 leading-relaxed mb-2 group-hover:text-gray-100 transition-colors">
+          {step.description}
+        </p>
 
         {/* Related nodes preview */}
         {step.relatedGraphNodes.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {step.relatedGraphNodes.slice(0, 2).map((node) => (
-              <span key={node} className={`inline-block text-[8px] px-1.5 py-0.5 rounded bg-black/30 ${config.text}`}>
+            {step.relatedGraphNodes.slice(0, 2).map((node, i) => (
+              <motion.span
+                key={node}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.12 + i * 0.05 }}
+                className={`inline-block text-[8px] px-1.5 py-0.5 rounded bg-black/30 ${config.text} hover:bg-black/50 transition-all cursor-default`}
+              >
                 {node}
-              </span>
+              </motion.span>
             ))}
             {step.relatedGraphNodes.length > 2 && (
-              <span className="text-[8px] text-gray-500">+{step.relatedGraphNodes.length - 2}</span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.12 + 0.1 }}
+                className="text-[8px] text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                +{step.relatedGraphNodes.length - 2}
+              </motion.span>
             )}
           </div>
         )}
@@ -77,12 +101,23 @@ function ChainStepCard({
 
       {/* Arrow between steps */}
       {index < total - 1 && (
-        <div className="flex justify-center py-2">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: index * 0.12 + 0.08 }}
+          className="flex justify-center py-2"
+        >
           <div className="flex flex-col items-center gap-1">
-            <div className="text-xs text-gray-600">↓</div>
+            <motion.div
+              animate={{ y: [0, 3, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-xs text-gray-600"
+            >
+              ↓
+            </motion.div>
             <div className="w-0.5 h-4 bg-gradient-to-b from-gray-600 to-transparent" />
           </div>
-        </div>
+        </motion.div>
       )}
     </motion.div>
   );
@@ -105,10 +140,15 @@ export default function CausalChain({ countryId, era, onStepClick }: CausalChain
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="px-1">
-        <h3 className="text-sm font-bold text-white mb-1">{chain.title}</h3>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="px-1 border-b border-panel-border pb-3"
+      >
+        <h3 className="text-sm font-bold text-cyber-cyan mb-1 uppercase tracking-wider">{chain.title}</h3>
         <p className="text-[10px] text-gray-500">{chain.shortDescription}</p>
-      </div>
+      </motion.div>
 
       {/* Chain visualization */}
       <div className="space-y-0.5">
@@ -132,34 +172,43 @@ export default function CausalChain({ countryId, era, onStepClick }: CausalChain
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: chain.chain.length * 0.1 }}
-        className="mt-4 p-3 rounded-lg bg-black/30 border border-panel-border"
+        transition={{ delay: chain.chain.length * 0.12 + 0.2 }}
+        className="mt-4 p-3 rounded-lg bg-gradient-to-br from-black/40 to-black/20 border border-panel-border hover:border-cyber-cyan/40 transition-colors"
       >
-        <h4 className="text-[10px] font-mono font-bold text-cyan-400 mb-2 tracking-wider">IMPACT ANALYSIS</h4>
+        <h4 className="text-[10px] font-mono font-bold text-cyan-400 mb-2 tracking-wider flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          IMPACT ANALYSIS
+        </h4>
         <div className="grid grid-cols-2 gap-2 text-[10px]">
-          <div>
-            <span className="text-gray-600">Steps: </span>
-            <span className="text-white font-bold">{chain.chain.length}</span>
-          </div>
-          <div>
-            <span className="text-gray-600">Era: </span>
-            <span className="text-white font-bold uppercase">{era}</span>
-          </div>
-          <div>
-            <span className="text-gray-600">Related Nodes: </span>
-            <span className="text-white font-bold">{chain.chain.reduce((sum, s) => sum + s.relatedGraphNodes.length, 0)}</span>
-          </div>
-          <div>
-            <span className="text-gray-600">Related Regions: </span>
-            <span className="text-white font-bold">{new Set(chain.chain.flatMap((s) => s.relatedCountries)).size}</span>
-          </div>
+          {[
+            { label: "Steps: ", value: chain.chain.length, color: "text-cyan-300" },
+            { label: "Era: ", value: era.toUpperCase(), color: "text-amber-300" },
+            { label: "Related Nodes: ", value: chain.chain.reduce((sum, s) => sum + s.relatedGraphNodes.length, 0), color: "text-green-300" },
+            { label: "Related Regions: ", value: new Set(chain.chain.flatMap((s) => s.relatedCountries)).size, color: "text-purple-300" },
+          ].map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: chain.chain.length * 0.12 + 0.25 + i * 0.05 }}
+              className="hover:bg-black/30 rounded px-1.5 py-1 transition-colors"
+            >
+              <span className="text-gray-600">{stat.label}</span>
+              <span className={`font-bold ${stat.color}`}>{stat.value}</span>
+            </motion.div>
+          ))}
         </div>
       </motion.div>
 
       {/* Interaction hint */}
-      <p className="text-[9px] text-gray-600 text-center italic">
-        Click steps to highlight in knowledge graph
-      </p>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: chain.chain.length * 0.12 + 0.35 }}
+        className="text-[9px] text-gray-600 text-center italic hover:text-gray-400 transition-colors"
+      >
+        ✨ Click steps to highlight in knowledge graph
+      </motion.p>
     </div>
   );
 }
