@@ -169,6 +169,7 @@ export default function AppDashboard() {
                 <CountryPanel
                   countryId={activeCountryId}
                   onClose={() => setActiveCountryId(null)}
+                  activeEra={activeEra}
                 />
               )}
             </AnimatePresence>
