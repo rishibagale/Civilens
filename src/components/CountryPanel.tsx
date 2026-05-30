@@ -409,23 +409,26 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
               </div>
 
               <div className="space-y-3">
-                {["ancient", "medieval", "colonial", "modern"].map((era) => {
+                {["ancient", "medieval", "colonial", "modern"].map((era, idx) => {
                   const eraRecord = countryEraData.find(
                     (d) => d.countryId === countryId && d.era === era
                   );
                   if (!eraRecord) return null;
 
                   const eraColors = {
-                    ancient: "border-amber-400/60 bg-amber-400/5",
-                    medieval: "border-orange-400/60 bg-orange-400/5",
-                    colonial: "border-rose-400/60 bg-rose-400/5",
-                    modern: "border-cyber-cyan/60 bg-cyber-cyan/5",
+                    ancient: "border-amber-400/60 bg-gradient-to-br from-amber-400/10 to-amber-400/5 hover:border-amber-400/80 hover:from-amber-400/15",
+                    medieval: "border-orange-400/60 bg-gradient-to-br from-orange-400/10 to-orange-400/5 hover:border-orange-400/80 hover:from-orange-400/15",
+                    colonial: "border-rose-400/60 bg-gradient-to-br from-rose-400/10 to-rose-400/5 hover:border-rose-400/80 hover:from-rose-400/15",
+                    modern: "border-cyber-cyan/60 bg-gradient-to-br from-cyber-cyan/10 to-cyber-cyan/5 hover:border-cyber-cyan/80 hover:from-cyber-cyan/15",
                   };
 
                   return (
-                    <div
+                    <motion.div
                       key={era}
-                      className={`border rounded p-3 space-y-2 ${eraColors[era as keyof typeof eraColors]}`}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.08 }}
+                      className={`border rounded p-3 space-y-2 transition-all ${eraColors[era as keyof typeof eraColors]} cursor-default`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-bold uppercase text-white">{era}</span>
@@ -441,9 +444,15 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
                         <span className="text-gray-500 uppercase text-[8px] block">Active Cities & Trade Centers</span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {eraRecord.majorCities.map((city, i) => (
-                            <span key={i} className="text-[8px] bg-white/10 border border-white/20 text-gray-300 px-1.5 py-0.5 rounded">
+                            <motion.span
+                              key={i}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.08 + i * 0.02 }}
+                              className="text-[8px] bg-white/10 border border-white/20 text-gray-300 px-1.5 py-0.5 rounded hover:bg-white/20 hover:border-white/40 transition-all"
+                            >
                               {city}
-                            </span>
+                            </motion.span>
                           ))}
                         </div>
                       </div>
@@ -451,20 +460,31 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
                         <span className="text-gray-500 uppercase text-[8px] block">Historic Events</span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {eraRecord.historicalEvents.map((event, i) => (
-                            <span key={i} className="text-[8px] bg-cyber-violet/10 border border-cyber-violet/30 text-cyber-violet px-1.5 py-0.5 rounded">
+                            <motion.span
+                              key={i}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.08 + i * 0.02 }}
+                              className="text-[8px] bg-cyber-violet/10 border border-cyber-violet/30 text-cyber-violet px-1.5 py-0.5 rounded hover:bg-cyber-violet/20 hover:border-cyber-violet/50 transition-all"
+                            >
                               {event}
-                            </span>
+                            </motion.span>
                           ))}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
             </div>
 
             {/* Historical Migration */}
-            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="border border-panel-border bg-gradient-to-br from-black/30 to-black/10 rounded p-4 space-y-3 hover:border-cyber-cyan/40 transition-colors"
+            >
               <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
                 <Compass className="w-4 h-4 text-cyber-cyan" />
                 <h3 className="text-[10px] text-white font-bold tracking-wider">MIGRATIVE FOREBEARS</h3>
@@ -472,10 +492,15 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
               <p className="text-[11px] text-gray-300 leading-relaxed">
                 {data.anthropology.migrationHistory}
               </p>
-            </div>
+            </motion.div>
 
             {/* Empires and Ethnic */}
-            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="border border-panel-border bg-gradient-to-br from-black/30 to-black/10 rounded p-4 space-y-3 hover:border-cyber-violet/40 transition-colors"
+            >
               <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
                 <BookOpen className="w-4 h-4 text-cyber-cyan" />
                 <h3 className="text-[10px] text-white font-bold tracking-wider">SOCIETAL ANTECEDENTS</h3>
@@ -484,9 +509,15 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
                 <span className="text-gray-500 uppercase text-[9px] block mb-1">Associated Empires</span>
                 <div className="flex flex-wrap gap-1">
                   {data.anthropology.ancientEmpires.map((emp, i) => (
-                    <span key={i} className="text-[9px] bg-cyber-violet/10 border border-cyber-violet/30 text-cyber-violet px-2 py-0.5 rounded">
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.43 + i * 0.03 }}
+                      className="text-[9px] bg-cyber-violet/10 border border-cyber-violet/30 text-cyber-violet px-2 py-0.5 rounded hover:bg-cyber-violet/20 hover:border-cyber-violet/50 transition-all cursor-default"
+                    >
                       {emp}
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
               </div>
@@ -500,7 +531,7 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
                   {data.anthropology.socialStructures}
                 </p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -512,23 +543,39 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
             className="space-y-6"
           >
             {/* Cultural Insights */}
-            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="border border-panel-border bg-gradient-to-br from-black/30 to-black/10 rounded p-4 space-y-3 hover:border-cyber-pink/40 transition-colors"
+            >
               <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
                 <HeartHandshake className="w-4 h-4 text-cyber-cyan" />
                 <h3 className="text-[10px] text-white font-bold tracking-wider">ETHNOGRAPHIC INSIGHT MATRIX</h3>
               </div>
               <ul className="space-y-3 text-[11px] text-gray-300">
                 {data.culture.insights.map((ins, i) => (
-                  <li key={i} className="relative pl-4 leading-relaxed">
-                    <span className="absolute left-0 top-1 text-cyber-cyan">•</span>
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.13 + i * 0.08 }}
+                    className="relative pl-4 leading-relaxed hover:text-cyber-pink transition-colors"
+                  >
+                    <span className="absolute left-0 top-1 text-cyber-pink font-bold">→</span>
                     {ins}
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
             {/* Food Culture */}
-            <div className="border border-panel-border bg-black/20 rounded p-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="border border-panel-border bg-gradient-to-br from-black/30 to-black/10 rounded p-4 space-y-3 hover:border-cyber-amber/40 transition-colors"
+            >
               <div className="flex items-center space-x-2 border-b border-panel-border pb-1.5">
                 <BookOpen className="w-4 h-4 text-cyber-cyan" />
                 <h3 className="text-[10px] text-white font-bold tracking-wider">DIETARY & PRESERVATION ECOLOGY</h3>
@@ -536,10 +583,15 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
               <p className="text-[11px] text-gray-300 leading-relaxed">
                 {data.culture.foodCulture}
               </p>
-              <div className="text-[9px] text-cyber-amber bg-cyber-amber/5 border border-cyber-amber/20 p-2 rounded leading-relaxed mt-1">
-                <span>SYSTEM CONTEXT: Culinary systems are primary adaptation mechanisms to preserve energy and local biodiversity cycles.</span>
-              </div>
-            </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-[9px] text-cyber-amber bg-gradient-to-r from-cyber-amber/10 to-cyber-amber/5 border border-cyber-amber/30 p-2 rounded leading-relaxed mt-1 hover:border-cyber-amber/60 hover:bg-cyber-amber/15 transition-all"
+              >
+                <span className="font-semibold">SYSTEM CONTEXT:</span> Culinary systems are primary adaptation mechanisms to preserve energy and local biodiversity cycles.
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -550,28 +602,45 @@ export default function CountryPanel({ countryId, onClose, activeEra = "ancient"
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
-            <div className="border border-cyber-cyan/35 bg-cyber-cyan/5 rounded p-5 space-y-4 relative overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="border border-gradient-to-r border-cyber-cyan/50 bg-gradient-to-br from-cyber-cyan/10 to-black/30 rounded p-5 space-y-4 relative overflow-hidden hover:border-cyber-cyan/70 transition-colors"
+            >
               {/* Scanline holographic effect overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyber-cyan/5 to-transparent pointer-events-none animate-scanline" />
-              
-              <div className="flex items-center space-x-2 border-b border-cyber-cyan/30 pb-2">
-                <Scroll className="w-4 h-4 text-cyber-cyan" />
+
+              <div className="relative z-10 flex items-center space-x-2 border-b border-cyber-cyan/30 pb-2">
+                <Scroll className="w-4 h-4 text-cyber-cyan animate-pulse" />
                 <h3 className="text-[10px] text-white font-bold tracking-widest neon-text-cyan">
                   AI CORE CIVILIZATIONAL INTEGRATION REPORT
                 </h3>
               </div>
 
-              <div className="font-mono text-xs text-gray-200 leading-relaxed space-y-3 text-justify">
+              <div className="relative z-10 font-mono text-xs text-gray-200 leading-relaxed space-y-3 text-justify">
                 {data.aiAnalysis.split("\n\n").map((para, i) => (
-                  <p key={i}>{para}</p>
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + i * 0.05 }}
+                  >
+                    {para}
+                  </motion.p>
                 ))}
               </div>
 
-              <div className="border-t border-cyber-cyan/20 pt-3 flex justify-between items-center text-[8px] text-gray-500 font-mono">
-                <span>MODEL: COGNITIVE SYNTHESIS V3.5</span>
-                <span>TELEMETRY STABILITY: 99.86%</span>
-              </div>
-            </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="relative z-10 border-t border-cyber-cyan/20 pt-3 flex justify-between items-center text-[8px] text-gray-500 font-mono"
+              >
+                <span className="hover:text-cyber-cyan transition-colors">MODEL: COGNITIVE SYNTHESIS V3.5</span>
+                <span className="hover:text-cyber-cyan transition-colors">TELEMETRY STABILITY: 99.86%</span>
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
       </div>
