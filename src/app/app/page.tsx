@@ -7,8 +7,9 @@ import Navbar from "@/components/Navbar";
 import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
-import { MessageSquare, Network, BookOpen, LayoutGrid } from "lucide-react";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Search, Menu, X, Compass, Globe } from "lucide-react";
 import { civilizationsData } from "@/data/civilizationsData";
+import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
 
 // Heavy components loaded client-side only
@@ -24,7 +25,9 @@ export default function AppDashboard() {
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
   const [activeLayers, setActiveLayers] = useState<string[]>(["trade_routes", "migration_flows"]);
   const [activePanel, setActivePanel] = useState<PanelType>("ai");
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
@@ -44,22 +47,171 @@ export default function AppDashboard() {
     }
   };
 
+  const handleAskQuestion = (question: string) => {
+    setPendingQuery(question);
+    setActivePanel("ai");
+  };
+
+  const getSearchResults = () => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    const results: Array<{ id: string; name: string; type: "country" | "civilization"; subtitle: string }> = [];
+
+    Object.values(countriesData).forEach((country) => {
+      if (
+        country.name.toLowerCase().includes(query) ||
+        country.climate.type.toLowerCase().includes(query) ||
+        country.religion.toLowerCase().includes(query)
+      ) {
+        results.push({
+          id: country.id,
+          name: country.name,
+          type: "country",
+          subtitle: `Country • ${country.capital}`,
+        });
+      }
+    });
+
+    civilizationsData.forEach((civ) => {
+      if (civ.name.toLowerCase().includes(query) || civ.era.toLowerCase().includes(query)) {
+        results.push({
+          id: civ.id,
+          name: civ.name,
+          type: "civilization",
+          subtitle: `Empire • ${civ.timeSpan}`,
+        });
+      }
+    });
+
+    return results.slice(0, 5);
+  };
+
   const sidebarItems = [
     { id: "ai" as PanelType, icon: MessageSquare, label: "AI ENGINE" },
-    { id: "graph" as PanelType, icon: Network, label: "GRAPH" },
+    { id: "graph" as PanelType, icon: Network, label: "CONCEPT GRAPH" },
     { id: "cards" as PanelType, icon: BookOpen, label: "REPORTS" },
     { id: "layers" as PanelType, icon: LayoutGrid, label: "LAYERS" },
   ];
 
-  return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden select-none">
-      {/* Top Navbar */}
-      <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
+  const searchResults = getSearchResults();
 
-      {/* Main Content */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Icon Sidebar */}
-        <div className="w-14 shrink-0 border-r border-panel-border bg-black/40 flex flex-col items-center py-4 space-y-2 z-20">
+  return (
+    <div className="flex flex-col h-screen bg-[#020204] overflow-hidden select-none relative selection:bg-[#f59e0b]/30">
+      
+      {/* ── DESKTOP ONLY: TOP NAVBAR ── */}
+      <div className="hidden md:block">
+        <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
+      </div>
+
+      {/* ── MOBILE ONLY: MINIMAL FLOATING COMPASS ICON NAVIGATION ── */}
+      <div className="md:hidden absolute top-4 right-4 z-50 flex items-center gap-2">
+        {/* Floating trigger button collapses to a single icon */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="w-12 h-12 rounded-full border border-[#f59e0b]/40 bg-[#060609]/90 flex items-center justify-center shadow-lg text-[#f59e0b] hover:text-white hover:border-[#00f0ff]/50 transition-all"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5 text-[#00f0ff]" /> : <Compass className="w-5 h-5 animate-spin-slow" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu Expanded Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden absolute inset-0 bg-[#030408]/95 z-40 p-6 flex flex-col pt-20"
+          >
+            {/* Minimal Mobile Search */}
+            <div className="relative w-full mb-6">
+              <div className="flex items-center bg-black/50 border border-zinc-800 rounded-lg px-3.5 py-2.5 focus-within:border-[#f59e0b] transition-all">
+                <Search className="w-4 h-4 text-zinc-500 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search countries, empires, climates..."
+                  className="bg-transparent text-xs text-white placeholder-zinc-500 outline-none w-full font-mono"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 bg-[#060609] border border-[#f59e0b]/30 rounded-md shadow-2xl p-2 z-50">
+                  {searchResults.map((res) => (
+                    <button
+                      key={res.id}
+                      className="w-full text-left px-2 py-2 hover:bg-[#f59e0b]/10 rounded text-xs text-zinc-300 flex flex-col font-mono border-b border-zinc-900/50 last:border-0"
+                      onClick={() => {
+                        handleSearchSelect(res.type, res.id);
+                        setSearchQuery("");
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <span className="text-white font-semibold">{res.name}</span>
+                      <span className="text-[9px] text-zinc-500 mt-0.5">{res.subtitle}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Floating Navigation Buttons inside overlay */}
+            <div className="grid grid-cols-2 gap-3 mb-6 font-mono">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePanel === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActivePanel(isActive ? null : item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 border text-center transition-all ${
+                      isActive
+                        ? "bg-[#f59e0b]/15 border-[#f59e0b] text-[#f59e0b]"
+                        : "border-zinc-800 bg-black/40 text-zinc-400"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-[9px] font-bold tracking-wider">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Era Selection inside mobile overlay */}
+            <div className="border-t border-zinc-900 pt-6 font-mono text-center">
+              <span className="text-[10px] text-zinc-600 block tracking-widest uppercase mb-3">SELECT ERA FOCUS</span>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {(["ancient", "medieval", "colonial", "modern", "future"] as EraType[]).map((era) => (
+                  <button
+                    key={era}
+                    onClick={() => {
+                      setActiveEra(era);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 text-[9px] rounded uppercase border tracking-widest transition-all ${
+                      activeEra === era
+                        ? "bg-[#00f0ff]/10 border-[#00f0ff] text-[#00f0ff]"
+                        : "border-zinc-900 bg-black/20 text-zinc-500"
+                    }`}
+                  >
+                    {era}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MAIN CONTENT (MAP, HUD, TIMELINE) ── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        
+        {/* DESKTOP SIDEBAR: Floating circular icon bar to feel less like a dashboard */}
+        <div className="hidden md:flex w-16 shrink-0 flex-col items-center py-6 space-y-3 z-20 bg-gradient-to-r from-black/40 to-transparent border-r border-zinc-900/10">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePanel === item.id;
@@ -67,36 +219,51 @@ export default function AppDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActivePanel(isActive ? null : item.id)}
-                className={`w-11 h-11 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all ${
+                className={`w-11 h-11 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all shadow-md ${
                   isActive
-                    ? "bg-cyber-cyan/15 border border-cyber-cyan text-cyber-cyan"
-                    : "border border-panel-border text-gray-500 hover:text-gray-200 hover:border-gray-500"
+                    ? "bg-[#f59e0b]/15 border border-[#f59e0b] text-[#f59e0b] scale-105"
+                    : "border border-zinc-900 bg-zinc-950/80 text-zinc-500 hover:text-zinc-200 hover:border-zinc-700"
                 }`}
                 title={item.label}
               >
                 <Icon className="w-4 h-4" />
-                <span className="text-[6px] font-mono font-bold tracking-wider">{item.label}</span>
+                <span className="text-[6px] font-mono font-bold tracking-wider">{item.label.split(" ")[0]}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Left Panel (conditional) */}
+        {/* LEFT COMPONENT DRAWER OVERLAY (Cinematic slide in) */}
         <AnimatePresence mode="wait">
           {activePanel && (
             <motion.div
               key={activePanel}
-              initial={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.2 }}
-              className="w-80 shrink-0 border-r border-panel-border bg-black/60 flex flex-col min-h-0 h-full overflow-hidden z-30"
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="absolute left-0 top-0 h-full w-full sm:w-85 z-30 shrink-0 border-r border-zinc-900 bg-[#040406]/95 flex flex-col min-h-0 overflow-hidden shadow-2xl"
             >
-              {activePanel === "ai" && <AiInsightEngine />}
+              <div className="absolute right-3 top-3 z-50 sm:hidden">
+                <button
+                  onClick={() => setActivePanel(null)}
+                  className="p-1.5 rounded-full bg-zinc-950 border border-zinc-900 text-zinc-400"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {activePanel === "ai" && (
+                <AiInsightEngine
+                  externalQuery={pendingQuery}
+                  onClearExternalQuery={() => setPendingQuery(null)}
+                />
+              )}
               {activePanel === "graph" && <KnowledgeGraph />}
               {activePanel === "cards" && <ExplorationCards />}
               {activePanel === "layers" && (
-                <div className="flex-1 min-h-0 overflow-y-auto p-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-zinc-950/40">
+                  <div className="text-xs font-mono font-bold tracking-widest text-zinc-500 mb-4 uppercase">Layer Controls</div>
                   <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
                 </div>
               )}
@@ -104,10 +271,9 @@ export default function AppDashboard() {
           )}
         </AnimatePresence>
 
-        {/* Interactive Map Center */}
+        {/* INTERACTIVE MAP LIBRE CENTER ENVIRONMENT */}
         <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden z-0 isolate flex flex-col">
-          {/* Map Area - Upper Section */}
-          <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden flex items-center justify-center pt-16">
+          <div className="flex-1 relative min-h-0 min-w-0 overflow-hidden flex items-center justify-center">
             <div className="absolute inset-0">
               <MapLibreGlobeGlobe 
                 activeEra={activeEra}
@@ -124,37 +290,39 @@ export default function AppDashboard() {
               />
             </div>
 
-            {/* Telemetry HUD overlays */}
-            <div className="absolute top-4 left-4 font-mono text-[8px] text-gray-500 pointer-events-none space-y-1 z-10">
+            {/* Cinematic Telemetry HUD overlays (Floating natively on the globe) */}
+            <div className="absolute top-4 left-4 font-mono text-[8px] text-zinc-500 pointer-events-none space-y-1.5 z-10 bg-black/25 backdrop-blur-sm p-3 rounded-lg border border-zinc-900/45">
               <div className="flex items-center space-x-1.5">
-                <span className="w-1 h-1 rounded-full bg-cyber-green animate-ping" />
-                <span className="text-gray-400">RENDER ENGINE: MAPLIBRE (FREE)</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
+                <span className="text-zinc-400 font-semibold uppercase tracking-wider">LENS FOCUS // {activeEra} ERA</span>
               </div>
-              <div>
+              <div className="text-zinc-600">
                 PROJECTION: MAPLIBRE 3D GLOBE
               </div>
-              <div>ERA: <span className="text-cyber-cyan uppercase">{activeEra}</span></div>
-              <div>LAYERS: <span className="text-white">{activeLayers.length} ACTIVE</span></div>
+              <div>LAYERS ENGAGED: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length} FILTERS</span></div>
             </div>
 
-            {/* Country Panel overlay */}
+            {/* Responsive Country Panel overlay (Bottom sheet on mobile, Right slider on desktop) */}
             <AnimatePresence>
               {activeCountryId && (
                 <CountryPanel
                   countryId={activeCountryId}
                   onClose={() => setActiveCountryId(null)}
+                  onAskQuestion={handleAskQuestion}
                 />
               )}
             </AnimatePresence>
           </div>
 
-          {/* Timeline at bottom - Separate Container */}
-          <div className="shrink-0 p-4 border-t border-panel-border bg-black/20 z-20">
+          {/* Immersive bottom timeline overlay */}
+          <div className="shrink-0 p-4 border-t border-zinc-900 bg-[#020204]/80 backdrop-blur-md z-20">
             <TimelineSlider 
               activeEra={activeEra} 
-              onEraChange={setActiveEra}
-              selectedEventId={selectedEventId}
-              onSelectEvent={setSelectedEventId}
+              onEraChange={setActiveEra} 
+              selectedEventId={null} 
+              onSelectEvent={function (id: string | null): void {
+                throw new Error("Function not implemented.");
+              }} 
             />
           </div>
         </div>
