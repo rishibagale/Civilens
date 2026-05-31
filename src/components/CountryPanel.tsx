@@ -56,11 +56,11 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
   if (!data) return null;
 
   const tabs: Array<{ id: TabType; label: string; icon: LucideIcon }> = [
-    { id: "overview", label: "OVERVIEW", icon: Globe },
-    { id: "geography", label: "GEOGRAPHY", icon: CloudRain },
-    { id: "history", label: "HISTORY", icon: Compass },
-    { id: "culture", label: "CULTURE", icon: HeartHandshake },
-    { id: "ai_analysis", label: "AI REPORT", icon: Scroll },
+    { id: "overview", label: "Essence", icon: Globe },
+    { id: "geography", label: "Landscape", icon: CloudRain },
+    { id: "history", label: "Timeline", icon: Compass },
+    { id: "culture", label: "Spirit", icon: HeartHandshake },
+    { id: "ai_analysis", label: "Insight", icon: Scroll },
   ];
 
   // Retrieve rabbit holes for current country, fall back if missing
@@ -82,23 +82,23 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
       <div className="w-12 h-1 bg-zinc-800 rounded-full mx-auto my-3 shrink-0 md:hidden" />
 
       {/* Header */}
-      <div className="px-5 py-4 border-b border-panel-border/30 flex items-center justify-between bg-black/40">
-        <div className="flex items-center space-x-3">
-          <div className="text-2xl">
+      <div className="px-6 py-5 border-b border-panel-border/30 flex items-center justify-between bg-black/40">
+        <div className="flex items-center space-x-4">
+          <div className="text-3xl">
             {data.id === "EG" ? "🇪🇬" : data.id === "JP" ? "🇯🇵" : data.id === "IS" ? "🇮🇸" : data.id === "IN" ? "🇮🇳" : data.id === "BR" ? "🇧🇷" : data.id === "NO" ? "🇳🇴" : "🌍"}
           </div>
           <div>
-            <h2 className="text-white text-base md:text-lg font-bold tracking-widest uppercase">
+            <h2 className="text-white text-xl md:text-2xl font-serif font-bold tracking-wide">
               {data.name}
             </h2>
-            <p className="text-[8px] text-zinc-500 font-mono">CORE SYSTEM DATA RECORD: {data.id}-ALPHA</p>
+            <p className="text-[10px] text-zinc-500 font-serif">A story written in stone and sky</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-full hover:bg-white/5 border border-zinc-800 text-zinc-400 hover:text-white transition-all focus:outline-none"
+          className="p-2 rounded-full hover:bg-white/5 border border-zinc-800 text-zinc-400 hover:text-white transition-all focus:outline-none"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
@@ -110,13 +110,13 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[70px] py-3 text-[9px] font-bold tracking-wider border-b-2 flex flex-col items-center justify-center transition-all space-y-1.5 ${
+              className={`flex-1 min-w-[80px] py-4 text-xs font-serif font-medium tracking-wide border-b-2 flex flex-col items-center justify-center transition-all space-y-2 ${
                 activeTab === tab.id
-                  ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/5 font-extrabold"
+                  ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/5"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               <span className="hidden sm:inline-block">{tab.label}</span>
             </button>
           );
@@ -124,52 +124,52 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 scrollbar-thin pb-24">
+      <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 scrollbar-thin pb-24">
         {/* Tab 1: Overview */}
         {activeTab === "overview" && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-8"
           >
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#050508] border border-panel-border/30 rounded p-3 text-xs">
-                <span className="text-[9px] text-zinc-500 uppercase block mb-1">Capital City</span>
-                <span className="text-white font-semibold">{data.capital}</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#050508] border border-panel-border/30 rounded-2xl p-4">
+                <span className="text-[10px] text-zinc-500 uppercase block mb-2 font-serif">Capital</span>
+                <span className="text-white font-semibold text-sm">{data.capital}</span>
               </div>
-              <div className="bg-[#050508] border border-panel-border/30 rounded p-3 text-xs">
-                <span className="text-[9px] text-zinc-500 uppercase block mb-1">Population Metric</span>
-                <span className="text-white font-semibold">{data.population}</span>
+              <div className="bg-[#050508] border border-panel-border/30 rounded-2xl p-4">
+                <span className="text-[10px] text-zinc-500 uppercase block mb-2 font-serif">Population</span>
+                <span className="text-white font-semibold text-sm">{data.population}</span>
               </div>
-              <div className="bg-[#050508] border border-panel-border/30 rounded p-3 text-xs">
-                <span className="text-[9px] text-zinc-500 uppercase block mb-1">Primary Tongues</span>
-                <span className="text-white font-semibold block truncate" title={data.languages.join(", ")}>
+              <div className="bg-[#050508] border border-panel-border/30 rounded-2xl p-4">
+                <span className="text-[10px] text-zinc-500 uppercase block mb-2 font-serif">Languages</span>
+                <span className="text-white font-semibold text-sm block truncate" title={data.languages.join(", ")}>
                   {data.languages.join(", ")}
                 </span>
               </div>
-              <div className="bg-[#050508] border border-panel-border/30 rounded p-3 text-xs">
-                <span className="text-[9px] text-zinc-500 uppercase block mb-1">Religions Matrix</span>
-                <span className="text-white font-semibold block truncate" title={data.religion}>
+              <div className="bg-[#050508] border border-panel-border/30 rounded-2xl p-4">
+                <span className="text-[10px] text-zinc-500 uppercase block mb-2 font-serif">Beliefs</span>
+                <span className="text-white font-semibold text-sm block truncate" title={data.religion}>
                   {data.religion}
                 </span>
               </div>
             </div>
 
             {/* Economy Block */}
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <Briefcase className="w-4 h-4 text-[#f59e0b]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">ECONOMIC CONTEXT</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <Briefcase className="w-5 h-5 text-[#f59e0b]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Economic Essence</h3>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed text-justify">
+              <p className="text-sm text-zinc-300 leading-relaxed text-justify font-serif">
                 {data.economy.overview}
               </p>
-              <div className="pt-1">
-                <span className="text-[9px] text-zinc-500 uppercase block mb-1.5">Key Resource Pillars</span>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="pt-2">
+                <span className="text-[10px] text-zinc-500 uppercase block mb-3 font-serif">Key Resources</span>
+                <div className="flex flex-wrap gap-2">
                   {data.economy.keyIndustries.map((ind, i) => (
-                    <span key={i} className="text-[9px] bg-[#f59e0b]/5 border border-[#f59e0b]/20 text-[#f59e0b] px-2 py-0.5 rounded">
+                    <span key={i} className="text-[10px] bg-[#f59e0b]/5 border border-[#f59e0b]/20 text-[#f59e0b] px-3 py-1.5 rounded-full">
                       {ind}
                     </span>
                   ))}
@@ -184,38 +184,38 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-8"
           >
             {/* Climate Card */}
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <CloudRain className="w-4 h-4 text-[#00f0ff]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">CLIMATIC ENERGY</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <CloudRain className="w-5 h-5 text-[#00f0ff]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Climate</h3>
               </div>
-              <div className="text-xs">
-                <span className="text-zinc-500 uppercase text-[9px] block">CLIMATE CLASSIFICATION</span>
-                <span className="text-[#00f0ff] font-bold">{data.climate.type}</span>
+              <div className="text-sm">
+                <span className="text-zinc-500 uppercase text-[10px] block font-serif">Type</span>
+                <span className="text-[#00f0ff] font-semibold">{data.climate.type}</span>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed text-justify">
+              <p className="text-sm text-zinc-300 leading-relaxed text-justify font-serif">
                 {data.climate.description}
               </p>
             </div>
 
             {/* Geography Details */}
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <Globe className="w-4 h-4 text-[#f59e0b]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">PHYSIOGRAPHIC PROPERTIES</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <Globe className="w-5 h-5 text-[#f59e0b]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Terrain</h3>
               </div>
-              <div className="text-xs">
-                <span className="text-zinc-500 uppercase text-[9px] block">Terrain Matrix</span>
-                <p className="text-zinc-300 leading-relaxed text-xs block mt-0.5">{data.geography.terrain}</p>
+              <div className="text-sm">
+                <span className="text-zinc-500 uppercase text-[10px] block font-serif">Landscape</span>
+                <p className="text-zinc-300 leading-relaxed text-sm block mt-1 font-serif">{data.geography.terrain}</p>
               </div>
-              <div className="pt-2">
-                <span className="text-zinc-500 uppercase text-[9px] block mb-1">Key Landscapes</span>
-                <div className="flex flex-wrap gap-1">
+              <div className="pt-3">
+                <span className="text-zinc-500 uppercase text-[10px] block mb-3 font-serif">Features</span>
+                <div className="flex flex-wrap gap-2">
                   {data.geography.features.map((feat, i) => (
-                    <span key={i} className="text-[9px] bg-white/5 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
+                    <span key={i} className="text-[10px] bg-white/5 border border-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full">
                       {feat}
                     </span>
                   ))}
@@ -224,16 +224,16 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
             </div>
 
             {/* Environmental Adaptation */}
-            <div className="border border-[#00f0ff]/20 bg-[#00f0ff]/5 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-[#00f0ff]/10 pb-1.5">
-                <Flame className="w-4 h-4 text-[#00f0ff] animate-pulse" />
-                <h3 className="text-[10px] text-[#00f0ff] font-bold tracking-wider">CIVILIZATIONAL ADAPTATION</h3>
+            <div className="border border-[#00f0ff]/20 bg-[#00f0ff]/5 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-[#00f0ff]/10 pb-3">
+                <Flame className="w-5 h-5 text-[#00f0ff] animate-pulse" />
+                <h3 className="text-sm text-[#00f0ff] font-serif font-bold tracking-wide">Adaptation</h3>
               </div>
-              <div className="text-xs">
-                <span className="text-[#00f0ff]/60 uppercase text-[8px] block">CRITICAL ADAPTIVE STRATEGY</span>
-                <span className="text-white font-semibold text-xs block mt-0.5">{data.adaptation.title}</span>
+              <div className="text-sm">
+                <span className="text-[#00f0ff]/60 uppercase text-[10px] block font-serif">Strategy</span>
+                <span className="text-white font-semibold text-sm block mt-1">{data.adaptation.title}</span>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed text-justify">
+              <p className="text-sm text-zinc-300 leading-relaxed text-justify font-serif">
                 {data.adaptation.description}
               </p>
             </div>
@@ -245,36 +245,36 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <Compass className="w-4 h-4 text-[#f59e0b]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">MIGRATION PATTERNS</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <Compass className="w-5 h-5 text-[#f59e0b]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Migration</h3>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed text-justify">
+              <p className="text-sm text-zinc-300 leading-relaxed text-justify font-serif">
                 {data.anthropology.migrationHistory}
               </p>
             </div>
 
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <BookOpen className="w-4 h-4 text-[#00f0ff]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">SOCIETAL FOREBEARS</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <BookOpen className="w-5 h-5 text-[#00f0ff]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Ancestry</h3>
               </div>
               <div>
-                <span className="text-zinc-500 uppercase text-[9px] block mb-1.5">Associated Empires</span>
-                <div className="flex flex-wrap gap-1.5">
+                <span className="text-zinc-500 uppercase text-[10px] block mb-3 font-serif">Empires</span>
+                <div className="flex flex-wrap gap-2">
                   {data.anthropology.ancientEmpires.map((emp, i) => (
-                    <span key={i} className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
+                    <span key={i} className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full">
                       {emp}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="pt-2 border-t border-zinc-900/50">
-                <span className="text-zinc-500 uppercase text-[9px] block">Historical Social Hierarchy</span>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed text-justify">
+              <div className="pt-3 border-t border-zinc-900/50">
+                <span className="text-zinc-500 uppercase text-[10px] block font-serif">Social Structure</span>
+                <p className="text-sm text-zinc-400 mt-2 leading-relaxed text-justify font-serif">
                   {data.anthropology.socialStructures}
                 </p>
               </div>
@@ -287,16 +287,16 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <HeartHandshake className="w-4 h-4 text-[#00f0ff]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">ETHNOGRAPHIC INSIGHT MATRIX</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <HeartHandshake className="w-5 h-5 text-[#00f0ff]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Cultural Insights</h3>
               </div>
-              <ul className="space-y-3 text-xs text-zinc-300">
+              <ul className="space-y-4 text-sm text-zinc-300">
                 {data.culture.insights.map((ins, i) => (
-                  <li key={i} className="relative pl-4 leading-relaxed text-justify">
+                  <li key={i} className="relative pl-5 leading-relaxed text-justify font-serif">
                     <span className="absolute left-0 top-1 text-[#00f0ff]">•</span>
                     {ins}
                   </li>
@@ -304,12 +304,12 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
               </ul>
             </div>
 
-            <div className="border border-panel-border/20 bg-black/20 rounded p-4 space-y-3">
-              <div className="flex items-center space-x-2 border-b border-panel-border/10 pb-1.5">
-                <BookOpen className="w-4 h-4 text-[#f59e0b]" />
-                <h3 className="text-[10px] text-white font-bold tracking-wider">DIETARY & PRESERVATION COGNITION</h3>
+            <div className="border border-panel-border/20 bg-black/20 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-3 border-b border-panel-border/10 pb-3">
+                <BookOpen className="w-5 h-5 text-[#f59e0b]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">Food & Tradition</h3>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed text-justify">
+              <p className="text-sm text-zinc-300 leading-relaxed text-justify font-serif">
                 {data.culture.foodCulture}
               </p>
             </div>
@@ -321,47 +321,47 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <div className="border border-[#00f0ff]/30 bg-[#00f0ff]/5 rounded p-5 space-y-4 relative overflow-hidden">
+            <div className="border border-[#00f0ff]/30 bg-[#00f0ff]/5 rounded-2xl p-8 space-y-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00f0ff]/5 to-transparent pointer-events-none animate-scanline" />
 
-              <div className="flex items-center space-x-2 border-b border-[#00f0ff]/20 pb-2.5">
-                <Scroll className="w-4 h-4 text-[#00f0ff]" />
-                <h3 className="text-[10px] text-white font-bold tracking-widest uppercase">
-                  AI INTEGRATED REPORT // DEEP SATELLITE SYNTHESIS
+              <div className="flex items-center space-x-3 border-b border-[#00f0ff]/20 pb-4">
+                <Scroll className="w-5 h-5 text-[#00f0ff]" />
+                <h3 className="text-sm text-white font-serif font-bold tracking-wide">
+                  Deep Insight
                 </h3>
               </div>
 
-              <div className="font-sans text-xs md:text-[13px] text-zinc-200 leading-relaxed space-y-4 text-justify">
+              <div className="font-serif text-sm md:text-base text-zinc-200 leading-relaxed space-y-5 text-justify">
                 {data.aiAnalysis.split("\n\n").map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
               </div>
 
-              <div className="border-t border-[#00f0ff]/10 pt-3 flex justify-between items-center text-[8px] text-zinc-500 font-mono">
-                <span>SYNAPSE MODEL: SAGAN-EXPLORER v3.5</span>
-                <span>MATCH COMPATIBILITY: 99.98%</span>
+              <div className="border-t border-[#00f0ff]/10 pt-4 flex justify-between items-center text-[10px] text-zinc-500 font-serif">
+                <span>Earth Intelligence Model</span>
+                <span>Analysis Complete</span>
               </div>
             </div>
           </motion.div>
         )}
 
         {/* ── INTERACTIVE RABBIT HOLE SECTION ── */}
-        <div className="border border-[#f59e0b]/30 bg-[#f59e0b]/5 rounded p-4 space-y-3">
-          <div className="flex items-center space-x-2 border-b border-[#f59e0b]/10 pb-1.5">
-            <HelpCircle className="w-4 h-4 text-[#f59e0b]" />
-            <h3 className="text-[10px] text-white font-bold tracking-wider uppercase">✦ Curiosities to Fall Into</h3>
+        <div className="border border-[#f59e0b]/30 bg-[#f59e0b]/5 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center space-x-3 border-b border-[#f59e0b]/10 pb-3">
+            <HelpCircle className="w-5 h-5 text-[#f59e0b]" />
+            <h3 className="text-sm text-white font-serif font-bold tracking-wide">✦ Fall Deeper</h3>
           </div>
-          <p className="text-[10px] text-zinc-400 leading-relaxed font-mono uppercase">
-            Click to activate the AI Insight Engine and dive down a localized rabbit hole:
+          <p className="text-sm text-zinc-400 leading-relaxed font-serif">
+            Click to activate the AI and explore the mysteries of this land:
           </p>
-          <div className="flex flex-col gap-2 pt-1">
+          <div className="flex flex-col gap-3 pt-2">
             {rabbitHoles.map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => onAskQuestion?.(q)}
-                className="w-full text-left font-mono text-[11px] text-[#00f0ff] hover:text-[#f59e0b] bg-black/40 hover:bg-black/80 px-3 py-2.5 rounded border border-zinc-900 hover:border-[#f59e0b]/30 transition-all leading-relaxed"
+                className="w-full text-left font-serif text-sm text-[#00f0ff] hover:text-[#f59e0b] bg-black/40 hover:bg-black/80 px-5 py-3 rounded-xl border border-zinc-900 hover:border-[#f59e0b]/30 transition-all leading-relaxed"
               >
                 {q}
               </button>

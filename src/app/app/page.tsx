@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
-import { MessageSquare, Network, BookOpen, LayoutGrid, Search, Menu, X, Compass, Globe } from "lucide-react";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass } from "lucide-react";
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
@@ -87,9 +87,9 @@ export default function AppDashboard() {
   };
 
   const sidebarItems = [
-    { id: "ai" as PanelType, icon: MessageSquare, label: "AI ENGINE" },
-    { id: "graph" as PanelType, icon: Network, label: "CONCEPT GRAPH" },
-    { id: "cards" as PanelType, icon: BookOpen, label: "REPORTS" },
+    { id: "ai" as PanelType, icon: MessageSquare, label: "ASK" },
+    { id: "graph" as PanelType, icon: Network, label: "CONNECT" },
+    { id: "cards" as PanelType, icon: BookOpen, label: "DISCOVER" },
     { id: "layers" as PanelType, icon: LayoutGrid, label: "LAYERS" },
   ];
 
@@ -157,7 +157,7 @@ export default function AppDashboard() {
             </div>
 
             {/* Floating Navigation Buttons inside overlay */}
-            <div className="grid grid-cols-2 gap-3 mb-6 font-mono">
+            <div className="grid grid-cols-2 gap-4 mb-8">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activePanel === item.id;
@@ -168,14 +168,14 @@ export default function AppDashboard() {
                       setActivePanel(isActive ? null : item.id);
                       setMobileMenuOpen(false);
                     }}
-                    className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 border text-center transition-all ${
+                    className={`p-5 rounded-2xl flex flex-col items-center justify-center gap-3 border text-center transition-all duration-300 ${
                       isActive
-                        ? "bg-[#f59e0b]/15 border-[#f59e0b] text-[#f59e0b]"
-                        : "border-zinc-800 bg-black/40 text-zinc-400"
+                        ? "bg-[#f59e0b]/20 border-2 border-[#f59e0b] text-[#f59e0b] scale-105"
+                        : "border-zinc-800/50 bg-black/40 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-[9px] font-bold tracking-wider">{item.label}</span>
+                    <Icon className="w-6 h-6" />
+                    <span className="text-sm font-bold tracking-widest">{item.label}</span>
                   </button>
                 );
               })}
@@ -210,8 +210,8 @@ export default function AppDashboard() {
       {/* ── MAIN CONTENT (MAP, HUD, TIMELINE) ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
         
-        {/* DESKTOP SIDEBAR: Floating circular icon bar to feel less like a dashboard */}
-        <div className="hidden md:flex w-16 shrink-0 flex-col items-center py-6 space-y-3 z-20 bg-gradient-to-r from-black/40 to-transparent border-r border-zinc-900/10">
+        {/* DESKTOP: Minimal floating exploration tools */}
+        <div className="hidden md:flex w-20 shrink-0 flex-col items-center justify-center py-8 space-y-6 z-20">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePanel === item.id;
@@ -219,30 +219,29 @@ export default function AppDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActivePanel(isActive ? null : item.id)}
-                className={`w-11 h-11 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all shadow-md ${
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
                   isActive
-                    ? "bg-[#f59e0b]/15 border border-[#f59e0b] text-[#f59e0b] scale-105"
-                    : "border border-zinc-900 bg-zinc-950/80 text-zinc-500 hover:text-zinc-200 hover:border-zinc-700"
+                    ? "bg-[#f59e0b]/20 border-2 border-[#f59e0b] text-[#f59e0b] scale-110 shadow-[0_0_30px_rgba(245,158,11,0.3)]"
+                    : "border border-zinc-900/50 bg-black/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 hover:scale-105"
                 }`}
                 title={item.label}
               >
-                <Icon className="w-4 h-4" />
-                <span className="text-[6px] font-mono font-bold tracking-wider">{item.label.split(" ")[0]}</span>
+                <Icon className="w-6 h-6" />
               </button>
             );
           })}
         </div>
 
-        {/* LEFT COMPONENT DRAWER OVERLAY (Cinematic slide in) */}
+        {/* LEFT COMPONENT DRAWER OVERLAY (Cinematic travel-like slide) */}
         <AnimatePresence mode="wait">
           {activePanel && (
             <motion.div
               key={activePanel}
-              initial={{ opacity: 0, x: -15 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -15 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="absolute left-0 top-0 h-full w-full sm:w-85 z-30 shrink-0 border-r border-zinc-900 bg-[#040406]/95 flex flex-col min-h-0 overflow-hidden shadow-2xl"
+              initial={{ opacity: 0, x: -50, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -50, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute left-0 top-0 h-full w-full sm:w-96 z-30 shrink-0 border-r border-zinc-900/50 bg-[#020204]/98 flex flex-col min-h-0 overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur-xl"
             >
               <div className="absolute right-3 top-3 z-50 sm:hidden">
                 <button
@@ -262,8 +261,8 @@ export default function AppDashboard() {
               {activePanel === "graph" && <KnowledgeGraph />}
               {activePanel === "cards" && <ExplorationCards />}
               {activePanel === "layers" && (
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-zinc-950/40">
-                  <div className="text-xs font-mono font-bold tracking-widest text-zinc-500 mb-4 uppercase">Layer Controls</div>
+                <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-black/40">
+                  <div className="text-sm font-serif font-bold tracking-wide text-zinc-400 mb-6">View Layers</div>
                   <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
                 </div>
               )}

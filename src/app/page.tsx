@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Compass, Eye, Map, Shield, Award, Zap, Anchor, Globe } from "lucide-react";
+import { ArrowRight, Compass, Map, Shield, Award, Zap, Anchor, Globe } from "lucide-react";
 
 // ─── Cinematic Holographic Globe (THREE.js) ────────────────────────
 function HeroGlobe() {
@@ -278,84 +278,84 @@ export default function LandingPage() {
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_transparent_20%,_#020204_75%)] pointer-events-none" />
 
         {/* Cinematic Content overlay */}
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto flex flex-col items-center select-none">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center select-none">
           {/* Question-provoking opening line */}
           <motion.p
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.4, ease: "easeOut" }}
-            className="text-[11px] sm:text-xs font-mono tracking-[0.4em] text-[#f59e0b] uppercase mb-4 text-shadow-glow"
+            transition={{ duration: 1.6, ease: "easeOut" }}
+            className="text-xs sm:text-sm font-serif tracking-[0.3em] text-[#f59e0b] uppercase mb-6"
           >
-            How does land write our destiny?
+            What whispers does the earth carry?
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl sm:text-6xl md:text-[5.5rem] font-bold tracking-tight text-white mb-8 leading-[1.1] font-serif"
+            transition={{ duration: 2.0, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="text-5xl sm:text-7xl md:text-[6.5rem] font-serif font-bold tracking-tight text-white mb-10 leading-[1.05]"
             style={{
-              textShadow: "0 0 80px rgba(245,158,11,0.15), 0 0 120px rgba(0,240,255,0.1)"
+              textShadow: "0 0 100px rgba(245,158,11,0.2), 0 0 150px rgba(0,240,255,0.15)"
             }}
           >
-            A silent architect <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f59e0b] to-[#00f0ff] filter drop-shadow-[0_2px_20px_rgba(0,240,255,0.15)]">
-              of human civilization.
+            The silent architect <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f59e0b] to-[#00f0ff] filter drop-shadow-[0_2px_30px_rgba(0,240,255,0.2)]">
+              of our story.
             </span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.8, delay: 0.8 }}
-            className="text-[11px] sm:text-xs font-mono text-zinc-500 max-w-md mx-auto leading-relaxed uppercase tracking-wider mb-12"
+            transition={{ duration: 2.0, delay: 1.0 }}
+            className="text-sm sm:text-base font-serif text-zinc-400 max-w-2xl mx-auto leading-relaxed mb-16"
           >
-            Connecting climate, geography, migration, and culture into a singular model of exploration.
+            Discover how geography, climate, and the invisible forces of our planet have shaped every civilization, every belief, every moment of human history.
           </motion.p>
 
           {/* ONE Clear CTA: Explore Earth - Nothing else above the fold */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 1.0 }}
+            transition={{ duration: 1.5, delay: 1.3 }}
           >
             <Link
               href="/app"
-              className="group relative inline-flex items-center space-x-3 bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:from-[#00f0ff] hover:to-[#00d2ff] text-black font-bold font-mono tracking-widest text-[11px] uppercase px-10 py-5 rounded-full transition-all duration-500 hover:shadow-[0_0_50px_rgba(0,240,255,0.4)] transform hover:scale-[1.03]"
+              className="group relative inline-flex items-center space-x-4 bg-gradient-to-r from-[#f59e0b] to-[#d4af37] hover:from-[#00f0ff] hover:to-[#00d2ff] text-black font-serif font-bold tracking-wide text-sm uppercase px-12 py-5 rounded-full transition-all duration-700 hover:shadow-[0_0_60px_rgba(0,240,255,0.5)] transform hover:scale-[1.02]"
             >
-              <span>Explore Earth</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-300" />
+              <span>Begin the Journey</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-400" />
             </Link>
           </motion.div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 pointer-events-none">
-          <span className="font-mono text-[8px] tracking-[0.3em] text-[#a1a1aa] mb-2 uppercase">THE INTELLIGENCE LOOP</span>
-          <div className="w-[1px] h-10 bg-gradient-to-b from-[#f59e0b] to-transparent animate-pulse" />
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 pointer-events-none">
+          <span className="font-serif text-[10px] tracking-[0.25em] text-[#a1a1aa] mb-3 uppercase">Discover</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-[#f59e0b] to-transparent animate-pulse" />
         </div>
       </section>
 
       {/* ── VISCERAL INSIGHT EXAMPLE: WHY DID JAPAN BECOME JAPAN? ── */}
-      <section className="relative py-32 px-6 bg-gradient-to-b from-[#020204] via-[#080604] to-[#020204]">
+      <section className="relative py-40 px-6 bg-gradient-to-b from-[#020204] via-[#080604] to-[#020204]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.03)_0%,_transparent_60%)] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-20">
-            <span className="text-[10px] font-mono text-[#00f0ff] tracking-[0.4em] uppercase block mb-3">SYNAPTIC DEMONSTRATION</span>
-            <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-white mb-4">
+          <div className="text-center mb-24">
+            <span className="text-xs font-serif text-[#00f0ff] tracking-[0.3em] uppercase block mb-4">A Journey Through Connection</span>
+            <h2 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-white mb-6">
               Why did Japan become Japan?
             </h2>
-            <p className="text-zinc-500 text-xs font-mono max-w-xl mx-auto uppercase tracking-wide leading-relaxed">
-              Trace how geographic constraints cascade into cultural philosophies and technological superpowers.
+            <p className="text-zinc-400 text-sm font-serif max-w-2xl mx-auto leading-relaxed">
+              Follow the invisible thread from volcanic islands to technological miracle—how the land beneath our feet shapes the civilization above it.
             </p>
           </div>
 
           {/* Interactive Causal Chain Row */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Step navigation & text details */}
-            <div className="lg:col-span-5 space-y-3">
+            <div className="lg:col-span-5 space-y-4">
               {JAPAN_CHAIN.map((item, idx) => {
                 const isSelected = activeStep === idx;
                 const Icon = item.icon;
@@ -363,27 +363,27 @@ export default function LandingPage() {
                   <button
                     key={idx}
                     onClick={() => setActiveStep(idx)}
-                    className={`w-full text-left p-6 rounded-xl border transition-all duration-300 flex items-start space-x-4 ${
+                    className={`w-full text-left p-6 rounded-2xl border transition-all duration-400 flex items-start space-x-5 ${
                       isSelected
-                        ? "bg-[#14110f] border-[#f59e0b]/40 shadow-[0_4px_30px_rgba(245,158,11,0.05)]"
+                        ? "bg-[#14110f] border-[#f59e0b]/40 shadow-[0_4px_40px_rgba(245,158,11,0.08)]"
                         : "bg-[#050508]/40 border-zinc-900/50 hover:border-zinc-800 hover:bg-[#07070b]/60"
                     }`}
                   >
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                       style={{
                         background: isSelected ? `${item.color}15` : "rgba(255,255,255,0.02)",
                         border: `1px solid ${isSelected ? `${item.color}40` : "rgba(255,255,255,0.05)"}`
                       }}
                     >
-                      <Icon className="w-4 h-4" style={{ color: isSelected ? item.color : "#71717a" }} />
+                      <Icon className="w-5 h-5" style={{ color: isSelected ? item.color : "#71717a" }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[9px] font-mono text-[#a1a1aa] tracking-widest uppercase">{item.phase}</span>
-                        <span className="text-[9px] font-mono text-[#f59e0b]" style={{ color: isSelected ? item.color : "#52525b" }}>{item.step}</span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-serif text-[#a1a1aa] tracking-wide uppercase">{item.phase}</span>
+                        <span className="text-[10px] font-serif text-[#f59e0b]" style={{ color: isSelected ? item.color : "#52525b" }}>{item.step}</span>
                       </div>
-                      <h3 className={`text-sm font-semibold tracking-wide ${isSelected ? "text-white" : "text-zinc-400"}`}>
+                      <h3 className={`text-base font-semibold tracking-wide ${isSelected ? "text-white" : "text-zinc-400"}`}>
                         {item.title}
                       </h3>
                     </div>
@@ -397,56 +397,56 @@ export default function LandingPage() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeStep}
-                  initial={{ opacity: 0, scale: 0.98, x: 15 }}
+                  initial={{ opacity: 0, scale: 0.97, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.98, x: -15 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
-                  className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-[#060608] p-8 md:p-10 shadow-2xl flex flex-col justify-between min-h-[360px]"
+                  exit={{ opacity: 0, scale: 0.97, x: -20 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative overflow-hidden rounded-3xl border border-zinc-800/50 bg-[#060608] p-10 md:p-12 shadow-2xl flex flex-col justify-between min-h-[400px]"
                 >
                   {/* Holographic glowing lines */}
                   <div className="absolute inset-0 cyber-grid-bg opacity-[0.1] pointer-events-none" />
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.05)_0%,transparent_70%)] pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.05)_0%,transparent_70%)] pointer-events-none" />
 
                   {/* Telemetry metadata */}
-                  <div className="flex items-center justify-between border-b border-zinc-900 pb-4 mb-6">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-[#f59e0b] animate-pulse" />
-                      <span className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">
-                        SYNAPSE REPORT // REGION: JP
+                  <div className="flex items-center justify-between border-b border-zinc-900/50 pb-5 mb-8">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] animate-pulse" />
+                      <span className="text-[10px] font-serif text-zinc-500 tracking-wide uppercase">
+                        Connection Analysis // Japan
                       </span>
                     </div>
-                    <span className="text-[9px] font-mono text-[#00f0ff] border border-[#00f0ff]/20 px-2.5 py-0.5 rounded bg-[#00f0ff]/5">
+                    <span className="text-[10px] font-serif text-[#00f0ff] border border-[#00f0ff]/20 px-3 py-1 rounded-full bg-[#00f0ff]/5">
                       {JAPAN_CHAIN[activeStep].highlight}
                     </span>
                   </div>
 
                   {/* Body description */}
-                  <div className="flex-1 space-y-6">
-                    <span className="text-xs font-mono text-[#f59e0b] uppercase tracking-[0.2em]">
-                      {JAPAN_CHAIN[activeStep].phase} ANALYSIS
+                  <div className="flex-1 space-y-8">
+                    <span className="text-sm font-serif text-[#f59e0b] uppercase tracking-[0.15em]">
+                      {JAPAN_CHAIN[activeStep].phase}
                     </span>
-                    <h3 className="text-2xl font-serif text-white leading-snug">
+                    <h3 className="text-3xl font-serif font-bold text-white leading-tight">
                       {JAPAN_CHAIN[activeStep].title}
                     </h3>
-                    <p className="text-sm text-zinc-400 font-mono leading-relaxed text-justify">
+                    <p className="text-base text-zinc-300 font-serif leading-relaxed text-justify">
                       {JAPAN_CHAIN[activeStep].desc}
                     </p>
                   </div>
 
                   {/* Footer node details */}
-                  <div className="border-t border-zinc-900 pt-6 mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="border-t border-zinc-900/50 pt-8 mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                     <div className="flex items-center space-x-3">
-                      <Anchor className="w-4 h-4 text-zinc-600" />
-                      <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">
-                        Linked Factors: Climate, Sea Straits, Isolation, Technology
+                      <Anchor className="w-5 h-5 text-zinc-600" />
+                      <span className="text-xs font-serif text-zinc-500 uppercase tracking-wide">
+                        Climate • Isolation • Culture • Technology
                       </span>
                     </div>
                     <Link
                       href="/app"
-                      className="text-[9px] font-mono text-[#00f0ff] hover:text-[#f59e0b] transition-colors flex items-center space-x-1 uppercase tracking-widest"
+                      className="text-xs font-serif text-[#00f0ff] hover:text-[#f59e0b] transition-colors flex items-center space-x-2 uppercase tracking-wide"
                     >
-                      <span>Observe Live Model</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <span>Explore the Model</span>
+                      <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </motion.div>
@@ -457,17 +457,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-zinc-900/50 py-12 px-6 flex flex-col sm:flex-row items-center justify-between font-mono text-[10px] text-zinc-600 bg-black">
-        <div className="flex items-center space-x-3 mb-4 sm:mb-0">
-          <div className="w-3 h-3 rounded-full bg-[#f59e0b]/30 flex items-center justify-center">
-            <div className="w-1 h-1 rounded-full bg-[#f59e0b]" />
+      <footer className="border-t border-zinc-900/50 py-16 px-6 flex flex-col sm:flex-row items-center justify-between font-serif text-xs text-zinc-600 bg-black">
+        <div className="flex items-center space-x-4 mb-6 sm:mb-0">
+          <div className="w-4 h-4 rounded-full bg-[#f59e0b]/30 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
           </div>
-          <span className="text-zinc-400 font-semibold tracking-wider">EARTH INTELLIGENCE</span>
+          <span className="text-zinc-400 font-semibold tracking-wide">Earth Intelligence</span>
           <span>© 2026</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
-          <span className="tracking-widest">COGNITIVE ECOSYSTEM NOMINAL</span>
+        <div className="flex items-center space-x-3">
+          <span className="w-2 h-2 rounded-full bg-[#00f0ff] animate-pulse" />
+          <span className="tracking-wide">Exploring the deep connections of our world</span>
         </div>
       </footer>
     </main>

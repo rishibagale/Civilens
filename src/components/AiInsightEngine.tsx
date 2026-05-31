@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Cpu, Send, ChevronDown, Sparkles, Network } from "lucide-react";
+import { Send, ChevronDown, Sparkles, Network } from "lucide-react";
 import { staticAiResponses, generateDynamicResponse } from "@/data/aiResponses";
 import { graphNodes, graphLinks } from "@/data/knowledgeGraphData";
 
@@ -15,11 +15,11 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "Why did Japan become Japan?",
-  "How did climate shape civilizations?",
-  "Why do island nations evolve differently?",
-  "How does geography affect psychology?",
-  "How did the Nile build a hydraulic empire?"
+  "What whispers does the desert carry?",
+  "How do mountains shape the human soul?",
+  "Why do rivers birth the first stories?",
+  "What secrets do the winds hold?",
+  "How does the ocean write our destiny?"
 ];
 
 interface AiInsightEngineProps {
@@ -33,10 +33,10 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
       id: "welcome",
       role: "ai",
       content:
-        "EARTH INTELLIGENCE COGNITIVE ENGINE ONLINE.\n\nI am a multi-disciplinary synthesis engine analyzing the deep-time connections between geography, climate, migration, and the tapestry of human civilization. Ask me how the physical world has sculpted our minds and empires.\n\nType an inquiry below, select a suggested path, or select a country to begin our journey.",
+        "Welcome, traveler.\n\nI am here to help you see the invisible threads that bind our world together—the way a mountain range shapes a language, how a river carves a philosophy, why the wind carries memories across oceans.\n\nAsk me anything about how this planet has written the story of us. Choose a path below, or select a country on the globe to begin our journey into the deep connections of civilization.",
       relatedQuestions: [
-        "How does geography shape our collective psychology?",
-        "Why do civilizations arise along active geological rifts?"
+        "How does the land beneath our feet shape the thoughts in our minds?",
+        "Why do civilizations bloom where the earth is most restless?"
       ]
     },
   ]);
@@ -88,31 +88,34 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
   // Handle external queries seamlessly (e.g. from clicking "Rabbit Hole" questions on countries)
   useEffect(() => {
     if (externalQuery) {
-      handleSend(externalQuery);
-      onClearExternalQuery?.();
+      // Defer to avoid synchronous setState in effect
+      setTimeout(() => {
+        handleSend(externalQuery);
+        onClearExternalQuery?.();
+      }, 0);
     }
-  }, [externalQuery]);
+  }, [externalQuery, handleSend, onClearExternalQuery]);
 
   return (
     <div className="flex flex-col h-full min-h-0 font-mono bg-[#030408]/30 border-l border-panel-border/20">
       {/* Header */}
-      <div className="border-b border-panel-border px-4 py-3 flex items-center justify-between shrink-0 bg-black/40">
-        <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded border border-[#f59e0b]/40 flex items-center justify-center bg-[#f59e0b]/5">
-            <Cpu className="w-4 h-4 text-[#f59e0b] animate-pulse" />
+      <div className="border-b border-panel-border/30 px-5 py-4 flex items-center justify-between shrink-0 bg-black/40">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full border border-[#f59e0b]/40 flex items-center justify-center bg-[#f59e0b]/5">
+            <Sparkles className="w-4 h-4 text-[#f59e0b] animate-pulse" />
           </div>
           <div>
-            <h3 className="text-[11px] text-white font-bold tracking-wider uppercase">SYNAPTIC SYNTHESIS ENGINE</h3>
-            <p className="text-[8px] text-[#f59e0b]/70 font-mono">COGNITIVE CIVILIZATION ANALYZER</p>
+            <h3 className="text-sm font-serif font-bold tracking-wide text-white">Earth Intelligence</h3>
+            <p className="text-[10px] text-zinc-500">Exploring the deep connections of our world</p>
           </div>
         </div>
         <button
           onClick={() => setShowGraph(!showGraph)}
-          className="flex items-center space-x-1.5 text-[9px] text-[#a1a1aa] hover:text-[#00f0ff] border border-panel-border hover:border-[#00f0ff]/30 px-2.5 py-1.5 rounded transition-all"
+          className="flex items-center space-x-1.5 text-[10px] text-zinc-500 hover:text-[#00f0ff] border border-zinc-800 hover:border-[#00f0ff]/30 px-3 py-2 rounded-full transition-all"
         >
-          <Network className="w-3 h-3 text-[#00f0ff]" />
-          <span>GRAPH</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${showGraph ? "rotate-180" : ""}`} />
+          <Network className="w-3.5 h-3.5" />
+          <span>Connections</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showGraph ? "rotate-180" : ""}`} />
         </button>
       </div>
 
@@ -121,22 +124,22 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
         {showGraph && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 140, opacity: 1 }}
+            animate={{ height: 160, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-b border-[#f59e0b]/10 overflow-hidden shrink-0 bg-black/60"
+            className="border-b border-zinc-900/30 overflow-hidden shrink-0 bg-black/60"
           >
-            <div className="p-3 h-full overflow-y-auto">
-              <div className="text-[8px] text-[#f59e0b] mb-2 font-semibold">ACTIVE COGNITIVE NODES</div>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="p-4 h-full overflow-y-auto">
+              <div className="text-[10px] font-serif text-zinc-400 mb-3">Active Connections</div>
+              <div className="flex flex-wrap gap-2">
                 {graphNodes.map((node) => {
                   const isHighlighted = highlightedNodes.includes(node.id);
                   return (
                     <div
                       key={node.id}
-                      className={`text-[8px] px-2 py-1 rounded border transition-all duration-500 ${
+                      className={`text-[10px] px-3 py-1.5 rounded-full border transition-all duration-500 ${
                         isHighlighted
-                          ? "bg-[#00f0ff]/15 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.2)] font-bold"
-                          : "bg-black/20 border-zinc-900 text-zinc-600"
+                          ? "bg-[#00f0ff]/15 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.2)] font-semibold"
+                          : "bg-black/30 border-zinc-800 text-zinc-500"
                       }`}
                     >
                       {node.label}
@@ -145,13 +148,14 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
                 })}
               </div>
               {highlightedNodes.length > 0 && (
-                <div className="mt-3 text-[8px] border-t border-zinc-900 pt-2 flex flex-col gap-0.5">
+                <div className="mt-4 text-[10px] border-t border-zinc-900 pt-3 flex flex-col gap-1.5">
                   {graphLinks
                     .filter((l) => highlightedNodes.includes(l.source) && highlightedNodes.includes(l.target))
                     .slice(0, 2)
                     .map((l, i) => (
-                      <div key={i} className="text-zinc-500">
-                        {l.source.replace(/_/g, " ")} <span className="text-[#00f0ff]">→</span> {l.target.replace(/_/g, " ")}
+                      <div key={i} className="text-zinc-400 flex items-center gap-2">
+                        <span className="text-[#00f0ff]">→</span>
+                        {l.source.replace(/_/g, " ")} connects to {l.target.replace(/_/g, " ")}
                       </div>
                     ))}
                 </div>
@@ -162,13 +166,13 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
       </AnimatePresence>
 
       {/* Suggested questions */}
-      <div className="px-4 py-2.5 border-b border-panel-border/20 shrink-0 overflow-x-auto bg-black/10 scrollbar-none">
+      <div className="px-5 py-3 border-b border-zinc-900/30 shrink-0 overflow-x-auto bg-black/10">
         <div className="flex space-x-2">
           {SUGGESTED_QUESTIONS.map((q, i) => (
             <button
               key={i}
               onClick={() => handleSend(q)}
-              className="shrink-0 text-[9px] bg-zinc-950/40 border border-zinc-900 hover:border-[#f59e0b]/40 hover:text-[#f59e0b] text-zinc-400 px-3 py-1.5 rounded transition-all whitespace-nowrap"
+              className="shrink-0 text-[11px] bg-zinc-950/40 border border-zinc-800 hover:border-[#f59e0b]/40 hover:text-[#f59e0b] text-zinc-400 px-4 py-2 rounded-full transition-all whitespace-nowrap font-serif"
             >
               {q}
             </button>
@@ -177,39 +181,40 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
       </div>
 
       {/* Chat messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-[#020204]/25">
+      <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 bg-[#020204]/25">
         {messages.map((msg) => (
           <motion.div
             key={msg.id}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.role === "ai" && (
-              <div className="mr-2 mt-0.5 w-6 h-6 rounded border border-[#00f0ff]/20 bg-[#00f0ff]/5 flex items-center justify-center shrink-0">
-                <Sparkles className="w-3 h-3 text-[#00f0ff]" />
+              <div className="mr-3 mt-1 w-8 h-8 rounded-full border border-[#00f0ff]/30 bg-[#00f0ff]/5 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-[#00f0ff]" />
               </div>
             )}
             <div
-              className={`max-w-[90%] rounded-xl px-4 py-3.5 text-xs leading-relaxed border ${
+              className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed border ${
                 msg.role === "user"
-                  ? "bg-[#f59e0b]/10 border-[#f59e0b]/40 text-white"
-                  : "bg-[#060609]/60 border-zinc-900 text-zinc-200"
+                  ? "bg-[#f59e0b]/10 border-[#f59e0b]/30 text-white"
+                  : "bg-[#060609]/70 border-zinc-900/50 text-zinc-200"
               }`}
             >
-              <p className="whitespace-pre-wrap font-sans text-xs md:text-[13px] leading-relaxed text-zinc-200 text-justify">
+              <p className="whitespace-pre-wrap font-serif text-sm md:text-base leading-relaxed text-zinc-200 text-justify">
                 {msg.content}
               </p>
 
               {/* Related node markers */}
               {msg.nodes && msg.nodes.length > 0 && (
-                <div className="mt-3 pt-2.5 border-t border-zinc-900 flex flex-wrap gap-1.5">
+                <div className="mt-4 pt-3 border-t border-zinc-900/50 flex flex-wrap gap-2">
                   {msg.nodes.map((nid) => {
                     const node = graphNodes.find((n) => n.id === nid);
                     return node ? (
                       <span
                         key={nid}
-                        className="text-[8px] font-mono bg-[#00f0ff]/5 border border-[#00f0ff]/20 text-[#00f0ff] px-2 py-0.5 rounded"
+                        className="text-[10px] font-serif bg-[#00f0ff]/5 border border-[#00f0ff]/20 text-[#00f0ff] px-3 py-1 rounded-full"
                       >
                         {node.label}
                       </span>
@@ -220,16 +225,16 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
 
               {/* Related interactive questions (the visual rabbit hole trigger!) */}
               {msg.role === "ai" && msg.relatedQuestions && msg.relatedQuestions.length > 0 && (
-                <div className="mt-4 pt-3.5 border-t border-zinc-900">
-                  <div className="text-[9px] font-mono text-[#f59e0b] font-semibold tracking-widest uppercase mb-2">
-                    ✦ FALL DEEPER INTO THE RABBIT HOLE:
+                <div className="mt-5 pt-4 border-t border-zinc-900/50">
+                  <div className="text-[11px] font-serif text-[#f59e0b] font-semibold tracking-wide mb-3">
+                    ✦ Fall deeper into the mystery:
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     {msg.relatedQuestions.map((q, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSend(q)}
-                        className="w-full text-left font-mono text-[10px] text-[#00f0ff] hover:text-[#f59e0b] hover:bg-white/5 px-2.5 py-2 rounded border border-zinc-900 hover:border-[#f59e0b]/20 transition-all leading-normal"
+                        className="w-full text-left font-serif text-sm text-[#00f0ff] hover:text-[#f59e0b] hover:bg-white/5 px-4 py-3 rounded-xl border border-zinc-900/50 hover:border-[#f59e0b]/20 transition-all leading-relaxed"
                       >
                         {q}
                       </button>
@@ -245,13 +250,13 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-3"
           >
-            <div className="w-6 h-6 rounded border border-[#f59e0b]/30 bg-[#f59e0b]/5 flex items-center justify-center">
-              <Cpu className="w-3 h-3 text-[#f59e0b] animate-spin" />
+            <div className="w-8 h-8 rounded-full border border-[#f59e0b]/30 bg-[#f59e0b]/5 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-[#f59e0b] animate-pulse" />
             </div>
-            <div className="bg-[#050508]/40 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-zinc-500 font-mono">
-              <span className="animate-pulse">SYNTHESIZING INTERDISCIPLINARY COGNITIVE MATRICES...</span>
+            <div className="bg-[#050508]/40 border border-zinc-900/50 rounded-2xl px-5 py-3 text-sm text-zinc-500 font-serif">
+              <span className="animate-pulse">Exploring the connections...</span>
             </div>
           </motion.div>
         )}
@@ -259,20 +264,20 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
       </div>
 
       {/* Input */}
-      <div className="border-t border-panel-border/20 p-4 shrink-0 bg-black/40">
-        <div className="flex space-x-2">
+      <div className="border-t border-zinc-900/30 p-5 shrink-0 bg-black/40">
+        <div className="flex space-x-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend(input)}
-            placeholder="How did ocean currents shape trade empires?"
-            className="flex-1 bg-[#020204]/60 border border-zinc-800 rounded px-3 py-2 text-xs text-white placeholder-zinc-600 font-mono outline-none focus:border-[#f59e0b]/60 transition-all"
+            placeholder="What mysteries shall we explore together?"
+            className="flex-1 bg-[#020204]/60 border border-zinc-800 rounded-2xl px-5 py-3 text-sm text-white placeholder-zinc-600 font-serif outline-none focus:border-[#f59e0b]/50 transition-all"
           />
           <button
             onClick={() => handleSend(input)}
             disabled={!input.trim() || isTyping}
-            className="bg-[#f59e0b]/15 hover:bg-[#f59e0b]/30 border border-[#f59e0b]/50 text-[#f59e0b] px-3.5 py-2 rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="bg-[#f59e0b]/15 hover:bg-[#f59e0b]/30 border border-[#f59e0b]/50 text-[#f59e0b] px-5 py-3 rounded-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
           </button>
