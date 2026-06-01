@@ -622,8 +622,8 @@ export default function MapLibreGlobeGlobe({
         container: mapContainer.current,
         style: MAP_STYLE,
         center: [0, 20],
-        zoom: 1.5,
-        pitch: 45,
+        zoom: 1.8,
+        pitch: -12,
         bearing: 0,
         attributionControl: false,
       });
@@ -750,7 +750,7 @@ export default function MapLibreGlobeGlobe({
 
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative" }} className="w-full h-full">
       <div
         ref={mapContainer}
         style={{
@@ -758,7 +758,7 @@ export default function MapLibreGlobeGlobe({
           height: "100%",
           backgroundColor: "#030408",
         }}
-        className="maplibre-container"
+        className="maplibre-container w-full h-full"
       />
       {isLoading && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "#00f0ff", textAlign: "center" }}>
