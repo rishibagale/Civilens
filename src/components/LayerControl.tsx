@@ -86,11 +86,11 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
   ];
 
   return (
-    <div className="w-64 glass-panel p-4 font-mono text-xs flex flex-col space-y-4 max-h-[85vh] overflow-y-auto scrollbar-none shrink-0 z-20">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col p-5 space-y-5 bg-black/20 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
       {/* Title */}
-      <div className="flex items-center space-x-2 border-b border-panel-border pb-2">
-        <Sliders className="w-4 h-4 text-cyber-cyan" />
-        <h3 className="text-white font-bold tracking-widest uppercase">MAP LAYERS HUD</h3>
+      <div className="flex items-center space-x-2.5 border-b border-zinc-800/60 pb-3 flex-shrink-0">
+        <Sliders className="w-5 h-5 text-[#00f0ff]" />
+        <h3 className="text-sm font-bold tracking-widest text-white uppercase">MAP LAYERS HUD</h3>
       </div>
 
       {/* Layer Groups */}
@@ -99,40 +99,40 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
         const catLayers = layers.filter((l) => l.category === cat.id);
 
         return (
-          <div key={cat.id} className="space-y-2">
-            <div className="flex items-center space-x-1.5 text-[9px] text-gray-500 font-bold tracking-wider">
-              <Icon className="w-3 h-3 text-gray-500" />
+          <div key={cat.id} className="space-y-3">
+            <div className="flex items-center space-x-2 text-xs text-zinc-400 font-bold tracking-widest uppercase">
+              <Icon className="w-4 h-4 text-zinc-500" />
               <span>{cat.label}</span>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {catLayers.map((layer) => {
                 const isActive = activeLayers.includes(layer.id);
                 return (
                   <button
                     key={layer.id}
                     onClick={() => onToggleLayer(layer.id)}
-                    className={`w-full text-left p-2 rounded border transition-all flex items-center justify-between group ${
+                    className={`w-full text-left p-3 rounded-lg border transition-all flex items-start justify-between group ${
                       isActive
-                        ? "bg-cyber-cyan/5 border-cyber-cyan/45 text-white"
-                        : "bg-black/20 border-panel-border text-gray-400 hover:text-gray-200 hover:border-panel-border/70"
+                        ? "bg-[#00f0ff]/10 border-[#00f0ff]/50 text-white shadow-[0_0_12px_rgba(0,240,255,0.15)]"
+                        : "bg-black/30 border-zinc-800/50 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700/70 hover:bg-black/40"
                     }`}
                   >
-                    <div className="space-y-0.5">
-                      <div className="flex items-center space-x-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-cyber-cyan animate-pulse" : "bg-gray-700"}`} />
-                        <span className={`text-[10px] font-semibold tracking-wide ${layer.colorClass}`}>{layer.label}</span>
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className={`w-2 h-2 rounded-full ${isActive ? "bg-[#00f0ff] animate-pulse" : "bg-zinc-600"}`} />
+                        <span className={`text-xs font-semibold tracking-wide ${layer.colorClass}`}>{layer.label}</span>
                       </div>
-                      <p className="text-[8px] text-gray-500 group-hover:text-gray-400 leading-tight">
+                      <p className="text-xs text-zinc-500 group-hover:text-zinc-400 leading-relaxed">
                         {layer.description}
                       </p>
                     </div>
 
-                    <div className="ml-2 shrink-0">
+                    <div className="ml-3 shrink-0 flex-shrink-0">
                       {isActive ? (
-                        <Eye className="w-3.5 h-3.5 text-cyber-cyan" />
+                        <Eye className="w-4 h-4 text-[#00f0ff]" />
                       ) : (
-                        <EyeOff className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />
+                        <EyeOff className="w-4 h-4 text-zinc-600 group-hover:text-zinc-500" />
                       )}
                     </div>
                   </button>
@@ -144,9 +144,9 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
       })}
 
       {/* Footer system alert */}
-      <div className="pt-2 border-t border-panel-border/50 flex items-start space-x-1.5 text-[8px] text-gray-500 leading-normal">
-        <ShieldAlert className="w-3 h-3 text-gray-500 shrink-0 mt-0.5" />
-        <span>Toggling layers updates GIS map overlays and WebGL holographic arcs automatically.</span>
+      <div className="mt-auto pt-4 border-t border-zinc-800/40 flex items-start space-x-2.5 text-xs text-zinc-500 leading-relaxed flex-shrink-0">
+        <ShieldAlert className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
+        <span>Toggle layers to update map overlays. Changes apply instantly to all eras.</span>
       </div>
     </div>
   );

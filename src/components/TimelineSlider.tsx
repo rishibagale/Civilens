@@ -69,29 +69,29 @@ export default function TimelineSlider({
   const progressPct = (activeIndex / (eras.length - 1)) * 100;
 
   return (
-    <div className="w-full h-full flex flex-col font-mono bg-black/30 border-t border-panel-border overflow-hidden">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between px-3 py-2 flex-shrink-0 border-b border-panel-border/50 gap-2">
-        <div className="flex items-center space-x-1.5">
-          <Clock className="w-3 h-3 text-cyber-cyan" />
-          <span className="text-[7px] text-white font-bold tracking-widest uppercase">TEMPORAL</span>
+    <div className="w-full h-full flex flex-col font-mono bg-black/40 border-t border-zinc-800/60 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-zinc-800/40 gap-3 bg-black/50">
+        <div className="flex items-center space-x-2">
+          <Clock className="w-4 h-4 text-[#00f0ff]" />
+          <span className="text-xs text-white font-bold tracking-widest uppercase">TEMPORAL EXPLORER</span>
         </div>
-        <div className="text-[6.5px] text-gray-400 font-mono">
-          <span className="text-cyber-cyan uppercase">{eras[activeIndex].label}</span> / {eras[activeIndex].span}
+        <div className="text-xs text-zinc-400 font-mono">
+          <span className="text-[#00f0ff] uppercase font-semibold">{eras[activeIndex].label}</span> • {eras[activeIndex].span}
         </div>
       </div>
 
-      {/* Compact Era Timeline */}
-      <div className="relative px-3 py-2 flex-shrink-0 border-b border-panel-border/50">
+      {/* Era Timeline */}
+      <div className="relative px-4 py-3 flex-shrink-0 border-b border-zinc-800/40 bg-black/30">
         {/* Progress Line */}
-        <div className="absolute top-1/2 left-0 right-0 h-px bg-panel-border z-0" />
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-zinc-800/50 z-0" />
         <div
-          className="absolute top-1/2 left-0 h-px bg-cyber-cyan z-0 transition-all duration-500"
+          className="absolute top-1/2 left-0 h-0.5 bg-[#00f0ff] z-0 transition-all duration-500"
           style={{ width: `${progressPct}%` }}
         />
 
-        {/* Era nodes - Tiny Version */}
-        <div className="relative z-10 flex justify-between gap-1">
+        {/* Era nodes */}
+        <div className="relative z-10 flex justify-between gap-2">
           {eras.map((era, idx) => {
             const isActive = era.id === activeEra;
             const isPast = idx < activeIndex;
@@ -100,21 +100,21 @@ export default function TimelineSlider({
               <button
                 key={era.id}
                 onClick={() => onEraChange(era.id)}
-                className="group flex-1"
+                className="group flex-1 flex flex-col items-center gap-1"
                 title={`${era.label} (${era.span}): ${era.description}`}
               >
                 <div
-                  className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300 text-[6px] font-bold mx-auto
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 text-xs font-bold
                     ${isActive
-                      ? `bg-cyber-cyan/25 border-cyber-cyan text-cyber-cyan shadow-[0_0_8px_rgba(0,240,255,0.3)]`
+                      ? `bg-[#00f0ff]/20 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.4)]`
                       : isPast
-                        ? `bg-white/10 border-white/20 text-white/50`
-                        : `bg-black/50 border-panel-border text-gray-500 group-hover:border-gray-400`
+                        ? `bg-white/10 border-white/20 text-white/60`
+                        : `bg-black/50 border-zinc-700 text-zinc-500 group-hover:border-zinc-500 group-hover:text-zinc-300`
                     }`}
                 >
                   {idx + 1}
                 </div>
-                <span className="text-[6px] font-bold text-center mt-0.5 block truncate text-gray-500 group-hover:text-gray-300 transition-colors">
+                <span className="text-[7px] font-bold text-center truncate text-zinc-500 group-hover:text-zinc-300 transition-colors w-full">
                   {era.label}
                 </span>
               </button>
@@ -123,45 +123,45 @@ export default function TimelineSlider({
         </div>
       </div>
 
-      {/* Events Carousel - Takes all remaining space */}
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-2 py-1.5">
-        <div className="text-[6px] font-bold text-gray-400 tracking-widest uppercase mb-1 flex-shrink-0">
-          {historicalEvents[activeEra].length} events
+      {/* Events Carousel */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-4 py-2">
+        <div className="text-[8px] font-bold text-zinc-400 tracking-widest uppercase mb-2 flex-shrink-0">
+          {historicalEvents[activeEra].length} HISTORICAL EVENTS
         </div>
         <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
-          <div className="flex gap-1.5 min-w-min h-full pb-1">
+          <div className="flex gap-2 min-w-min h-full pb-2">
             {historicalEvents[activeEra].length > 0 ? (
               historicalEvents[activeEra].map((event) => {
                 const isSelected = selectedEventId === event.id;
                 const impactIcon = {
-                  major: "🔴",
-                  significant: "🟠",
-                  regional: "🔵",
+                  major: "⚡",
+                  significant: "▪",
+                  regional: "◆",
                 }[event.impact];
-                
+
                 const impactColor = isSelected
-                  ? "border-cyber-cyan bg-cyber-cyan/15 ring-1 ring-cyber-cyan/50 shadow-[0_0_8px_rgba(0,240,255,0.2)] scale-[0.98]"
+                  ? "border-[#00f0ff] bg-[#00f0ff]/15 ring-1 ring-[#00f0ff]/50 shadow-[0_0_12px_rgba(0,240,255,0.3)]"
                   : {
-                      major: "border-red-500/60 bg-red-500/8 hover:border-red-500",
-                      significant: "border-orange-500/60 bg-orange-500/8 hover:border-orange-500",
-                      regional: "border-cyan-500/60 bg-cyan-500/8 hover:border-cyan-500",
+                      major: "border-red-500/50 bg-red-500/10 hover:border-red-500/70 hover:bg-red-500/15",
+                      significant: "border-amber-500/50 bg-amber-500/10 hover:border-amber-500/70 hover:bg-amber-500/15",
+                      regional: "border-cyan-500/50 bg-cyan-500/10 hover:border-cyan-500/70 hover:bg-cyan-500/15",
                     }[event.impact];
 
                 return (
                   <button
                     key={event.id}
                     onClick={() => onSelectEvent(isSelected ? null : event.id)}
-                    className={`flex-shrink-0 w-44 border rounded px-1.5 py-1 cursor-pointer transition-all duration-150 flex flex-col gap-0.5 hover:shadow-lg ${impactColor}`}
+                    className={`flex-shrink-0 w-56 border rounded-lg px-3 py-2 cursor-pointer transition-all duration-200 flex flex-col gap-1.5 hover:shadow-lg ${impactColor}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[6.5px] font-mono text-gray-400">{event.year}</span>
-                      <span className="text-[8px]">{impactIcon}</span>
+                      <span className="text-[7px] font-mono text-zinc-400 font-semibold">{event.year}</span>
+                      <span className="text-sm">{impactIcon}</span>
                     </div>
-                    <div className="text-[6.5px] font-semibold leading-tight line-clamp-2 text-white">
+                    <div className="text-xs font-semibold leading-snug line-clamp-2 text-white group-hover:text-[#00f0ff] transition-colors">
                       {event.title}
                     </div>
                     {isSelected && (
-                      <div className="text-[5.5px] text-gray-300 leading-tight pt-0.5 border-t border-cyber-cyan/30 mt-0.5 text-left">
+                      <div className="text-[7px] text-zinc-300 leading-snug pt-1.5 border-t border-[#00f0ff]/30 mt-1 text-left">
                         {event.description}
                       </div>
                     )}
@@ -169,7 +169,7 @@ export default function TimelineSlider({
                 );
               })
             ) : (
-              <div className="text-[6px] text-gray-500 flex items-center">–</div>
+              <div className="text-xs text-zinc-500 flex items-center">No events this era</div>
             )}
           </div>
         </div>

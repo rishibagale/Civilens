@@ -302,10 +302,7 @@ export default function AppDashboard() {
               {activePanel === "graph" && <KnowledgeGraph />}
               {activePanel === "cards" && <ExplorationCards />}
               {activePanel === "layers" && (
-                <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-black/40">
-                  <div className="text-sm font-serif font-bold tracking-wide text-zinc-400 mb-6">View Layers</div>
-                  <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
-                </div>
+                <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
               )}
             </motion.div>
           )}
@@ -383,7 +380,7 @@ export default function AppDashboard() {
           </div>
 
           {/* Timeline Slider — bottom strip */}
-          <div className="shrink-0 border-t border-zinc-900 bg-[#020204]/80 backdrop-blur-md z-20" style={{ maxHeight: "30vh" }}>
+          <div className="shrink-0 border-t border-zinc-800/60 bg-black/50 z-20" style={{ height: "35vh", minHeight: "200px" }}>
             <TimelineSlider
               activeEra={activeEra}
               onEraChange={setActiveEra}
