@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Sliders, Sun, ShieldAlert, Compass, Network, Eye, EyeOff } from "lucide-react";
+import React, { useState } from "react";
+import { Sliders, Sun, ShieldAlert, Compass, Network, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 
 interface LayerControlProps {
   activeLayers: string[];
@@ -17,6 +17,7 @@ interface LayerItem {
 }
 
 export default function LayerControl({ activeLayers, onToggleLayer }: LayerControlProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const layers: LayerItem[] = [
     // Environmental Layers
     {
@@ -86,68 +87,82 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
   ];
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col p-5 space-y-5 bg-black/20 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-      {/* Title */}
-      <div className="flex items-center space-x-2.5 border-b border-zinc-800/60 pb-3 flex-shrink-0">
-        <Sliders className="w-5 h-5 text-[#00f0ff]" />
-        <h3 className="text-sm font-bold tracking-widest text-white uppercase">MAP LAYERS HUD</h3>
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col bg-black/20 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+      {/* Title with Collapse Button */}
+      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3 flex-shrink-0 px-5 pt-5 bg-black/30">
+        <div className="flex items-center space-x-2.5">
+          <Sliders className="w-5 h-5 text-[#00f0ff]" />
+          <h3 className="text-sm font-bold tracking-widest text-white uppercase">MAP LAYERS</h3>
+        </div>
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-1.5 rounded hover:bg-zinc-800/50 transition-all text-zinc-400 hover:text-white"
+          title={isCollapsed ? "Expand layers" : "Collapse layers"}
+        >
+          {isCollapsed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
       </div>
 
-      {/* Layer Groups */}
-      {categories.map((cat) => {
-        const Icon = cat.icon;
-        const catLayers = layers.filter((l) => l.category === cat.id);
+      {/* Collapsible Layer Groups */}
+      {!isCollapsed && (
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+          {/* Layer Groups */}
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const catLayers = layers.filter((l) => l.category === cat.id);
 
-        return (
-          <div key={cat.id} className="space-y-3">
-            <div className="flex items-center space-x-2 text-xs text-zinc-400 font-bold tracking-widest uppercase">
-              <Icon className="w-4 h-4 text-zinc-500" />
-              <span>{cat.label}</span>
-            </div>
+            return (
+              <div key={cat.id} className="space-y-3">
+                <div className="flex items-center space-x-2 text-xs text-zinc-400 font-bold tracking-widest uppercase">
+                  <Icon className="w-4 h-4 text-zinc-500" />
+                  <span>{cat.label}</span>
+                </div>
 
-            <div className="space-y-2">
-              {catLayers.map((layer) => {
-                const isActive = activeLayers.includes(layer.id);
-                return (
-                  <button
-                    key={layer.id}
-                    onClick={() => onToggleLayer(layer.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all flex items-start justify-between group ${
-                      isActive
-                        ? "bg-[#00f0ff]/10 border-[#00f0ff]/50 text-white shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-                        : "bg-black/30 border-zinc-800/50 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700/70 hover:bg-black/40"
-                    }`}
-                  >
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className={`w-2 h-2 rounded-full ${isActive ? "bg-[#00f0ff] animate-pulse" : "bg-zinc-600"}`} />
-                        <span className={`text-xs font-semibold tracking-wide ${layer.colorClass}`}>{layer.label}</span>
-                      </div>
-                      <p className="text-xs text-zinc-500 group-hover:text-zinc-400 leading-relaxed">
-                        {layer.description}
-                      </p>
-                    </div>
+                <div className="space-y-2">
+                  {catLayers.map((layer) => {
+                    const isActive = activeLayers.includes(layer.id);
+                    return (
+                      <button
+                        key={layer.id}
+                        onClick={() => onToggleLayer(layer.id)}
+                        className={`w-full text-left p-3 rounded-lg border transition-all flex items-start justify-between group ${
+                          isActive
+                            ? "bg-[#00f0ff]/10 border-[#00f0ff]/50 text-white shadow-[0_0_12px_rgba(0,240,255,0.15)]"
+                            : "bg-black/30 border-zinc-800/50 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700/70 hover:bg-black/40"
+                        }`}
+                      >
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className={`w-2 h-2 rounded-full ${isActive ? "bg-[#00f0ff] animate-pulse" : "bg-zinc-600"}`} />
+                            <span className={`text-xs font-semibold tracking-wide ${layer.colorClass}`}>{layer.label}</span>
+                          </div>
+                          <p className="text-xs text-zinc-500 group-hover:text-zinc-400 leading-relaxed">
+                            {layer.description}
+                          </p>
+                        </div>
 
-                    <div className="ml-3 shrink-0 flex-shrink-0">
-                      {isActive ? (
-                        <Eye className="w-4 h-4 text-[#00f0ff]" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-zinc-600 group-hover:text-zinc-500" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        <div className="ml-3 shrink-0 flex-shrink-0">
+                          {isActive ? (
+                            <Eye className="w-4 h-4 text-[#00f0ff]" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-zinc-600 group-hover:text-zinc-500" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Footer system alert */}
+          <div className="mt-auto pt-4 border-t border-zinc-800/40 flex items-start space-x-2.5 text-xs text-zinc-500 leading-relaxed flex-shrink-0">
+            <ShieldAlert className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
+            <span>Toggle layers to update map overlays. Changes apply instantly to all eras.</span>
           </div>
-        );
-      })}
-
-      {/* Footer system alert */}
-      <div className="mt-auto pt-4 border-t border-zinc-800/40 flex items-start space-x-2.5 text-xs text-zinc-500 leading-relaxed flex-shrink-0">
-        <ShieldAlert className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
-        <span>Toggle layers to update map overlays. Changes apply instantly to all eras.</span>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
