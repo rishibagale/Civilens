@@ -23,7 +23,12 @@ type PanelType = "ai" | "graph" | "cards" | "layers" | null;
 export default function AppDashboard() {
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
-  const [activeLayers, setActiveLayers] = useState<string[]>(["trade_routes", "migration_flows"]);
+  const [activeLayers, setActiveLayers] = useState<string[]>([
+    "climate",
+    "biodiversity",
+    "trade_routes",
+    "migration_flows",
+  ]);
   // Default null so map is immediately visible — user opens panels by tapping icons
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);

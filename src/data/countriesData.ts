@@ -1,3 +1,5 @@
+import { allCountriesComprehensive, type CountryComprehensive } from "./allCountriesComprehensive";
+
 export interface CountryData {
   id: string;
   name: string;
@@ -43,7 +45,7 @@ export interface CountryData {
   aiAnalysis: string;
 }
 
-export const countriesData: Record<string, CountryData> = {
+export const coreCountriesData: Record<string, CountryData> = {
   EG: {
     id: "EG",
     name: "Egypt",
@@ -805,6 +807,29 @@ export const countriesData: Record<string, CountryData> = {
     },
     aiAnalysis: "New Zealand's isolation from any continent for 80 million years created unique fauna (only mammals were bats). Human arrival 700 years ago created Māori civilization. British colonization created bicultural tensions still being resolved. The small population and island isolation fostered egalitarian culture and progressive policies (women's suffrage first, Treaty settlements). Geographic remoteness from major markets drove creative independence and film industry success."
   },
+};
+
+function getGeneratedAnalysis(country: CountryComprehensive): string {
+  return `${country.name}'s story begins with ${country.geography.terrain.toLowerCase()} and a ${country.climate.type.toLowerCase()} climate. ${country.adaptation.description} Its cultural identity is shaped by ${country.culture.culturalIdentity.toLowerCase()}, while its economy reflects ${country.economy.overview.toLowerCase()}`;
+}
+
+const comprehensiveCountriesData = allCountriesComprehensive.reduce<Record<string, CountryData>>(
+  (acc, country) => {
+    acc[country.id] = {
+      ...country,
+      adaptation: {
+        ...country.adaptation,
+      },
+      aiAnalysis: getGeneratedAnalysis(country),
+    };
+    return acc;
+  },
+  {}
+);
+
+export const countriesData: Record<string, CountryData> = {
+  ...comprehensiveCountriesData,
+  ...coreCountriesData,
 };
 
 export const countriesDataArray = Object.values(countriesData);

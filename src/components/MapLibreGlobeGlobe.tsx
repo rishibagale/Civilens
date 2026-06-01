@@ -34,6 +34,50 @@ function createCoordinateCircle(center: [number, number], radiusKm: number, poin
   return coords;
 }
 
+function parsePopulationMillions(population: string): number {
+  const value = Number.parseFloat(population.replace(/,/g, ""));
+  if (Number.isNaN(value)) return 1;
+  if (population.toLowerCase().includes("billion")) return value * 1000;
+  if (population.toLowerCase().includes("million")) return value;
+  return Math.max(value / 1_000_000, 1);
+}
+
+function getLanguageFamilyColor(languages: string[]): string {
+  const primaryLanguage = languages[0]?.toLowerCase() ?? "";
+  if (primaryLanguage.includes("english") || primaryLanguage.includes("german") || primaryLanguage.includes("dutch") || primaryLanguage.includes("swedish")) return "#38bdf8";
+  if (primaryLanguage.includes("spanish") || primaryLanguage.includes("portuguese") || primaryLanguage.includes("french") || primaryLanguage.includes("italian")) return "#f97316";
+  if (primaryLanguage.includes("arabic") || primaryLanguage.includes("hebrew") || primaryLanguage.includes("amharic")) return "#f59e0b";
+  if (primaryLanguage.includes("hindi") || primaryLanguage.includes("urdu") || primaryLanguage.includes("bengali") || primaryLanguage.includes("nepali")) return "#a855f7";
+  if (primaryLanguage.includes("mandarin") || primaryLanguage.includes("chinese") || primaryLanguage.includes("japanese") || primaryLanguage.includes("korean")) return "#ef4444";
+  if (primaryLanguage.includes("thai") || primaryLanguage.includes("vietnamese") || primaryLanguage.includes("filipino") || primaryLanguage.includes("indonesian")) return "#10b981";
+  if (primaryLanguage.includes("swahili") || primaryLanguage.includes("zulu") || primaryLanguage.includes("xhosa") || primaryLanguage.includes("yoruba") || primaryLanguage.includes("hausa")) return "#84cc16";
+  return "#00f0ff";
+}
+
+type HistoricalEvent = (typeof historicalEvents)[keyof typeof historicalEvents][number];
+
+function getEventPopupContent(event: HistoricalEvent): string {
+  const toneClass =
+    event.impact === "major"
+      ? "text-cyber-red"
+      : event.impact === "significant"
+        ? "text-cyber-amber"
+        : "text-cyber-cyan";
+
+  return `
+    <div class="bg-black/95 text-white p-3 rounded border border-panel-border font-mono text-[9px] w-60 shadow-2xl leading-relaxed">
+      <div class="font-bold text-[10px] border-b border-panel-border pb-1 mb-1.5 flex justify-between ${toneClass}">
+        <span>${event.title}</span>
+        <span>${event.impact === "major" ? "!" : event.impact === "significant" ? "*" : "+"}</span>
+      </div>
+      <div><span class="text-gray-400">Year:</span> <span class="text-white">${event.year}</span></div>
+      <div><span class="text-gray-400">Impact:</span> <span class="uppercase text-white font-semibold">${event.impact}</span></div>
+      <div><span class="text-gray-400">Location:</span> <span class="text-white">${event.coordinates?.[0].toFixed(2)}, ${event.coordinates?.[1].toFixed(2)}</span></div>
+      <div class="text-gray-300 mt-2 pt-1 border-t border-panel-border/30 text-[8.5px]">${event.description}</div>
+    </div>
+  `;
+}
+
 interface MapLibreGlobeGlobeProps {
   activeEra?: "ancient" | "medieval" | "colonial" | "modern" | "future";
   activeLayers?: string[];
@@ -55,6 +99,7 @@ export default function MapLibreGlobeGlobe({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const selectedEventPopupRef = useRef<maplibregl.Popup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +130,10 @@ export default function MapLibreGlobeGlobe({
       "climate-layer-line",
       "biodiversity-layer-fill",
       "biodiversity-layer-line",
+      "population-density-layer-fill",
+      "population-density-layer-line",
+      "language-families-layer-fill",
+      "language-families-layer-line",
       "ocean-currents-layer"
     ];
     const sourceIds = [
@@ -93,6 +142,8 @@ export default function MapLibreGlobeGlobe({
       "ancient-civilizations-source",
       "climate-source",
       "biodiversity-source",
+      "population-density-source",
+      "language-families-source",
       "ocean-currents-source"
     ];
 
@@ -357,6 +408,103 @@ export default function MapLibreGlobeGlobe({
       }
     }
 
+    // Add Population Density Overlay
+    if (activeLayers.includes("population_density")) {
+      const populationFeatures: Feature[] = [];
+      Object.values(countriesData).forEach((country) => {
+        const populationMillions = parsePopulationMillions(country.population);
+        const radius = Math.max(350, Math.min(1800, 280 + Math.sqrt(populationMillions) * 40));
+        const ring = createCoordinateCircle(country.coordinates, radius);
+
+        populationFeatures.push({
+          type: "Feature",
+          properties: {
+            name: country.name,
+            population: country.population,
+            color: "#f59e0b",
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [ring],
+          },
+        });
+      });
+
+      if (populationFeatures.length > 0) {
+        map.addSource("population-density-source", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: populationFeatures },
+        });
+        map.addLayer({
+          id: "population-density-layer-fill",
+          type: "fill",
+          source: "population-density-source",
+          paint: {
+            "fill-color": ["get", "color"],
+            "fill-opacity": 0.18,
+          },
+        });
+        map.addLayer({
+          id: "population-density-layer-line",
+          type: "line",
+          source: "population-density-source",
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 1,
+            "line-opacity": 0.55,
+          },
+        });
+      }
+    }
+
+    // Add Language Families Overlay
+    if (activeLayers.includes("language_families")) {
+      const languageFeatures: Feature[] = [];
+      Object.values(countriesData).forEach((country) => {
+        const color = getLanguageFamilyColor(country.languages);
+        const ring = createCoordinateCircle(country.coordinates, 700);
+
+        languageFeatures.push({
+          type: "Feature",
+          properties: {
+            name: country.name,
+            language: country.languages[0] ?? "Unknown",
+            color,
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [ring],
+          },
+        });
+      });
+
+      if (languageFeatures.length > 0) {
+        map.addSource("language-families-source", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: languageFeatures },
+        });
+        map.addLayer({
+          id: "language-families-layer-fill",
+          type: "fill",
+          source: "language-families-source",
+          paint: {
+            "fill-color": ["get", "color"],
+            "fill-opacity": 0.16,
+          },
+        });
+        map.addLayer({
+          id: "language-families-layer-line",
+          type: "line",
+          source: "language-families-source",
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 1.25,
+            "line-opacity": 0.65,
+          },
+        });
+      }
+    }
+
     // Add Ocean Currents
     if (activeLayers.includes("ocean_currents")) {
       const currents = [
@@ -543,7 +691,11 @@ export default function MapLibreGlobeGlobe({
       }[event.impact];
 
       const pin = document.createElement("div");
-      pin.className = `w-3 h-3 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass}`;
+      pin.className = `w-3 h-3 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass} ${
+        event.id === selectedEventId
+          ? "scale-150 ring-2 ring-white/80 shadow-[0_0_18px_rgba(255,255,255,0.8)]"
+          : ""
+      }`;
       
       const dot = document.createElement("div");
       dot.className = `w-1 h-1 rounded-full ${
@@ -590,22 +742,38 @@ export default function MapLibreGlobeGlobe({
       markersRef.current.push(marker);
     });
 
-  }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization]);
+  }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization, selectedEventId]);
 
   // Zoom/Fly-to Selected Event
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedEventId) return;
+    if (!map) return;
+
+    if (!selectedEventId) {
+      selectedEventPopupRef.current?.remove();
+      selectedEventPopupRef.current = null;
+      return;
+    }
 
     const event = (historicalEvents[activeEra] || []).find((e) => e.id === selectedEventId);
     if (event && event.coordinates) {
       map.flyTo({
         center: [event.coordinates[1], event.coordinates[0]], // [lng, lat]
-        zoom: 3.5,
+        zoom: 4.2,
         speed: 1.2,
         curve: 1.4,
         essential: true,
       });
+
+      selectedEventPopupRef.current?.remove();
+      selectedEventPopupRef.current = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: false,
+        className: "cyber-popup",
+      })
+        .setLngLat([event.coordinates[1], event.coordinates[0]])
+        .setHTML(getEventPopupContent(event))
+        .addTo(map);
     }
   }, [selectedEventId, activeEra]);
 
@@ -716,6 +884,8 @@ export default function MapLibreGlobeGlobe({
     }
 
     return () => {
+      selectedEventPopupRef.current?.remove();
+      selectedEventPopupRef.current = null;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
