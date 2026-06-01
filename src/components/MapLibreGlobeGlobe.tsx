@@ -59,21 +59,21 @@ type HistoricalEvent = (typeof historicalEvents)[keyof typeof historicalEvents][
 function getEventPopupContent(event: HistoricalEvent): string {
   const toneClass =
     event.impact === "major"
-      ? "text-cyber-red"
+      ? "text-red-500"
       : event.impact === "significant"
-        ? "text-cyber-amber"
-        : "text-cyber-cyan";
+        ? "text-amber-500"
+        : "text-cyan-500";
 
   return `
-    <div class="bg-black/95 text-white p-3 rounded border border-panel-border font-mono text-[9px] w-60 shadow-2xl leading-relaxed">
-      <div class="font-bold text-[10px] border-b border-panel-border pb-1 mb-1.5 flex justify-between ${toneClass}">
+    <div class="bg-black/95 text-white p-3 rounded border border-zinc-800 font-mono text-[9px] w-60 shadow-2xl leading-relaxed">
+      <div class="font-bold text-[10px] border-b border-zinc-800 pb-1 mb-1.5 flex justify-between ${toneClass}">
         <span>${event.title}</span>
         <span>${event.impact === "major" ? "!" : event.impact === "significant" ? "*" : "+"}</span>
       </div>
       <div><span class="text-gray-400">Year:</span> <span class="text-white">${event.year}</span></div>
       <div><span class="text-gray-400">Impact:</span> <span class="uppercase text-white font-semibold">${event.impact}</span></div>
       <div><span class="text-gray-400">Location:</span> <span class="text-white">${event.coordinates?.[0].toFixed(2)}, ${event.coordinates?.[1].toFixed(2)}</span></div>
-      <div class="text-gray-300 mt-2 pt-1 border-t border-panel-border/30 text-[8.5px]">${event.description}</div>
+      <div class="text-gray-300 mt-2 pt-1 border-t border-zinc-800/50 text-[8.5px]">${event.description}</div>
     </div>
   `;
 }
@@ -555,14 +555,14 @@ export default function MapLibreGlobeGlobe({
     // 1. Add country markers with hover tooltips
     Object.values(countriesData).forEach((country) => {
       const el = document.createElement("div");
-      el.className = "group relative w-5 h-5 flex items-center justify-center cursor-pointer";
-      el.style.pointerEvents = "auto";
+      el.className = "group relative w-8 h-8 flex items-center justify-center cursor-pointer";
+      el.style.pointerEvents = "auto"; el.style.zIndex = "1000";
 
       const dot = document.createElement("div");
       dot.className = `w-4.5 h-4.5 rounded-full flex items-center justify-center border transition-all ${
         country.id === activeCountryId
           ? "bg-cyber-green/30 border-cyber-green shadow-[0_0_15px_rgba(57,255,20,0.5)] scale-110"
-          : "bg-cyber-cyan/15 border-cyber-cyan/60 hover:border-white hover:bg-cyber-cyan/30"
+          : "bg-cyan-500/15 border-cyan-500/60 hover:border-white hover:bg-cyan-500/30"
       }`;
       el.appendChild(dot);
 
@@ -571,9 +571,9 @@ export default function MapLibreGlobeGlobe({
       const controlledBy = eraRecord ? eraRecord.controlledBy : "Independent / Indigenous";
 
       const tooltip = document.createElement("div");
-      tooltip.className = "absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-panel-border px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-50 whitespace-nowrap shadow-2xl";
+      tooltip.className = "absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-zinc-800 px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-[10000] whitespace-nowrap shadow-2xl";
       tooltip.innerHTML = `
-        <div class="font-bold text-cyber-cyan text-[9px] mb-0.5">${country.name}</div>
+        <div class="font-bold text-cyan-500 text-[9px] mb-0.5">${country.name}</div>
         <div>Capital: ${country.capital}</div>
         <div class="text-gray-400 mt-0.5">Control: ${controlledBy}</div>
       `;
@@ -596,14 +596,14 @@ export default function MapLibreGlobeGlobe({
       .forEach((civ) => {
         const el = document.createElement("div");
         el.className = "group relative w-6 h-6 flex items-center justify-center cursor-pointer";
-        el.style.pointerEvents = "auto";
+        el.style.pointerEvents = "auto"; el.style.zIndex = "1000";
 
         const iconContainer = document.createElement("div");
-        iconContainer.innerHTML = `<svg class="w-5 h-5 text-cyber-violet filter drop-shadow-[0_0_4px_rgba(189,0,255,0.4)]" fill="currentColor" viewBox="0 0 100 100"><polygon points="50,10 90,85 10,85"/></svg>`;
+        iconContainer.innerHTML = `<svg class="w-8 h-8 text-cyber-violet filter drop-shadow-[0_0_4px_rgba(189,0,255,0.4)]" fill="currentColor" viewBox="0 0 100 100"><polygon points="50,10 90,85 10,85"/></svg>`;
         el.appendChild(iconContainer);
 
         const tooltip = document.createElement("div");
-        tooltip.className = "absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-panel-border px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-50 whitespace-nowrap shadow-2xl";
+        tooltip.className = "absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-zinc-800 px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-[10000] whitespace-nowrap shadow-2xl";
         tooltip.innerHTML = `
           <div class="font-bold text-cyber-violet text-[9px] mb-0.5">${civ.name}</div>
           <div class="text-gray-400">Era: ${activeEra}</div>
@@ -629,19 +629,19 @@ export default function MapLibreGlobeGlobe({
     activeCities.forEach((city) => {
       const el = document.createElement("div");
       el.className = "group relative w-4 h-4 flex items-center justify-center cursor-pointer";
-      el.style.pointerEvents = "auto";
+      el.style.pointerEvents = "auto"; el.style.zIndex = "1000";
 
       const diamond = document.createElement("div");
-      diamond.className = "w-2.5 h-2.5 bg-cyber-amber/20 border border-cyber-amber rotate-45 shadow-[0_0_8px_rgba(245,158,11,0.6)] transition-all hover:scale-125 hover:bg-cyber-amber/40";
+      diamond.className = "w-2.5 h-2.5 bg-amber-500/20 border border-amber-500 rotate-45 shadow-[0_0_8px_rgba(245,158,11,0.6)] transition-all hover:scale-125 hover:bg-amber-500/40";
       el.appendChild(diamond);
 
       const eraInfo = city.eraInfo.find((info) => info.era === activeEra);
       const role = eraInfo ? eraInfo.role : "Trade Hub";
 
       const tooltip = document.createElement("div");
-      tooltip.className = "absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-panel-border px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-50 whitespace-nowrap shadow-2xl";
+      tooltip.className = "absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-zinc-800 px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-[10000] whitespace-nowrap shadow-2xl";
       tooltip.innerHTML = `
-        <div class="font-bold text-cyber-amber text-[9px] mb-0.5">${city.name} 🏛️</div>
+        <div class="font-bold text-amber-500 text-[9px] mb-0.5">${city.name} 🏛️</div>
         <div class="text-gray-400">${role}</div>
       `;
       el.appendChild(tooltip);
@@ -651,15 +651,15 @@ export default function MapLibreGlobeGlobe({
       el.addEventListener("click", (e) => {
         e.stopPropagation();
         const popupContent = `
-          <div class="bg-black/95 text-white p-3 rounded border border-panel-border font-mono text-[9px] w-56 shadow-2xl leading-relaxed">
-            <div class="text-cyber-amber font-bold text-[10px] border-b border-panel-border pb-1 mb-1.5 flex justify-between">
+          <div class="bg-black/95 text-white p-3 rounded border border-zinc-800 font-mono text-[9px] w-56 shadow-2xl leading-relaxed">
+            <div class="text-amber-500 font-bold text-[10px] border-b border-zinc-800 pb-1 mb-1.5 flex justify-between">
               <span>${city.name}</span>
               <span>🏛️</span>
             </div>
             <div><span class="text-gray-400">Era:</span> <span class="capitalize text-white">${activeEra}</span></div>
-            <div><span class="text-gray-400">Era Role:</span> <span class="text-cyber-cyan font-semibold">${role}</span></div>
+            <div><span class="text-gray-400">Era Role:</span> <span class="text-cyan-500 font-semibold">${role}</span></div>
             <div><span class="text-gray-400">Est. Pop:</span> <span class="text-white">${popEst}</span></div>
-            <div class="text-gray-300 mt-2 pt-1 border-t border-panel-border/30 text-[8.5px]">${eraInfo?.description || city.historicalSignificance}</div>
+            <div class="text-gray-300 mt-2 pt-1 border-t border-zinc-800/50 text-[8.5px]">${eraInfo?.description || city.historicalSignificance}</div>
           </div>
         `;
 
@@ -681,34 +681,34 @@ export default function MapLibreGlobeGlobe({
       if (!event.coordinates) return;
 
       const el = document.createElement("div");
-      el.className = "group relative w-5 h-5 flex items-center justify-center cursor-pointer";
-      el.style.pointerEvents = "auto";
+      el.className = "group relative w-8 h-8 flex items-center justify-center cursor-pointer";
+      el.style.pointerEvents = "auto"; el.style.zIndex = "1000";
 
       const impactColorClass = {
-        major: "border-cyber-red bg-cyber-red/20 shadow-[0_0_8px_rgba(255,59,48,0.5)]",
-        significant: "border-cyber-amber bg-cyber-amber/20 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
-        regional: "border-cyber-cyan bg-cyber-cyan/20 shadow-[0_0_8px_rgba(0,240,255,0.5)]",
+        major: "border-red-500 bg-red-500/20 shadow-[0_0_8px_rgba(255,59,48,0.5)]",
+        significant: "border-amber-500 bg-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
+        regional: "border-cyan-500 bg-cyan-500/20 shadow-[0_0_8px_rgba(0,240,255,0.5)]",
       }[event.impact];
 
       const pin = document.createElement("div");
-      pin.className = `w-3 h-3 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass} ${
+      pin.className = `w-4 h-4 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass} ${
         event.id === selectedEventId
           ? "scale-150 ring-2 ring-white/80 shadow-[0_0_18px_rgba(255,255,255,0.8)]"
           : ""
       }`;
       
       const dot = document.createElement("div");
-      dot.className = `w-1 h-1 rounded-full ${
-        event.impact === "major" ? "bg-cyber-red" : event.impact === "significant" ? "bg-cyber-amber" : "bg-cyber-cyan"
+      dot.className = `w-2 h-2 rounded-full ${
+        event.impact === "major" ? "bg-red-500" : event.impact === "significant" ? "bg-amber-500" : "bg-cyan-500"
       }`;
       pin.appendChild(dot);
       el.appendChild(pin);
 
       const tooltip = document.createElement("div");
-      tooltip.className = "absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-panel-border px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-50 whitespace-nowrap shadow-2xl";
+      tooltip.className = "absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 bg-black/95 border border-zinc-800 px-2.5 py-1.5 rounded text-[8px] text-white font-mono z-[10000] whitespace-nowrap shadow-2xl";
       tooltip.innerHTML = `
         <div class="font-bold text-[9px] mb-0.5 ${
-          event.impact === "major" ? "text-cyber-red" : event.impact === "significant" ? "text-cyber-amber" : "text-cyber-cyan"
+          event.impact === "major" ? "text-red-500" : event.impact === "significant" ? "text-amber-500" : "text-cyan-500"
         }">${event.title}</div>
         <div class="text-gray-400">Year: ${event.year}</div>
       `;
@@ -717,16 +717,16 @@ export default function MapLibreGlobeGlobe({
       el.addEventListener("click", (e) => {
         e.stopPropagation();
         const popupContent = `
-          <div class="bg-black/95 text-white p-3 rounded border border-panel-border font-mono text-[9px] w-56 shadow-2xl leading-relaxed">
-            <div class="font-bold text-[10px] border-b border-panel-border pb-1 mb-1.5 flex justify-between ${
-              event.impact === "major" ? "text-cyber-red" : event.impact === "significant" ? "text-cyber-amber" : "text-cyber-cyan"
+          <div class="bg-black/95 text-white p-3 rounded border border-zinc-800 font-mono text-[9px] w-56 shadow-2xl leading-relaxed">
+            <div class="font-bold text-[10px] border-b border-zinc-800 pb-1 mb-1.5 flex justify-between ${
+              event.impact === "major" ? "text-red-500" : event.impact === "significant" ? "text-amber-500" : "text-cyan-500"
             }">
               <span>${event.title}</span>
               <span>⚡</span>
             </div>
             <div><span class="text-gray-400">Year:</span> <span class="text-white">${event.year}</span></div>
             <div><span class="text-gray-400">Impact:</span> <span class="uppercase text-white font-semibold">${event.impact}</span></div>
-            <div class="text-gray-300 mt-2 pt-1 border-t border-panel-border/30 text-[8.5px]">${event.description}</div>
+            <div class="text-gray-300 mt-2 pt-1 border-t border-zinc-800/50 text-[8.5px]">${event.description}</div>
           </div>
         `;
 
