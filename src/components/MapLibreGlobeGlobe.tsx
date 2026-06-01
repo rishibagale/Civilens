@@ -677,8 +677,13 @@ export default function MapLibreGlobeGlobe({
 
     // 4. Add timeline event markers with glowing rings and popups
     const activeEvents = historicalEvents[activeEra] || [];
+    console.log("Active events for", activeEra, ":", activeEvents.length, "events");
     activeEvents.forEach((event) => {
-      if (!event.coordinates) return;
+      if (!event.coordinates) {
+        console.log("Skipping event without coordinates:", event.title);
+        return;
+      }
+      console.log("Creating marker for event:", event.title, "at", event.coordinates);
 
       const el = document.createElement("div");
       el.className = "group relative w-8 h-8 flex items-center justify-center cursor-pointer";
@@ -740,6 +745,7 @@ export default function MapLibreGlobeGlobe({
         .setLngLat([event.coordinates[1], event.coordinates[0]])
         .addTo(map);
       markersRef.current.push(marker);
+      console.log("Marker added successfully for:", event.title);
     });
 
   }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization, selectedEventId]);
@@ -817,7 +823,9 @@ export default function MapLibreGlobeGlobe({
           console.warn("Globe projection not available");
         }
 
+        console.log("Calling updateMarkers...");
         updateMarkers();
+        console.log("Calling updateEraLayers...");
         updateEraLayers();
       });
 
