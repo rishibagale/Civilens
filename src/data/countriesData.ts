@@ -195,7 +195,7 @@ export const countriesData: Record<string, CountryData> = {
     population: "1.43 Billion",
     languages: ["Hindi (official)", "English", "Bengali", "Telugu", "Marathi", "Tamil", "Urdu", "22 Scheduled Languages"],
     religion: "Hinduism ~79.8%, Islam ~14.2%, Christianity ~2.3%, Sikhism ~1.7%, Buddhism ~0.7%, Jainism ~0.4%",
-    coordinates: [20.5937, 78.9629],
+    coordinates: [28.6139, 77.2090],
     climate: {
       type: "Tropical Monsoon & Diverse Regional Climates",
       description: "Varies from alpine tundra in the Himalayas to tropical wet in the south and arid desert in the west. Dominated by the seasonal monsoon winds.",
@@ -217,7 +217,7 @@ export const countriesData: Record<string, CountryData> = {
     anthropology: {
       migrationHistory: "A crucial crossroads of global human migration. Home to the ancient Indus Valley Civilization. Experiencing migrations of Indo-Aryans, Greco-Bactrians, Islamic dynasties, and British colonial rule.",
       ethnicComposition: ["Indo-Aryan ~72%", "Dravidian ~25%", "Austroasiatic and Tibeto-Burman ~3%"],
-      ancientEmpires: ["Indus Valley Civilization", "Maurya Empire", "Gupta Empire", "Chola Dynasty", "Mughal Empire", "Maratha Confederacy"],
+      ancientEmpires: ["Indus Valley Civilization", "Maurya Empire", "Gupta Empire", "Chola Dynasty", "Mughal Empire", "Maratha Confederacy", "India"],
       socialStructures: "Historically characterized by highly structured, localized village systems and the complex, controversial caste (Varna/Jati) social system, which originally coordinated labor specialization."
     },
     culture: {
@@ -424,7 +424,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Ottawa",
     population: "38 Million",
     languages: ["English", "French"],
-    religion: "Christianity ~55%", "Unaffiliated ~27%", "Islam ~3.2%", "Judaism ~1%",
+    religion: "Christianity ~55%, Unaffiliated ~27%, Islam ~3.2%, Judaism ~1%",
     coordinates: [45.4215, -75.6972],
     climate: {
       type: "Subarctic and Temperate Maritime",
@@ -467,7 +467,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "London",
     population: "67 Million",
     languages: ["English"],
-    religion: "Christianity ~50%", "Unaffiliated ~37%", "Islam ~3.1%", "Hinduism ~1.5%",
+    religion: "Christianity ~50%, Unaffiliated ~37%, Islam ~3.1%, Hinduism ~1.5%",
     coordinates: [51.5074, -0.1278],
     climate: {
       type: "Temperate Maritime",
@@ -510,7 +510,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Paris",
     population: "68 Million",
     languages: ["French"],
-    religion: "Christianity ~60%", "Unaffiliated ~32%", "Islam ~5%",
+    religion: "Christianity ~60%, Unaffiliated ~32%, Islam ~5%",
     coordinates: [48.8566, 2.3522],
     climate: {
       type: "Temperate Mediterranean & Oceanic",
@@ -553,7 +553,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Berlin",
     population: "84 Million",
     languages: ["German"],
-    religion: "Christianity ~56%", "Unaffiliated ~38%", "Islam ~5%",
+    religion: "Christianity ~56%, Unaffiliated ~38%, Islam ~5%",
     coordinates: [52.5200, 13.4050],
     climate: {
       type: "Temperate Continental",
@@ -596,7 +596,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Rome",
     population: "58 Million",
     languages: ["Italian"],
-    religion: "Christianity ~87%", "Unaffiliated ~10%", "Islam ~1%",
+    religion: "Christianity ~87%, Unaffiliated ~10%, Islam ~1%",
     coordinates: [41.9028, 12.4964],
     climate: {
       type: "Mediterranean",
@@ -639,7 +639,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Moscow",
     population: "146 Million",
     languages: ["Russian"],
-    religion: "Orthodox Christianity ~71%", "Islam ~14%", "Unaffiliated ~15%",
+    religion: "Orthodox Christianity ~71%, Islam ~14%, Unaffiliated ~15%",
     coordinates: [55.7558, 37.6173],
     climate: {
       type: "Subarctic to Temperate Continental",
@@ -682,7 +682,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Beijing",
     population: "1.43 Billion",
     languages: ["Mandarin Chinese (official)"],
-    religion: "Officially atheist; Buddhism, Taoism, folk religion significant (~10-15%)","Christianity ~5%",
+    religion: "Officially atheist; Buddhism, Taoism, folk religion significant (~10-15%), Christianity ~5%",
     coordinates: [39.9042, 116.4074],
     climate: {
       type: "Diverse: Subtropical, Temperate, Subarctic",
@@ -719,111 +719,13 @@ export const countriesData: Record<string, CountryData> = {
     },
     aiAnalysis: "China's geography enabled the world's oldest continuous civilization. The Yellow and Yangtze Rivers created agricultural surplus allowing centralized state development. Geographic barriers (mountains, deserts) created a bounded civilization distinct from Europe. The 'Middle Kingdom' psychological identity stems from geographic isolation. Modern China's rise stems from its massive population base and manufacturing advantages. The party-state structure reflects millennia of centralized bureaucratic tradition adapted to modern communism-capitalism."
   },
-  IN: {
-    id: "IN",
-    name: "India",
-    capital: "New Delhi",
-    population: "1.43 Billion",
-    languages: ["Hindi (official)", "English", "Bengali", "Telugu", "Marathi", "Tamil", "Urdu", "22 Scheduled Languages"],
-    religion: "Hinduism ~79.8%, Islam ~14.2%, Christianity ~2.3%, Sikhism ~1.7%, Buddhism ~0.7%, Jainism ~0.4%",
-    coordinates: [28.6139, 77.2090],
-    climate: {
-      type: "Tropical Monsoon & Diverse Regional Climates",
-      description: "Varies from alpine tundra in the Himalayas to tropical wet in the south and arid desert in the west. Dominated by the seasonal monsoon winds.",
-      temperatureRange: "-10°C (Himalayan winter) to 48°C (Thar Desert summer)",
-      rainfallPattern: "Extremely seasonal. The southwest monsoon (June-September) delivers 80% of the country's annual rainfall."
-    },
-    geography: {
-      terrain: "High mountain ranges in the north, fertile Indo-Gangetic plains, central dry plateau, and long coastal strips.",
-      features: ["Himalayas", "Ganges River", "Deccan Plateau", "Thar Desert", "Western Ghats"],
-      biodiversityRating: "Mega-diverse (One of the top 17 mega-diverse countries)",
-      ecosystems: ["Alpine meadows", "Alluvial grasslands", "Tropical rainforests", "Dry deciduous forests", "Thar desert scrub", "Sundarbans mangrove delta"]
-    },
-    adaptation: {
-      title: "Stepwell Hydrology & Monsoon Crop Rotation",
-      description: "Managing severe dry seasons followed by massive monsoons through water conservation architecture and agrarian calendars.",
-      physiologicalAdaptation: "High heat-tolerance and physiological efficiency in processing a plant-based diet in hot conditions.",
-      technologicalAdaptation: "Construction of thousands of elaborate stepwells (Baoris) to store rainwater deep underground, and advanced drainage systems in the ancient Indus Valley cities."
-    },
-    anthropology: {
-      migrationHistory: "A crucial crossroads of global human migration. Home to the ancient Indus Valley Civilization. Experiencing migrations of Indo-Aryans, Greco-Bactrians, Islamic dynasties, and British colonial rule.",
-      ethnicComposition: ["Indo-Aryan ~72%", "Dravidian ~25%", "Austroasiatic and Tibeto-Burman ~3%"],
-      ancientEmpires: ["Indus Valley Civilization", "Maurya Empire", "Gupta Empire", "Chola Dynasty", "Mughal Empire", "Maratha Confederacy", "India"],
-      socialStructures: "Historically characterized by highly structured, localized village systems and the complex, controversial caste (Varna/Jati) social system, which originally coordinated labor specialization."
-    },
-    culture: {
-      insights: [
-        "A highly pluralistic civilization with continuous traditions dating back over 5000 years.",
-        "Concepts of Dharma (cosmic order/duty) and Karma (cause and effect) are deeply woven into daily life.",
-        "Artistic expressions include intricate temple architecture, classical dance forms (Bharatanatyam), and epic literature (Ramayana, Mahabharata)."
-      ],
-      foodCulture: "Extremely regional, characterized by sophisticated spice blends (Garam Masala, Turmeric). High rate of vegetarianism. Staple foods include rice in the south/east, wheat flatbreads (Roti, Naan) in the north, and lentils (Dal) nationwide.",
-      culturalIdentity: "A vibrant mosaic of languages, festivals (Diwali, Holi), clothing (Sari, Dhoti), and philosophies."
-    },
-    economy: {
-      overview: "A fast-growing major economy transitioning from agriculture to a major services, software, manufacturing, and pharmaceutical hub.",
-      keyIndustries: ["Information Technology & Software Services", "Pharmaceuticals & Biotechnology", "Textiles and Apparel", "Heavy Manufacturing & Agriculture"],
-      tradeLegacy: "The anchor of the Silk Road and Indian Ocean trade networks, exporting spices, textiles (muslin, calico), and gemstones for millennia."
-    },
-    aiAnalysis: "India's civilization is fundamentally tied to the monsoon cycle. The predictability yet volatility of the rains created a culture focused on cycles, time, and cosmic scales, influencing Indian mathematics, philosophy, and religion. The fertile alluvial plains of the Ganges allowed for massive population densities, fostering rich linguistic and cultural diversity rather than a single homogeneous state. Its geographical boundary of the Himalayas acted as a wall, isolating it enough to develop a distinct civilizational identity, while the passes in the northwest and its open oceans ensured constant, rich cultural infusions."
-    },
-    aiAnalysis: "India's civilization is fundamentally tied to the monsoon cycle. The predictability yet volatility of the rains created a culture focused on cycles, time, and cosmic scales, influencing Indian mathematics, philosophy, and religion. The fertile alluvial plains of the Ganges allowed for massive population densities, fostering rich linguistic and cultural diversity rather than a single homogeneous state. Its geographical boundary of the Himalayas acted as a wall, isolating it enough to develop a distinct civilizational identity, while the passes in the northwest and its open oceans ensured constant, rich cultural infusions."
-  },
-  BR: {
-    id: "BR",
-    name: "Brazil",
-    capital: "Brasilia",
-    population: "215 Million",
-    languages: ["Portuguese (official)"],
-    religion: "Roman Catholicism ~64.6%, Protestantism ~22.2%, Spiritism ~2%, Candomblé/Umbanda ~0.3%",
-    coordinates: [-14.2350, -51.9253],
-    climate: {
-      type: "Tropical and Subtropical",
-      description: "Mostly hot and humid, with tropical wet and dry seasons. The southern regions transition into temperate climates with cold winters.",
-      temperatureRange: "10°C (southern winter frost) to 40°C (Amazon summer)",
-      rainfallPattern: "Very high rainfall in the Amazon basin (exceeding 3000mm annually), while the northeast semi-arid region (Sertão) experiences severe droughts."
-    },
-    geography: {
-      terrain: "Extensive plains, low hills, and plateaus, dominated by the massive Amazon River Basin and the Guiana Highlands.",
-      features: ["Amazon River", "Pantanal Wetlands", "Cerrado Savannah", "Atlantic Forest", "Brazilian Highlands"],
-      biodiversityRating: "Hyper-diverse (Holds the highest biodiversity of any nation on Earth)",
-      ecosystems: ["Amazon rainforest", "Flooded savannah (Pantanal)", "Wooded grasslands (Cerrado)", "Semi-arid thorn forest (Caatinga)", "Atlantic coastal forest"]
-    },
-    adaptation: {
-      title: "Rainforest Silviculture & Agro-ecological Adaptations",
-      description: "Indigenous tribes adapted to live inside the Amazon without destroying it, using terra preta soil, while modern populations manage soil acidity in the Cerrado.",
-      physiologicalAdaptation: "Indigenous populations evolved immunities and genetic adaptations to humid tropical climates and forest pathogens.",
-      technologicalAdaptation: "Ancient creation of 'Terra Preta' (highly fertile, human-made dark earth created by adding charcoal, bone, and manure to nutrient-poor forest soils) and modern agricultural engineering to fertilize the acid-heavy Cerrado savannah."
-    },
-    anthropology: {
-      migrationHistory: "Inhabited by hundreds of nomadic and semi-nomadic indigenous tribes (Tupi, Guarani). Colonized by the Portuguese in 1500, followed by the largest forced migration of enslaved Africans in history, and later massive waves of Italian, German, Japanese, and Middle Eastern immigrants.",
-      ethnicComposition: ["White ~47.7%", "Mixed (Pardo) ~43.1%", "Black ~7.6%", "East Asian ~1.1%", "Indigenous ~0.5%"],
-      ancientEmpires: ["Kingdom/Empire of Brazil (1822–1889)", "Brazil"],
-      socialStructures: "Complex, highly syncresized social structure. Highly urbanized coastal populations juxtaposed with isolated indigenous territories in the interior."
-    },
-    culture: {
-      insights: [
-        "A highly syncretic society blending Portuguese institutions, West African music, dance, and spiritualism, and Indigenous land practices.",
-        "Deep cultural devotion to public festivities, most famously Carnaval, showcasing regional samba and axé rhythms.",
-        "Candomblé and Umbanda represent unique Afro-Brazilian syncretic religions combining Catholic saints with African Orixás."
-      ],
-      foodCulture: "Based on cassava, beans, rice, and meat. The national dish is Feijoada (a rich black bean stew with pork and beef). In the south, Churrasco (barbecue) dominates, while northeastern cuisine features Acarajé (black-eyed pea fritters fried in dende palm oil).",
-      culturalIdentity: "Defined by 'Jeitinho Brasileiro' (the Brazilian way of finding creative, informal solutions to problems) and a joyful, expressive lifestyle."
-    },
-    economy: {
-      overview: "A major global economy driven by vast agricultural exports, mining, manufacturing, and aerospace.",
-      keyIndustries: ["Agribusiness (Soy, Beef, Sugar, Coffee)", "Iron Ore and Oil Extraction", "Aerospace Manufacturing (Embraer)", "Biofuels (Ethanol)"],
-      tradeLegacy: "Shaped by colonial commodity cycles (Brazilwood, Sugar, Gold, Rubber, Coffee) which dictated domestic infrastructure and migration paths."
-    },
-    aiAnalysis: "Brazil represents an ecological superpower. Its developmental history is a story of human interaction with massive, complex forest and savannah systems. The Amazon rainforest acted as an internal ocean, preventing centralization and fostering diverse, sustainable indigenous micro-societies. The modern state's expansion into the interior required massive infrastructure projects (like building the capital Brasilia in the geographic center) and scientific agricultural breakthroughs to turn the infertile Cerrado savannah into a global breadbasket, showcasing how technological adaptation can unlock previously unproductive climates."
-  },
   AU: {
     id: "AU",
     name: "Australia",
     capital: "Canberra",
     population: "26 Million",
     languages: ["English"],
-    religion: "Christianity ~52%", "Unaffiliated ~30%", "Buddhism ~2%", "Islam ~2.6%",
+    religion: "Christianity ~52%, Unaffiliated ~30%, Buddhism ~2%, Islam ~2.6%",
     coordinates: [-25.2744, 133.7751],
     climate: {
       type: "Diverse: Tropical, Desert, Mediterranean, Temperate",
@@ -866,7 +768,7 @@ export const countriesData: Record<string, CountryData> = {
     capital: "Wellington",
     population: "5 Million",
     languages: ["English", "Māori"],
-    religion: "Christianity ~38%", "Unaffiliated ~48%", "Buddhism ~2%", "Hinduism ~1%",
+    religion: "Christianity ~38%, Unaffiliated ~48%, Buddhism ~2%, Hinduism ~1%",
     coordinates: [-41.2865, 174.7762],
     climate: {
       type: "Temperate Oceanic",

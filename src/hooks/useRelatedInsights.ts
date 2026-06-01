@@ -3,9 +3,8 @@
 
 import { useMemo } from 'react';
 import { countriesData } from '@/data/countriesData';
-import { civilizationsData } from '@/data/civilizationsData';
-import { historicalEvents } from '@/data/historicalEvents';
-import { synthesizeInsight, getRelatedCountries, type EraType } from '@/services/aiSynthesisEngine';
+import type { CountryData } from '@/data/countriesData';
+import type { EraType } from '@/services/aiSynthesisEngine';
 
 export interface RelatedInsights {
   followUpQuestions: string[];
@@ -60,7 +59,7 @@ export function useRelatedInsights(countryId: string | null, era: EraType): Rela
     const contrastingCountries = generateContrastingCountries(country);
 
     // ─── HISTORICAL CONTEXT ───────────────────────────────────────────────
-    const historicalContext = generateHistoricalContext(countryId, era);
+    const historicalContext = generateHistoricalContext(countryId);
 
     // ─── SUGGESTED EXPLORATION ────────────────────────────────────────────
     const suggestedExploration = generateSuggestedExploration(country, era);
@@ -77,7 +76,7 @@ export function useRelatedInsights(countryId: string | null, era: EraType): Rela
 
 // ─── HELPER FUNCTIONS ──────────────────────────────────────────────────────
 
-function generateFollowUpQuestions(country: any, era: EraType): string[] {
+function generateFollowUpQuestions(country: CountryData, era: EraType): string[] {
   const questions: string[] = [];
 
   // Climate-based questions
@@ -142,7 +141,7 @@ function generateFollowUpQuestions(country: any, era: EraType): string[] {
 }
 
 function generateRelatedCountries(
-  country: any
+  country: CountryData
 ): Array<{ id: string; name: string; reason: string }> {
   const related: Array<{ id: string; name: string; reason: string }> = [];
   const seen = new Set<string>();
@@ -150,7 +149,7 @@ function generateRelatedCountries(
   // Same climate zone
   const sameClimate = Object.entries(countriesData)
     .filter(([id]) => id !== country.id && !seen.has(id))
-    .map(([id, other]: any) => {
+    .map(([id, other]) => {
       let score = 0;
       if (other.climate.type === country.climate.type) score += 3;
       return { id, other, score };
@@ -171,7 +170,7 @@ function generateRelatedCountries(
   // Same religion
   const sameReligion = Object.entries(countriesData)
     .filter(([id]) => id !== country.id && !seen.has(id))
-    .map(([id, other]: any) => {
+    .map(([id, other]) => {
       let score = 0;
       if (other.religion[0] === country.religion[0]) score += 2;
       return { id, other, score };
@@ -192,7 +191,7 @@ function generateRelatedCountries(
   // Geographic proximity
   const proximity = Object.entries(countriesData)
     .filter(([id]) => id !== country.id && !seen.has(id))
-    .map(([id, other]: any) => {
+    .map(([id, other]) => {
       const latDiff = Math.abs(other.coordinates[0] - country.coordinates[0]);
       const lngDiff = Math.abs(other.coordinates[1] - country.coordinates[1]);
       const distance = latDiff + lngDiff;
@@ -215,13 +214,13 @@ function generateRelatedCountries(
 }
 
 function generateContrastingCountries(
-  country: any
+  country: CountryData
 ): Array<{ id: string; name: string; contrast: string }> {
   const contrasts: Array<{ id: string; name: string; contrast: string }> = [];
 
   // Same climate, different outcome
   const sameClimateOpposite = Object.entries(countriesData)
-    .map(([id, other]: any) => {
+    .map(([id, other]) => {
       if (id === country.id) return null;
 
       let similarity = 0;
@@ -255,28 +254,17 @@ function generateContrastingCountries(
       return similarity > 0 ? { id, name: other.name, contrast, similarity } : null;
     })
     .filter((p) => p !== null)
-    .sort((a, b) => (b as any).similarity - (a as any).similarity)
+    .sort((a, b) => (b as unknown as { similarity: number }).similarity - (a as unknown as { similarity: number }).similarity)
     .slice(0, 2)
-    .map((p: any) => ({ id: p.id, name: p.name, contrast: p.contrast }));
+    .map((p) => ({ id: (p as unknown as { id: string; name: string; contrast: string }).id, name: (p as unknown as { id: string; name: string; contrast: string }).name, contrast: (p as unknown as { id: string; name: string; contrast: string }).contrast }));
 
   contrasts.push(...sameClimateOpposite);
   return contrasts;
 }
 
-function generateHistoricalContext(countryId: string, era: EraType): string[] {
+function generateHistoricalContext(countryId: string): string[] {
   const context: string[] = [];
 
-  // Find historical events
-  const events = historicalEvents[era] || [];
-  const relevant = events
-    .filter((e) => e.affectedRegions?.includes(countryId))
-    .slice(0, 2);
-
-  relevant.forEach((event) => {
-    context.push(`${event.year}: ${event.title}`);
-  });
-
-  // Find major cities
   const country = countriesData[countryId];
   if (country?.capital) {
     context.push(`Capital: ${country.capital}`);
@@ -285,7 +273,7 @@ function generateHistoricalContext(countryId: string, era: EraType): string[] {
   return context;
 }
 
-function generateSuggestedExploration(country: any, era: EraType): string[] {
+function generateSuggestedExploration(country: CountryData, era: EraType): string[] {
   const suggestions: string[] = [];
 
   // Suggest exploring knowledge graph nodes
