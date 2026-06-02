@@ -677,13 +677,27 @@ export default function MapLibreGlobeGlobe({
 
     // 4. Add timeline event markers with glowing rings and popups
     const activeEvents = historicalEvents[activeEra] || [];
-    console.log("Active events for", activeEra, ":", activeEvents.length, "events");
+    console.log(`[Markers] Active events for era "${activeEra}": ${activeEvents.length} total`);
+    
+    let markersAdded = 0;
+    let markersSkipped = 0;
+    
     activeEvents.forEach((event) => {
+      // Skip events without coordinates OR events at Null Island (0,0)
       if (!event.coordinates) {
-        console.log("Skipping event without coordinates:", event.title);
+        console.log(`[Markers] SKIP (no coords): ${event.title} (id: ${event.id})`);
+        markersSkipped++;
         return;
       }
-      console.log("Creating marker for event:", event.title, "at", event.coordinates);
+      
+      const [lat, lng] = event.coordinates;
+      if (lat === 0 && lng === 0) {
+        console.log(`[Markers] SKIP (null island [0,0]): ${event.title} (id: ${event.id})`);
+        markersSkipped++;
+        return;
+      }
+      
+      console.log(`[Markers] CREATE: ${event.title} (id: ${event.id}) at [${lat}, ${lng}] impact: ${event.impact}`);
 
       const el = document.createElement("div");
       el.className = "group relative w-8 h-8 flex items-center justify-center cursor-pointer";
