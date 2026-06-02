@@ -1,5 +1,3 @@
-import { allCountriesComprehensive, type CountryComprehensive } from "./allCountriesComprehensive";
-
 export interface CountryData {
   id: string;
   name: string;
@@ -45,7 +43,7 @@ export interface CountryData {
   aiAnalysis: string;
 }
 
-export const coreCountriesData: Record<string, CountryData> = {
+export const countriesData: Record<string, CountryData> = {
   EG: {
     id: "EG",
     name: "Egypt",
@@ -197,7 +195,7 @@ export const coreCountriesData: Record<string, CountryData> = {
     population: "1.43 Billion",
     languages: ["Hindi (official)", "English", "Bengali", "Telugu", "Marathi", "Tamil", "Urdu", "22 Scheduled Languages"],
     religion: "Hinduism ~79.8%, Islam ~14.2%, Christianity ~2.3%, Sikhism ~1.7%, Buddhism ~0.7%, Jainism ~0.4%",
-    coordinates: [28.6139, 77.2090],
+    coordinates: [20.5937, 78.9629],
     climate: {
       type: "Tropical Monsoon & Diverse Regional Climates",
       description: "Varies from alpine tundra in the Himalayas to tropical wet in the south and arid desert in the west. Dominated by the seasonal monsoon winds.",
@@ -219,7 +217,7 @@ export const coreCountriesData: Record<string, CountryData> = {
     anthropology: {
       migrationHistory: "A crucial crossroads of global human migration. Home to the ancient Indus Valley Civilization. Experiencing migrations of Indo-Aryans, Greco-Bactrians, Islamic dynasties, and British colonial rule.",
       ethnicComposition: ["Indo-Aryan ~72%", "Dravidian ~25%", "Austroasiatic and Tibeto-Burman ~3%"],
-      ancientEmpires: ["Indus Valley Civilization", "Maurya Empire", "Gupta Empire", "Chola Dynasty", "Mughal Empire", "Maratha Confederacy", "India"],
+      ancientEmpires: ["Indus Valley Civilization", "Maurya Empire", "Gupta Empire", "Chola Dynasty", "Mughal Empire", "Maratha Confederacy"],
       socialStructures: "Historically characterized by highly structured, localized village systems and the complex, controversial caste (Varna/Jati) social system, which originally coordinated labor specialization."
     },
     culture: {
@@ -721,115 +719,6 @@ export const coreCountriesData: Record<string, CountryData> = {
     },
     aiAnalysis: "China's geography enabled the world's oldest continuous civilization. The Yellow and Yangtze Rivers created agricultural surplus allowing centralized state development. Geographic barriers (mountains, deserts) created a bounded civilization distinct from Europe. The 'Middle Kingdom' psychological identity stems from geographic isolation. Modern China's rise stems from its massive population base and manufacturing advantages. The party-state structure reflects millennia of centralized bureaucratic tradition adapted to modern communism-capitalism."
   },
-  AU: {
-    id: "AU",
-    name: "Australia",
-    capital: "Canberra",
-    population: "26 Million",
-    languages: ["English"],
-    religion: "Christianity ~52%, Unaffiliated ~30%, Buddhism ~2%, Islam ~2.6%",
-    coordinates: [-25.2744, 133.7751],
-    climate: {
-      type: "Diverse: Tropical, Desert, Mediterranean, Temperate",
-      description: "Extremely variable; tropical north, vast arid interior, temperate south and east, Mediterranean southwest.",
-      temperatureRange: "-10°C (Tasmania winter) to 50°C (inland summer)",
-      rainfallPattern: "Most of interior is desert; coasts and south temperate receive regular rain."
-    },
-    geography: {
-      terrain: "Vast, flat continent with limited mountain ranges; extensive deserts in interior; tropical northeast.",
-      features: ["Great Barrier Reef", "Uluru (Ayers Rock)", "Great Dividing Range", "Sydney Harbour", "Tasmania"],
-      biodiversityRating: "High (Unique marsupial and monotreme fauna; endemic species)",
-      ecosystems: ["Tropical rainforests (far north)", "Dry eucalyptus forests and woodlands", "Grasslands and semi-arid scrubland", "Alpine meadows (Tasmania)", "Coral reef ecosystems"]
-    },
-    adaptation: {
-      title: "Desert Survival & Island Isolation",
-      description: "Adapting to world's driest inhabited continent through indigenous knowledge and modern technology.",
-      technologicalAdaptation: "Bore wells, desalination, advanced agricultural irrigation, mining deep underground minerals."
-    },
-    anthropology: {
-      migrationHistory: "Indigenous peoples for 65,000+ years (longest continuous culture). British penal colony 1788, immigration waves.",
-      ethnicComposition: ["European ancestry ~72%", "Asian ~10%", "Aboriginal and Torres Strait Islander ~3%", "Other ~15%"],
-      ancientEmpires: ["Aboriginal nations (pre-colonial)", "British colonial settlements", "Australia"],
-      socialStructures: "Egalitarian frontier culture; indigenous dispossession and ongoing reconciliation."
-    },
-    culture: {
-      insights: ["Laid-back, egalitarian ethos", "Strong outdoor/sports culture", "Aboriginal art and Dreamtime traditions"],
-      foodCulture: "BBQ culture, meat pies, lamingtons (chocolate coconut cakes); Aboriginal bush tucker traditions.",
-      culturalIdentity: "Frontier egalitarianism, outdoor lifestyle, unique nature, and unresolved indigenous relationships."
-    },
-    economy: {
-      overview: "Developed economy; strong in mining, agriculture, tourism, education, and services.",
-      keyIndustries: ["Mining (iron, coal, gold)", "Agriculture", "Tourism", "Education", "Financial Services"],
-      tradeLegacy: "Colonial agricultural and pastoral economy; modern commodity exports and service economy."
-    },
-    aiAnalysis: "Australia is geographic isolation taken to extreme. The vast, dry interior prevented rapid European colonization beyond coasts. Indigenous peoples developed sustainable desert survival over 65,000 years. Modern Australia developed as a British colonial project importing European systems to an alien landscape. The continent's isolation created unique endemic fauna (kangaroos, koalas, platypuses) but also ecological fragility from invasive species. Australia's wealth comes from mining extracted from ancient geology rather than renewable resources, creating long-term sustainability questions."
-  },
-  NZ: {
-    id: "NZ",
-    name: "New Zealand",
-    capital: "Wellington",
-    population: "5 Million",
-    languages: ["English", "Māori"],
-    religion: "Christianity ~38%, Unaffiliated ~48%, Buddhism ~2%, Hinduism ~1%",
-    coordinates: [-41.2865, 174.7762],
-    climate: {
-      type: "Temperate Oceanic",
-      description: "Mild temperatures year-round; very high rainfall; four distinct seasons.",
-      temperatureRange: "5°C (winter) to 20°C (summer)",
-      rainfallPattern: "Very high precipitation especially on western slopes; moderate east side."
-    },
-    geography: {
-      terrain: "Two main islands (North and South) with volcanic North Island and mountainous South Island.",
-      features: ["Southern Alps", "Fjordland", "Bay of Islands", "Mount Cook", "Geysers (Rotorua)"],
-      biodiversityRating: "High (Unique endemic birds and flora; limited native mammals)",
-      ecosystems: ["Temperate rainforests", "Alpine meadows", "Fjord valleys", "Glacial landscapes", "Coastal forests"]
-    },
-    adaptation: {
-      title: "Island Isolation & Volcanic Geology Management",
-      description: "Adapting to isolated island environment and active volcanic zones.",
-      technologicalAdaptation: "Geothermal energy utilization, seismic engineering, conservation of unique endemic species."
-    },
-    anthropology: {
-      migrationHistory: "Polynesian settlement ~1280 CE. British colonization 1840. Māori land dispossession and ongoing Treaty of Waitangi negotiations.",
-      ethnicComposition: ["New Zealand European (Pākehā) ~71%", "Māori ~17%", "Asian ~15%", "Pacific Islander ~9%", "Other ~2%"],
-      ancientEmpires: ["Māori iwi (tribes)", "British colonial New Zealand", "Dominion of New Zealand", "New Zealand"],
-      socialStructures: "Bicultural nation incorporating Māori and Pākehā; indigenous rights and language revitalization ongoing."
-    },
-    culture: {
-      insights: ["Māori cultural renaissance", "Environmental conservation ethic", "Egalitarian 'tall poppy' culture"],
-      foodCulture: "Hangi (earth oven cooking), meat pies, pavlova; Māori traditional foods (kaimoana - seafood).",
-      culturalIdentity: "Progressive bicultural society; strong environmental stewardship; small-nation identity."
-    },
-    economy: {
-      overview: "Developed economy; strengths in agriculture (dairy, sheep), tourism, forestry, and education.",
-      keyIndustries: ["Dairy and Agriculture", "Tourism", "Forestry", "Film and Creative Industries", "Education"],
-      tradeLegacy: "Colonial agricultural exports; modern services and tourism focus."
-    },
-    aiAnalysis: "New Zealand's isolation from any continent for 80 million years created unique fauna (only mammals were bats). Human arrival 700 years ago created Māori civilization. British colonization created bicultural tensions still being resolved. The small population and island isolation fostered egalitarian culture and progressive policies (women's suffrage first, Treaty settlements). Geographic remoteness from major markets drove creative independence and film industry success."
-  },
-};
-
-function getGeneratedAnalysis(country: CountryComprehensive): string {
-  return `${country.name}'s story begins with ${country.geography.terrain.toLowerCase()} and a ${country.climate.type.toLowerCase()} climate. ${country.adaptation.description} Its cultural identity is shaped by ${country.culture.culturalIdentity.toLowerCase()}, while its economy reflects ${country.economy.overview.toLowerCase()}`;
-}
-
-const comprehensiveCountriesData = allCountriesComprehensive.reduce<Record<string, CountryData>>(
-  (acc, country) => {
-    acc[country.id] = {
-      ...country,
-      adaptation: {
-        ...country.adaptation,
-      },
-      aiAnalysis: getGeneratedAnalysis(country),
-    };
-    return acc;
-  },
-  {}
-);
-
-export const countriesData: Record<string, CountryData> = {
-  ...comprehensiveCountriesData,
-  ...coreCountriesData,
 };
 
 export const countriesDataArray = Object.values(countriesData);
