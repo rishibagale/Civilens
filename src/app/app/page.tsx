@@ -332,6 +332,7 @@ export default function AppDashboard() {
                     setActiveCountryId(null);
                   }
                 }}
+                onSelectEvent={handleSelectEvent}
                 selectedEventId={selectedEventId}
               />
             </div>

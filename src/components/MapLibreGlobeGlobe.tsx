@@ -84,6 +84,7 @@ interface MapLibreGlobeGlobeProps {
   activeCountryId?: string | null;
   onSelectCountry?: (id: string) => void;
   onSelectCivilization?: (id: string) => void;
+  onSelectEvent?: (id: string | null) => void;
   selectedEventId?: string | null;
 }
 
@@ -94,6 +95,7 @@ export default function MapLibreGlobeGlobe({
   activeCountryId = null,
   onSelectCountry,
   onSelectCivilization,
+  onSelectEvent,
   selectedEventId = null,
 }: MapLibreGlobeGlobeProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -735,24 +737,8 @@ export default function MapLibreGlobeGlobe({
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const popupContent = `
-          <div class="bg-black/95 text-white p-3 rounded border border-zinc-800 font-mono text-[9px] w-56 shadow-2xl leading-relaxed">
-            <div class="font-bold text-[10px] border-b border-zinc-800 pb-1 mb-1.5 flex justify-between ${
-              event.impact === "major" ? "text-red-500" : event.impact === "significant" ? "text-amber-500" : "text-cyan-500"
-            }">
-              <span>${event.title}</span>
-              <span>⚡</span>
-            </div>
-            <div><span class="text-gray-400">Year:</span> <span class="text-white">${event.year}</span></div>
-            <div><span class="text-gray-400">Impact:</span> <span class="uppercase text-white font-semibold">${event.impact}</span></div>
-            <div class="text-gray-300 mt-2 pt-1 border-t border-zinc-800/50 text-[8.5px]">${event.description}</div>
-          </div>
-        `;
-
-        new maplibregl.Popup({ closeButton: true, className: "cyber-popup" })
-          .setLngLat([event.coordinates![1], event.coordinates![0]])
-          .setHTML(popupContent)
-          .addTo(map);
+        // Fire onSelectEvent which triggers the unified flyTo + cinematic popup in useEffect
+        onSelectEvent?.(event.id);
       });
 
       const marker = new maplibregl.Marker({ element: el })
