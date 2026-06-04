@@ -7,7 +7,9 @@ import Navbar from "@/components/Navbar";
 import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
+import EventDetailPanel from "@/components/EventDetailPanel";
 import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map } from "lucide-react";
+import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
@@ -64,6 +66,19 @@ export default function AppDashboard() {
 
   const handleSelectEvent = (id: string | null) => {
     setSelectedEventId(id);
+    // Mutually exclusive: opening an event closes any open country panel
+    if (id) setActiveCountryId(null);
+  };
+
+  const handleSelectCountry = (id: string | null) => {
+    setActiveCountryId(id);
+    // Mutually exclusive: opening a country closes any open event panel
+    if (id) setSelectedEventId(null);
+  };
+
+  const handleAskAboutEvent = (event: HistoricalEvent) => {
+    setPendingQuery(`Tell me more about ${event.title} (${event.era} era). ${event.description}`);
+    setActivePanel("ai");
   };
 
   const getSearchResults = () => {
@@ -318,23 +333,22 @@ export default function AppDashboard() {
           {/* Map Area */}
           <div className="flex-1 relative w-full min-h-0 overflow-hidden">
             <div className="absolute inset-0 w-full h-full">
-              <MapLibreGlobeGlobe
-                activeEra={activeEra}
-                activeLayers={activeLayers}
-                activeCountryId={activeCountryId}
-                onSelectCountry={(id) => {
-                  setActiveCountryId(id);
-                }}
-                onSelectCivilization={(civId) => {
-                  const civ = civilizationsData.find((c) => c.id === civId);
-                  if (civ) {
-                    setActiveEra(civ.era);
-                    setActiveCountryId(null);
-                  }
-                }}
-                onSelectEvent={handleSelectEvent}
-                selectedEventId={selectedEventId}
-              />
+            <MapLibreGlobeGlobe
+              activeEra={activeEra}
+              activeLayers={activeLayers}
+              activeCountryId={activeCountryId}
+              onSelectCountry={handleSelectCountry}
+              onSelectCivilization={(civId) => {
+                const civ = civilizationsData.find((c) => c.id === civId);
+                if (civ) {
+                  setActiveEra(civ.era);
+                  setActiveCountryId(null);
+                  setSelectedEventId(null);
+                }
+              }}
+              onSelectEvent={handleSelectEvent}
+              selectedEventId={selectedEventId}
+            />
             </div>
 
             {/* Cinematic HUD Overlays */}
@@ -383,6 +397,14 @@ export default function AppDashboard() {
                 />
               )}
             </AnimatePresence>
+
+            {/* Event Detail Panel — mutually exclusive with CountryPanel */}
+            <EventDetailPanel
+              eventId={selectedEventId}
+              onClose={() => setSelectedEventId(null)}
+              onSelectEvent={handleSelectEvent}
+              onAskAboutEvent={handleAskAboutEvent}
+            />
           </div>
 
           {/* Timeline Slider — bottom strip */}

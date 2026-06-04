@@ -108,14 +108,16 @@ export default function MapLibreGlobeGlobe({
   const propsRef = useRef({
     onSelectCountry,
     onSelectCivilization,
+    onSelectEvent,
   });
 
   useEffect(() => {
     propsRef.current = {
       onSelectCountry,
       onSelectCivilization,
+      onSelectEvent,
     };
-  }, [onSelectCountry, onSelectCivilization]);
+  }, [onSelectCountry, onSelectCivilization, onSelectEvent]);
 
   // Update layers based on era and active layers
   const updateEraLayers = useCallback(() => {
@@ -737,8 +739,8 @@ export default function MapLibreGlobeGlobe({
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        // Fire onSelectEvent which triggers the unified flyTo + cinematic popup in useEffect
-        onSelectEvent?.(event.id);
+        // Use propsRef to avoid stale closure — onSelectEvent changes when the parent re-renders
+        propsRef.current.onSelectEvent?.(event.id);
       });
 
       const marker = new maplibregl.Marker({ element: el })
@@ -750,36 +752,125 @@ export default function MapLibreGlobeGlobe({
 
   }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization, selectedEventId]);
 
-  // Zoom/Fly-to Selected Event
+  // Zoom/Fly-to Selected Event (panel handles the actual detail UI;
+  // here we just animate the camera and the pulse ring / trail).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !map.isStyleLoaded()) return;
 
     if (!selectedEventId) {
-      selectedEventPopupRef.current?.remove();
-      selectedEventPopupRef.current = null;
+      // remove pulse + trail when deselected
+      if (map.getLayer("selected-event-pulse")) map.removeLayer("selected-event-pulse");
+      if (map.getLayer("selected-event-trail")) map.removeLayer("selected-event-trail");
+      if (map.getSource("selected-event-source")) map.removeSource("selected-event-source");
       return;
     }
 
     const event = (historicalEvents[activeEra] || []).find((e) => e.id === selectedEventId);
-    if (event && event.coordinates) {
-      map.flyTo({
-        center: [event.coordinates[1], event.coordinates[0]], // [lng, lat]
-        zoom: 4.2,
-        speed: 1.2,
-        curve: 1.4,
-        essential: true,
-      });
+    if (!event || !event.coordinates) return;
 
-      selectedEventPopupRef.current?.remove();
-      selectedEventPopupRef.current = new maplibregl.Popup({
-        closeButton: true,
-        closeOnClick: false,
-        className: "cyber-popup",
-      })
-        .setLngLat([event.coordinates[1], event.coordinates[0]])
-        .setHTML(getEventPopupContent(event))
-        .addTo(map);
+    // Cinematic camera: tilt, fly-to, slight bearing rotation
+    const [lat, lng] = event.coordinates;
+    const targetBearing = ((Date.now() / 200) % 360) - 180; // dynamic but bounded
+    map.flyTo({
+      center: [lng, lat],
+      zoom: 4.2,
+      pitch: 35,
+      bearing: targetBearing,
+      speed: 1.0,
+      curve: 1.4,
+      essential: true,
+    });
+
+    // ── Pulse ring + animated trail ─────────────────────────
+    const color = {
+      major: "#ff3b30",
+      significant: "#f59e0b",
+      regional: "#00f0ff",
+    }[event.impact];
+
+    const ringRadiusKm = 4; // ~ event pinpoint size
+    const ring = createCoordinateCircle([lat, lng], ringRadiusKm * 80, 64);
+
+    // Optional trail
+    const lineFeatures: Feature<LineString>[] = [];
+    if (event.trailPath && event.trailPath.length > 1) {
+      lineFeatures.push({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: event.trailPath.map((c) => [c[1], c[0]]),
+        },
+      });
+    }
+
+    // Remove old pulse + trail if any
+    if (map.getLayer("selected-event-pulse")) map.removeLayer("selected-event-pulse");
+    if (map.getLayer("selected-event-trail")) map.removeLayer("selected-event-trail");
+    if (map.getSource("selected-event-source")) map.removeSource("selected-event-source");
+
+    map.addSource("selected-event-source", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Polygon", coordinates: [ring] },
+          },
+          ...lineFeatures,
+        ],
+      },
+    });
+
+    // Two-layer ring: a filled disk + an outline that we'll animate via paint
+    map.addLayer({
+      id: "selected-event-pulse",
+      type: "fill",
+      source: "selected-event-source",
+      filter: ["==", "$type", "Polygon"],
+      paint: {
+        "fill-color": color,
+        "fill-opacity": 0.18,
+      },
+    });
+
+    if (lineFeatures.length > 0) {
+      map.addLayer({
+        id: "selected-event-trail",
+        type: "line",
+        source: "selected-event-source",
+        filter: ["==", "$type", "LineString"],
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": color,
+          "line-width": 2.5,
+          "line-opacity": 0.85,
+          "line-dasharray": [2, 3],
+        },
+      });
+      // Animate the dash offset for a "flowing" trail effect
+      let dashPhase = 0;
+      const interval = window.setInterval(() => {
+        dashPhase = (dashPhase + 1) % 1000;
+        if (!map.getLayer("selected-event-trail")) {
+          window.clearInterval(interval);
+          return;
+        }
+        try {
+          map.setPaintProperty("selected-event-trail", "line-dasharray", [
+            2,
+            3,
+          ]);
+          // MapLibre doesn't have a direct dash-offset in stable; use line-width pulse instead
+          const pulse = 2.5 + Math.sin(Date.now() / 220) * 0.5;
+          map.setPaintProperty("selected-event-trail", "line-width", pulse);
+        } catch {
+          /* layer may have been removed */
+        }
+      }, 60);
     }
   }, [selectedEventId, activeEra]);
 

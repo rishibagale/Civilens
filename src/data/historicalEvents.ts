@@ -1,3 +1,8 @@
+export interface KeyFigure {
+  name: string;
+  role: string;
+}
+
 export interface HistoricalEvent {
   id: string;
   title: string;
@@ -7,6 +12,16 @@ export interface HistoricalEvent {
   description: string;
   impact: "major" | "significant" | "regional";
   affectedRegions: string[];
+  // ── Rich detail fields (optional — when missing, the panel shows a slim view) ──
+  narrative?: string;
+  causes?: string[];
+  effects?: string[];
+  keyFigures?: KeyFigure[];
+  relatedEvents?: string[];
+  imageQuery?: string;
+  imageCaption?: string;
+  /** Optional animated trail path across the globe (e.g. Mongol expansion). */
+  trailPath?: [number, number][];
 }
 
 type EraType = "ancient" | "medieval" | "colonial" | "modern" | "future";
@@ -22,6 +37,26 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Narmer unites Upper and Lower Egypt, establishing the first dynasty.",
       impact: "major",
       affectedRegions: ["EG"],
+      narrative: "Around 3100 BCE, the legendary king Narmer (sometimes identified with Menes) unified the kingdoms of Upper and Lower Egypt for the first time, founding the First Dynasty and inaugurating more than three millennia of pharaonic rule. The unification transformed the Nile valley from a patchwork of competing city-states into a single, centralized state capable of mobilizing massive labor for monumental architecture, codified writing, and standardized measurement.\n\nThe most tangible evidence is the Narmer Palette, a siltstone cosmetic palette discovered at Hierakonpolis, depicting the king wearing the white crown of Upper Egypt on one side and the red crown of Lower Egypt on the other—a visual statement of political fusion. The capital was established at Memphis, near modern Cairo, strategically positioned at the apex of the Nile Delta.\n\nThe unification created the world's first large-scale territorial state, setting templates for bureaucracy, taxation, and irrigation management that would shape Mediterranean and Near Eastern civilization for thousands of years. It is often cited as the dawn of recorded history.",
+      causes: [
+        "Centuries of warfare between Upper (southern) and Lower (northern) Nile kingdoms over fertile floodplain territory",
+        "Resource competition for grain, gold, and trade-route control between Nile and Red Sea",
+        "Rise of warrior-kings capable of mobilizing mass conscript armies with bronze weapons",
+        "Need for unified flood-control infrastructure on the Nile"
+      ],
+      effects: [
+        "Birth of the world's first territorial nation-state with codified bureaucracy",
+        "Standardization of hieroglyphic writing, mathematics, and a 365-day calendar",
+        "Construction of the first pyramids and the great temples of Karnak and Luxor",
+        "Created a 3,000-year continuity of pharaonic culture that defined Egyptian identity"
+      ],
+      keyFigures: [
+        { name: "Narmer / Menes", role: "Unifier and founder of the First Dynasty" },
+        { name: "Neithhotep", role: "Queen consort, possibly first ruling queen of dynastic Egypt" }
+      ],
+      relatedEvents: ["great_wall_construction", "han_dynasty", "maurya_empire"],
+      imageQuery: "Narmer Palette ancient Egypt",
+      imageCaption: "The Narmer Palette (c. 3100 BCE) commemorates the unification — one of the earliest known historical artworks."
     },
     {
       id: "indus_valley",
@@ -194,6 +229,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Western Roman Empire collapses; barbarian kingdoms emerge.",
       impact: "major",
       affectedRegions: ["IT", "FR", "ES", "DE"],
+      narrative: "On 4 September 476 CE, the Germanic chieftain Odoacer deposed the teenage emperor Romulus Augustulus in Ravenna, an event traditionally marked as the fall of the Western Roman Empire. While the East—centered on Constantinople—continued as the Byzantine Empire for another thousand years, the political unity of the Mediterranean world dissolved almost overnight.\n\nThe collapse was not a single blow but the culmination of three centuries of cascading crises: the Antonine Plague (165-180 CE) and Cyprian Plague (249-262 CE) killing perhaps a third of the empire's population; recurring barbarian incursions along the Rhine and Danube; the fiscal strain of maintaining a 400,000-strong army; economic debasement of the silver currency; and the loss of African breadbasket provinces to the Vandals. Climate data from ice cores suggests a period of cooling and drought that further stressed agriculture.\n\nIn the void, a patchwork of Germanic successor kingdoms emerged—the Ostrogoths in Italy, the Visigoths in Iberia, the Franks in Gaul, and the Anglo-Saxons in Britain. Christianity, once a persecuted sect, became the unifying cultural force, preserving literacy, Roman law, and administrative techniques through the monasteries that would fuel the Carolingian Renaissance three centuries later.",
+      causes: [
+        "Recurring pandemics (Antonine and Cyprian plagues) devastating urban populations and tax bases",
+        "Sustained Germanic migrations across the Rhine and Danube frontiers",
+        "Severe fiscal crisis and currency debasement undermining army pay and trade",
+        "Overextension of borders and a shift of economic重心 to the Eastern Empire"
+      ],
+      effects: [
+        "End of unified Mediterranean political authority; rise of feudal and manorial systems",
+        "Christian Church becomes the central preserver of literacy, law, and learning in the West",
+        "Successor kingdoms in Italy, Gaul, Iberia, and Britain create the medieval map of Europe",
+        "Sets the stage for the Carolingian Renaissance and eventual formation of the Holy Roman Empire"
+      ],
+      keyFigures: [
+        { name: "Romulus Augustulus", role: "Last Western Roman Emperor" },
+        { name: "Odoacer", role: "Germanic chieftain who deposed the last emperor" },
+        { name: "Emperor Zeno (East)", role: "Refused to send aid, accelerating Western collapse" }
+      ],
+      relatedEvents: ["byzantine_peak", "ottoman_constantinople", "islamic_golden_age"],
+      imageQuery: "Fall of Rome barbarian invasions",
+      imageCaption: "Germanic warriors cross the frozen Rhine in 406 CE — the breach that began the end."
     },
     {
       id: "byzantine_peak",
@@ -264,6 +320,39 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Genghis Khan unites Mongol tribes and begins world's largest land empire.",
       impact: "major",
       affectedRegions: ["MN", "CN", "RU"],
+      narrative: "In 1206, on the banks of the Onon River, Temüjin was proclaimed Genghis Khan ('Universal Ruler') at a kurultai of Mongol and Turkic tribes, ending decades of steppe infighting. He then unleashed the most formidable war machine the medieval world had ever seen: a decimal-organized army of light-cavalry archers communicating via horse-relay messenger stations (yam), capable of coordinating campaigns across thousands of kilometers.\n\nIn barely two decades, the Mongols crushed the Western Xia, the Jin Dynasty of northern China, and the Khwarezmian Empire of Persia. By Genghis Khan's death in 1227, his empire already stretched from the Sea of Japan to the Caspian. His sons and grandsons extended it further: the sack of Baghdad in 1258 ended the Abbasid Caliphate; the invasion of Poland and Hungary in 1241-42 came within a hairsbreadth of conquering Vienna; Kublai Khan completed the conquest of southern China and founded the Yuan Dynasty.\n\nAt its peak under Kublai, the empire covered roughly 24 million km²—about a quarter of the world's inhabited land and the largest contiguous land empire in history. Paradoxically, the Pax Mongolica also enabled the greatest exchange of goods, ideas, pathogens, and people in pre-modern history: gunpowder, printing, and the Black Death all traveled the same horse-routes.",
+      causes: [
+        "Decades of tribal warfare on the steppe producing hardened warrior leaders",
+        "Superior horse-archer military doctrine with unprecedented coordination by messenger relay",
+        "Vacuum of power in northern China after Jin Dynasty's decline",
+        "Climate stress on the steppe (early 13th-century drought) pushing tribes outward"
+      ],
+      effects: [
+        "Largest contiguous land empire in human history (24 million km² at peak)",
+        "Pax Mongolica enabled unprecedented Silk Road trade, exchanging gunpowder, printing, and papermaking between East and West",
+        "The Black Death spread along Mongol trade routes in the 14th century, killing ~30-50% of Europe",
+        "Established the principle of meritocratic military bureaucracy that influenced later Eurasian states"
+      ],
+      keyFigures: [
+        { name: "Genghis Khan", role: "Founder and unifier of the Mongol Empire" },
+        { name: "Kublai Khan", role: "Grandson, completed conquest of China, founded the Yuan Dynasty" },
+        { name: "Subutai", role: "Greatest Mongol general, mastermind of the European campaigns" }
+      ],
+      relatedEvents: ["silk_road_peak", "crusades", "ottoman_constantinople"],
+      imageQuery: "Genghis Khan Mongol Empire",
+      imageCaption: "Genghis Khan unifying the Mongol tribes at the 1206 kurultai.",
+      trailPath: [
+        [49.1999, 102.1734],
+        [47.9214, 106.9057],
+        [43.1198, 76.9298],
+        [39.5501, 77.2353],
+        [33.3139, 44.3661],
+        [33.3128, 44.3615],
+        [34.3416, 69.1834],
+        [39.9042, 116.4074],
+        [47.8864, 106.9060],
+        [55.7558, 37.6173]
+      ]
     },
     {
       id: "magna_carta",
@@ -304,6 +393,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Fall of Byzantine Empire; Ottomans establish dominance in Eastern Mediterranean.",
       impact: "major",
       affectedRegions: ["TR", "GR"],
+      narrative: "On 29 May 1453, after a 53-day siege, the 21-year-old Ottoman Sultan Mehmed II rode into the shattered Theodosian walls of Constantinople. The last Byzantine emperor, Constantine XI Palaiologos, died on the ramparts, and the thousand-year-old Eastern Roman Empire ceased to exist. The event marked both an end and a beginning—the close of the medieval world and the inauguration of the Ottoman age.\n\nMehmed had assembled an astonishing force: perhaps 80,000 troops and a navy that hauled ships overland into the Golden Horn. His Hungarian cannon-maker Orban cast a 27-foot bronze bombard that could fire 600-pound stone balls—among the largest siege guns ever built. The Theodosian walls, which had repelled Attila and countless others for a millennium, finally fell to the combination of massed artillery and a daring night attack through a postern gate.\n\nConstantinople was renamed Istanbul, Hagia Sophia became a mosque, and the city was repopulated with Turks, Jews, and Christians invited from across the empire. The fall sent shockwaves across Europe, accelerating the Portuguese search for sea routes to Asia, and arguably setting the Renaissance—and ultimately the modern world—into motion.",
+      causes: [
+        "Centuries of Ottoman territorial consolidation isolating Constantinople from Christian Europe",
+        "Collapse of the Byzantine Empire's finances and population after the Black Death and the 1204 Latin sack",
+        "Rise of gunpowder artillery making medieval walls obsolete for the first time in history",
+        "Mehmed II's personal ambition to complete what his great-grandfather Bayezid had begun"
+      ],
+      effects: [
+        "End of the Byzantine (Eastern Roman) Empire after 1,123 years of continuous existence",
+        "Established the Ottoman Empire as a major power for the next 450 years",
+        "Accelerated European Age of Exploration as overland trade routes fell under Ottoman control",
+        "Transformed Hagia Sophia from Christianity's largest church into a mosque — symbol of Islamic ascendancy"
+      ],
+      keyFigures: [
+        { name: "Mehmed II 'the Conqueror'", role: "21-year-old Ottoman Sultan who took the city" },
+        { name: "Constantine XI", role: "Last Byzantine Emperor, died defending the walls" },
+        { name: "Orban", role: "Hungarian engineer who built the massive siege bombard" }
+      ],
+      relatedEvents: ["roman_fall", "byzantine_peak", "age_discovery"],
+      imageQuery: "Fall of Constantinople 1453 Ottoman siege",
+      imageCaption: "The fall of Constantinople — often called the end of the Middle Ages."
     },
     {
       id: "zheng_he_voyages",
@@ -376,6 +486,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "United States declares independence from British Empire.",
       impact: "major",
       affectedRegions: ["US", "GB"],
+      narrative: "On 4 July 1776, the Second Continental Congress, meeting in Philadelphia, adopted the Declaration of Independence written primarily by Thomas Jefferson. The document's famous preamble—that 'all men are created equal' and are 'endowed by their Creator with certain unalienable Rights'—articulated Enlightenment principles in a political act of war against the world's most powerful empire.\n\nThe causes were a combination of imperial taxation (the Stamp Act of 1765, the Townshend Acts), military occupation (the Boston Massacre of 1770, the Intolerable Acts of 1774), and the colonists' distinct political culture of self-governance through town meetings and colonial assemblies. The shot heard 'round the world' at Lexington in April 1775 began an eight-year war that, against the odds, expelled British forces from Yorktown in October 1781.\n\nThe American Revolution was the first successful colonial war of independence in modern history and a template for dozens of similar movements over the following centuries. It also created the first large-scale constitutional experiment in federal republicanism, tested under the Articles of Confederation and refined in the 1787 Constitution.",
+      causes: [
+        "Parliamentary taxation without colonial representation ('no taxation without representation')",
+        "British military occupation of Boston and closing of the port after the Boston Tea Party",
+        "Enlightenment philosophy of natural rights spreading through colonial reading clubs and pamphlets",
+        "Distinct colonial self-governance through town meetings and elected assemblies"
+      ],
+      effects: [
+        "Birth of the United States and the first modern constitutional republic of continental scale",
+        "Inspired the French Revolution (1789) and Latin American independence movements (1810s-1820s)",
+        "Established the principle that political legitimacy derives from the consent of the governed",
+        "Created the template for federalism, separation of powers, and a bill of rights"
+      ],
+      keyFigures: [
+        { name: "George Washington", role: "Commander-in-Chief, first President of the United States" },
+        { name: "Thomas Jefferson", role: "Principal author of the Declaration of Independence" },
+        { name: "Benjamin Franklin", role: "Diplomat who secured French alliance critical to victory" }
+      ],
+      relatedEvents: ["french_revolution", "industrial_revolution", "ww1"],
+      imageQuery: "American Revolution Declaration of Independence",
+      imageCaption: "John Trumbull's painting of the signing of the Declaration of Independence."
     },
     {
       id: "french_revolution",
@@ -386,6 +517,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Revolutionary upheaval transforms French society and inspires global change.",
       impact: "major",
       affectedRegions: ["FR", "EU"],
+      narrative: "On 14 July 1789, a Parisian crowd stormed the Bastille fortress in search of gunpowder and political prisoners, an act that has since become the iconic image of popular revolution. Within four years, King Louis XVI was dead by guillotine, the Catholic Church had been disestablished, France had declared itself a republic, and the Revolutionary armies were about to march across Europe.\n\nThe deeper causes were structural. By 1789, France was the most populous nation in Europe (28 million) and its financial system had effectively gone bankrupt from supporting the American Revolution and the lavish court at Versailles. The Estates-General, called for the first time in 175 years, transformed itself into a National Assembly; the Tennis Court Oath of 20 June pledged not to disperse until France had a constitution.\n\nThe Revolution is the founding event of modern democratic politics, the source of the political vocabulary we still use: left, right, liberal, radical, citizen, constitution. The 1789 Declaration of the Rights of Man and of the Citizen enshrined principles of equality before the law, freedom of speech, and popular sovereignty that echoed through the 19th and 20th centuries. But the Revolution also revealed the dark side of democratic politics: the Terror of 1793-94 executed perhaps 17,000 people, including many of the original revolutionaries.",
+      causes: [
+        "Financial bankruptcy of the French state after supporting the American Revolution",
+        "Severe food shortages and rising bread prices in 1788-89",
+        "Enlightenment critique of absolute monarchy and aristocratic privilege",
+        "Convocation of the Estates-General breaking a 175-year institutional paralysis"
+      ],
+      effects: [
+        "Established the political vocabulary of modern democracy (left, right, citizen, constitution)",
+        "Inspired the Haitian Revolution, Latin American independence, and 19th-century European liberalism",
+        "Demonstrated both the promise and terror of popular sovereignty (the Reign of Terror)",
+        "Set the stage for the Napoleonic Wars that reshaped the European map"
+      ],
+      keyFigures: [
+        { name: "Maximilien Robespierre", role: "Leader of the Jacobins and the Committee of Public Safety" },
+        { name: "Georges Danton", role: "Early revolutionary, called for clemency, guillotined 1794" },
+        { name: "Marquis de Lafayette", role: "Liberal aristocrat, author of the Declaration of the Rights of Man" }
+      ],
+      relatedEvents: ["american_independence", "industrial_revolution", "ww1"],
+      imageQuery: "French Revolution Bastille storming 1789",
+      imageCaption: "The storming of the Bastille — the iconic moment of the French Revolution."
     },
     {
       id: "haitian_revolution",
@@ -458,6 +610,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Britain's industrial dominance transforms global economy.",
       impact: "major",
       affectedRegions: ["GB", "DE", "FR"],
+      narrative: "By 1850, Britain had become the world's first industrial civilization, the 'workshop of the world' producing over half of global manufactured goods. The transformation that began in the steam engines of Newcomen and Watt, the spinning jennies of Hargreaves, and the iron furnaces of Coalbrookdale had, by mid-century, remade work, time, space, and the relationship between humanity and nature.\n\nCities like Manchester swelled from 25,000 in 1772 to 400,000 by 1850, drawing labor from the countryside. The factory system replaced seasonal rhythms with the relentless discipline of the clock. Railways, requiring iron, coal, and capital on an unprecedented scale, knit the British Isles into a single market and then, by 1860, spanned the globe from London to Calcutta. The telegraph collapsed communication latency from weeks to seconds.\n\nYet the revolution was never purely British. It was fueled by colonial cotton from America and India, guano from Peru, and rubber from the Congo. It produced immense wealth alongside Dickensian poverty, gave rise to both Marx's critique and the modern labor movement, and set in motion the climate-changing CO₂ emissions that now define our geological epoch—the Anthropocene.",
+      causes: [
+        "Abundant coal and iron deposits concentrated in close proximity in northern England",
+        "Enclosure movement creating a dispossessed labor force available for factory work",
+        "Imperial trade network supplying raw materials (cotton, rubber, guano) and captive markets",
+        "Stable property rights and patent system encouraging technological experimentation"
+      ],
+      effects: [
+        "Urbanization: from 10% to 50% of British population living in cities within a century",
+        "Global GDP per capita and life expectancy begin sustained exponential growth",
+        "CO₂ atmospheric concentration rises from ~280 ppm to over 420 ppm, initiating the Anthropocene",
+        "Birth of the modern working class, socialism, feminism, and labor movements"
+      ],
+      keyFigures: [
+        { name: "James Watt", role: "Improved the steam engine, the prime mover of industrialization" },
+        { name: "Richard Arkwright", role: "Pioneered the water-frame and the factory system" },
+        { name: "Friedrich Engels", role: "Co-author of The Communist Manifesto, observed the era's human cost" }
+      ],
+      relatedEvents: ["ww1", "ww2", "internet_revolution"],
+      imageQuery: "Industrial Revolution steam engine factory",
+      imageCaption: "A 19th-century British steam engine — the prime mover of the industrial age."
     },
     {
       id: "berlin_conference_modern",
@@ -498,6 +671,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Global conflict with unprecedented scale and technology.",
       impact: "major",
       affectedRegions: ["(global)"],
+      narrative: "On 1 September 1939, Nazi Germany invaded Poland. Two days later, Britain and France declared war. By the time the conflict ended in 1945, an estimated 70-85 million people had died—more than 2.5% of the world's population—making World War II the deadliest conflict in human history. Its scale, technology, and ideological ferocity redefined what war itself meant.\n\nThe war fused three previously separate theaters: the European war of blitzkrieg and occupation; the Pacific war of carrier fleets and island-hopping; and the Sino-Japanese war that had begun in 1937. Industrial warfare reached its terrifying apex with the V-2 rocket, strategic bombing of cities, and the atomic bombings of Hiroshima and Nagasaki (6 and 9 August 1945) that brought Japan's surrender.\n\nThe aftermath reshaped the planet: the United Nations was founded in 1945, the Universal Declaration of Human Rights in 1948, the state of Israel in 1948, decolonization swept through Asia and Africa in the following two decades, and the wartime alliance between the US and USSR quickly dissolved into the Cold War that would dominate the next half-century. The trauma also produced the European project—the 1957 Treaty of Rome and the eventual European Union—as an explicit answer to a century of European civil war.",
+      causes: [
+        "Harsh terms of the Treaty of Versailles (1919) and German economic humiliation",
+        "Rise of fascist and Nazi ideologies capitalizing on economic depression",
+        "Failure of the League of Nations to deter aggression in Manchuria, Ethiopia, and the Rhineland",
+        "German-Soviet pact (1939) giving Hitler freedom to invade Poland"
+      ],
+      effects: [
+        "Approximately 70-85 million deaths, including 6 million Jews in the Holocaust",
+        "United Nations founded (1945); Universal Declaration of Human Rights (1948)",
+        "Atomic weapons usher in the nuclear age and Cold War bipolar world order",
+        "Acceleration of European decolonization and the eventual formation of the European Union"
+      ],
+      keyFigures: [
+        { name: "Franklin D. Roosevelt / Harry Truman", role: "US Presidents who led Allied war effort" },
+        { name: "Winston Churchill", role: "British Prime Minister, voice of resistance" },
+        { name: "Joseph Stalin", role: "Soviet dictator whose sacrifices defeated Nazi Germany" }
+      ],
+      relatedEvents: ["ww1", "nuclear_age", "cold_war"],
+      imageQuery: "World War II 1945 surrender",
+      imageCaption: "The raising of the Soviet flag over the Reichstag in Berlin, May 1945."
     },
     {
       id: "nuclear_age",
@@ -548,6 +742,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "Apollo 11 launches from Kennedy Space Center; humans land on the moon.",
       impact: "significant",
       affectedRegions: ["(global)"],
+      narrative: "At 20:17 UTC on 20 July 1969, the lunar module Eagle settled onto the Moon's Sea of Tranquility with less than 30 seconds of fuel remaining. Six hours later, Neil Armstrong became the first human being to set foot on a world other than Earth, calling it 'one small step for [a] man, one giant leap for mankind.' An estimated 650 million people watched the grainy black-and-white broadcast live—the largest television audience in human history to that point.\n\nThe Apollo program had been launched by President Kennedy in 1961 as a deliberate Cold War gesture after Soviet cosmonaut Yuri Gagarin became the first human in space. The decade between 1961 and 1969 saw NASA's budget briefly reach 4.5% of US federal spending, employing 400,000 Americans and the labor of some 20,000 industrial firms and universities. The Saturn V rocket, still the most powerful ever to fly successfully, remains a monument to that focused effort.\n\nThe six Apollo lunar landings (1969-1972) brought back 382 kilograms of lunar rocks, deployed scientific instruments that operated for years, and forever altered humanity's sense of its own place in the cosmos. The famous 'Earthrise' photograph from Apollo 8 is widely credited with catalyzing the modern environmental movement by showing the planet as a fragile, isolated whole.",
+      causes: [
+        "Cold War competition between the United States and the Soviet Union",
+        "Soviet firsts (Sputnik 1957, Gagarin 1961) shocking American prestige",
+        "Kennedy's 1961 commitment to a manned lunar landing within the decade",
+        "Massive federal funding and concentration of aerospace engineering talent"
+      ],
+      effects: [
+        "First time humans walked on a world other than Earth",
+        "Catalyzed the modern environmental movement via the Earthrise photo",
+        "Established the precedent that humanity can leave its planet of origin",
+        "Drove development of integrated circuits, fuel cells, and many other spin-off technologies"
+      ],
+      keyFigures: [
+        { name: "Neil Armstrong", role: "First human to set foot on the Moon" },
+        { name: "Buzz Aldrin", role: "Second moonwalker, pilot of the lunar module" },
+        { name: "Wernher von Braun", role: "German-American architect of the Saturn V rocket" }
+      ],
+      relatedEvents: ["cold_war", "ww2", "internet_revolution"],
+      imageQuery: "Apollo 11 Moon Landing 1969",
+      imageCaption: "Buzz Aldrin's footprint on the Moon — a mark that will remain undisturbed for millions of years."
     },
     {
       id: "china_opens",
@@ -588,6 +803,27 @@ export const historicalEvents: Record<EraType, HistoricalEvent[]> = {
       description: "World Wide Web becomes mainstream; digital revolution transforms society.",
       impact: "major",
       affectedRegions: ["(global)"],
+      narrative: "On 9 August 1995, Netscape Communications went public; the next day its stock rose from $28 to $74. Within four years the company's browser was on 80% of the world's computers, and a previously obscure research project funded by the US Department of Defense had become the substrate of global commerce, communication, and culture.\n\nThe Internet had existed for decades as ARPANET (1969) and the academic NSFNET (1986), but two innovations transformed it from a tool of universities and defense contractors into a mass medium: Tim Berners-Lee's 1991 invention of the World Wide Web at CERN, and the 1993 release of Mosaic—the first graphical browser. By 2000, the phrase 'dot-com' had entered every language, and the New Economy had begun to reshape retail, media, finance, and politics.\n\nThe Internet Revolution is unique in human history for its speed: a technology that took electricity 30 years, the telephone 25 years, and television 13 years to reach a quarter of the US population reached that mark in just seven. Its consequences—global social media, e-commerce, the gig economy, cyberwarfare, deepfakes, and a fundamental rewiring of attention itself—are still unfolding. It is the technological substrate of your reading of this page.",
+      causes: [
+        "ARPANET research (1960s-80s) on resilient packet-switched networks for Cold War defense",
+        "Tim Berners-Lee's 1991 invention of the World Wide Web at CERN",
+        "Mosaic (1993) and Netscape (1994) made the web accessible to non-technical users",
+        "Deregulation of US telecoms (1996) and falling cost of personal computers"
+      ],
+      effects: [
+        "Internet reached 50% of the world population by 2017, faster than any prior technology",
+        "Created entirely new industries (search, social media, e-commerce, streaming, gig work)",
+        "Fundamentally rewired global politics, journalism, and the economy of attention",
+        "Enabled new forms of conflict (cyberwarfare, disinformation, surveillance capitalism)"
+      ],
+      keyFigures: [
+        { name: "Tim Berners-Lee", role: "Invented the World Wide Web at CERN" },
+        { name: "Marc Andreessen", role: "Co-created Mosaic, the first mass-market browser" },
+        { name: "Vint Cerf & Bob Kahn", role: "Co-designed the TCP/IP protocol underlying the Internet" }
+      ],
+      relatedEvents: ["industrial_revolution", "globalization", "9_11"],
+      imageQuery: "Internet 1995 Netscape Mosaic browser",
+      imageCaption: "The Netscape browser icon — gateway to the World Wide Web for the first generation of users."
     },
     {
       id: "9_11",
