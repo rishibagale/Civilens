@@ -756,122 +756,72 @@ export default function MapLibreGlobeGlobe({
   // here we just animate the camera and the pulse ring / trail).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
     if (!selectedEventId) {
       // remove pulse + trail when deselected
-      if (map.getLayer("selected-event-pulse")) map.removeLayer("selected-event-pulse");
-      if (map.getLayer("selected-event-trail")) map.removeLayer("selected-event-trail");
-      if (map.getSource("selected-event-source")) map.removeSource("selected-event-source");
+      try {
+        if (map.getLayer("selected-event-pulse")) map.removeLayer("selected-event-pulse");
+        if (map.getLayer("selected-event-trail")) map.removeLayer("selected-event-trail");
+        if (map.getSource("selected-event-source")) map.removeSource("selected-event-source");
+      } catch (e) { console.warn("[FlyTo] cleanup error:", e); }
       return;
     }
 
-    const event = (historicalEvents[activeEra] || []).find((e) => e.id === selectedEventId);
-    if (!event || !event.coordinates) return;
+    const doFlyTo = () => {
+      const currentMap = mapRef.current;
+      if (!currentMap) return;
 
-    // Cinematic camera: tilt, fly-to, slight bearing rotation
-    const [lat, lng] = event.coordinates;
-    const targetBearing = ((Date.now() / 200) % 360) - 180; // dynamic but bounded
-    map.flyTo({
-      center: [lng, lat],
-      zoom: 4.2,
-      pitch: 35,
-      bearing: targetBearing,
-      speed: 1.0,
-      curve: 1.4,
-      essential: true,
-    });
+      const event = (historicalEvents[activeEra] || []).find((e) => e.id === selectedEventId)
+        || Object.values(historicalEvents).flat().find((e) => e.id === selectedEventId);
+      if (!event || !event.coordinates) {
+        console.warn("[FlyTo] Event not found:", selectedEventId);
+        return;
+      }
 
-    // ── Pulse ring + animated trail ─────────────────────────
-    const color = {
-      major: "#ff3b30",
-      significant: "#f59e0b",
-      regional: "#00f0ff",
-    }[event.impact];
-
-    const ringRadiusKm = 4; // ~ event pinpoint size
-    const ring = createCoordinateCircle([lat, lng], ringRadiusKm * 80, 64);
-
-    // Optional trail
-    const lineFeatures: Feature<LineString>[] = [];
-    if (event.trailPath && event.trailPath.length > 1) {
-      lineFeatures.push({
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: event.trailPath.map((c) => [c[1], c[0]]),
-        },
+      console.log("[FlyTo] Flying to:", event.title, "at", event.coordinates);
+      const [lat, lng] = event.coordinates;
+      const targetBearing = ((Date.now() / 200) % 360) - 180;
+      currentMap.flyTo({
+        center: [lng, lat],
+        zoom: 4.5,
+        pitch: 35,
+        bearing: targetBearing,
+        speed: 1.0,
+        curve: 1.4,
+        essential: true,
       });
-    }
 
-    // Remove old pulse + trail if any
-    if (map.getLayer("selected-event-pulse")) map.removeLayer("selected-event-pulse");
-    if (map.getLayer("selected-event-trail")) map.removeLayer("selected-event-trail");
-    if (map.getSource("selected-event-source")) map.removeSource("selected-event-source");
+      // ── Pulse ring + animated trail ─────────────────────────
+      const color = { major: "#ff3b30", significant: "#f59e0b", regional: "#00f0ff" }[event.impact];
+      const ring = createCoordinateCircle([lat, lng], 320, 64);
 
-    map.addSource("selected-event-source", {
-      type: "geojson",
-      data: {
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: {},
-            geometry: { type: "Polygon", coordinates: [ring] },
-          },
-          ...lineFeatures,
-        ],
-      },
-    });
+      const lineFeatures: Feature<LineString>[] = [];
+      if (event.trailPath && event.trailPath.length > 1) {
+        lineFeatures.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: event.trailPath.map((c) => [c[1], c[0]]) } });
+      }
 
-    // Two-layer ring: a filled disk + an outline that we'll animate via paint
-    map.addLayer({
-      id: "selected-event-pulse",
-      type: "fill",
-      source: "selected-event-source",
-      filter: ["==", "$type", "Polygon"],
-      paint: {
-        "fill-color": color,
-        "fill-opacity": 0.18,
-      },
-    });
+      try {
+        ["selected-event-pulse", "selected-event-trail"].forEach((id) => { if (currentMap.getLayer(id)) currentMap.removeLayer(id); });
+        if (currentMap.getSource("selected-event-source")) currentMap.removeSource("selected-event-source");
+      } catch (e) { console.warn("[FlyTo] cleanup before add:", e); }
 
-    if (lineFeatures.length > 0) {
-      map.addLayer({
-        id: "selected-event-trail",
-        type: "line",
-        source: "selected-event-source",
-        filter: ["==", "$type", "LineString"],
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: {
-          "line-color": color,
-          "line-width": 2.5,
-          "line-opacity": 0.85,
-          "line-dasharray": [2, 3],
-        },
+      currentMap.addSource("selected-event-source", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [ring] } }, ...lineFeatures] },
       });
-      // Animate the dash offset for a "flowing" trail effect
-      let dashPhase = 0;
-      const interval = window.setInterval(() => {
-        dashPhase = (dashPhase + 1) % 1000;
-        if (!map.getLayer("selected-event-trail")) {
-          window.clearInterval(interval);
-          return;
-        }
-        try {
-          map.setPaintProperty("selected-event-trail", "line-dasharray", [
-            2,
-            3,
-          ]);
-          // MapLibre doesn't have a direct dash-offset in stable; use line-width pulse instead
-          const pulse = 2.5 + Math.sin(Date.now() / 220) * 0.5;
-          map.setPaintProperty("selected-event-trail", "line-width", pulse);
-        } catch {
-          /* layer may have been removed */
-        }
-      }, 60);
-    }
+      currentMap.addLayer({ id: "selected-event-pulse", type: "fill", source: "selected-event-source", filter: ["==", "$type", "Polygon"], paint: { "fill-color": color, "fill-opacity": 0.2 } });
+
+      if (lineFeatures.length > 0) {
+        currentMap.addLayer({ id: "selected-event-trail", type: "line", source: "selected-event-source", filter: ["==", "$type", "LineString"], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": color, "line-width": 2.5, "line-opacity": 0.85, "line-dasharray": [2, 3] } });
+        const interval = window.setInterval(() => {
+          if (!currentMap.getLayer("selected-event-trail")) { window.clearInterval(interval); return; }
+          try { currentMap.setPaintProperty("selected-event-trail", "line-width", 2.5 + Math.sin(Date.now() / 220) * 0.5); } catch { /* removed */ }
+        }, 60);
+      }
+    }; // end doFlyTo
+
+    doFlyTo();
   }, [selectedEventId, activeEra]);
 
   useEffect(() => {
