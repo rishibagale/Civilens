@@ -14,6 +14,7 @@ import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import Fuse from "fuse.js";
 
 // Heavy components loaded client-side only
 const AiInsightEngine = dynamic(() => import("@/components/AiInsightEngine"), { ssr: false });
@@ -123,39 +124,36 @@ export default function AppDashboard() {
     setActivePanel("ai");
   };
 
-  const getSearchResults = () => {
+  // Fuzzy search with fuse.js — handles typos, partial matches
+  const searchResults = (() => {
     if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
-    const results: Array<{ id: string; name: string; type: "country" | "civilization"; subtitle: string }> = [];
 
-    Object.values(countriesData).forEach((country) => {
-      if (
-        country.name.toLowerCase().includes(query) ||
-        country.climate.type.toLowerCase().includes(query) ||
-        country.religion.toLowerCase().includes(query)
-      ) {
-        results.push({
-          id: country.id,
-          name: country.name,
-          type: "country",
-          subtitle: `Country • ${country.capital}`,
-        });
-      }
+    const countryItems: Array<{ id: string; name: string; type: "country" | "civilization"; subtitle: string }> =
+      Object.values(countriesData).map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: "country" as const,
+        subtitle: `Country • ${c.capital} • ${c.climate.type}`,
+      }));
+
+    const civItems = civilizationsData.map((civ) => ({
+      id: civ.id,
+      name: civ.name,
+      type: "civilization" as const,
+      subtitle: `Empire • ${civ.era} (${civ.timeSpan})`,
+    }));
+
+    const allItems = [...countryItems, ...civItems];
+
+    const fuse = new Fuse(allItems, {
+      keys: ["name", "subtitle"],
+      threshold: 0.4,
+      distance: 80,
+      minMatchCharLength: 1,
     });
 
-    civilizationsData.forEach((civ) => {
-      if (civ.name.toLowerCase().includes(query) || civ.era.toLowerCase().includes(query)) {
-        results.push({
-          id: civ.id,
-          name: civ.name,
-          type: "civilization",
-          subtitle: `Empire • ${civ.timeSpan}`,
-        });
-      }
-    });
-
-    return results.slice(0, 5);
-  };
+    return fuse.search(searchQuery).map((r) => r.item).slice(0, 8);
+  })();
 
   const sidebarItems = [
     { id: "ai" as PanelType, icon: MessageSquare, label: "ASK" },
@@ -164,7 +162,7 @@ export default function AppDashboard() {
     { id: "layers" as PanelType, icon: LayoutGrid, label: "LAYERS" },
   ];
 
-  const searchResults = getSearchResults();
+  // Remove the old getSearchResults call — now computed inline above
 
   return (
     <div className="flex flex-col bg-[#020204] overflow-hidden select-none relative selection:bg-[#f59e0b]/30" style={{ height: "100dvh" }}>
