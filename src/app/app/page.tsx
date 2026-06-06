@@ -67,6 +67,20 @@ export default function AppDashboard() {
     // Don't close AI/Layers panels — those are intentional user choices
   }, []);
 
+  // ESC key dismiss everything (Material Design + accessibility pattern)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActivePanel(null);
+        setSelectedEventId(null);
+        setActiveCountryId(null);
+        setTimelineExpanded(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
@@ -253,8 +267,8 @@ export default function AppDashboard() {
       {/* ── MAIN CONTENT (MAP, SIDEBAR, TIMELINE) ── */}
       <div className="flex flex-1 min-h-0 w-full overflow-hidden relative">
 
-        {/* DESKTOP: Floating sidebar icon strip */}
-        <div className="hidden md:flex w-16 shrink-0 flex-col items-center justify-center py-8 space-y-4 z-20 bg-black/30">
+        {/* DESKTOP: Floating sidebar icon strip — VS Code activity bar pattern */}
+        <div className="hidden md:flex w-16 shrink-0 flex-col items-center justify-center py-6 space-y-3 z-20 bg-black/30">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePanel === item.id;
@@ -262,20 +276,23 @@ export default function AppDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActivePanel(isActive ? null : item.id)}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${
+                className={`w-full flex flex-col items-center justify-center py-2.5 px-1 transition-all duration-300 border-l-2 ${
                   isActive
-                    ? "bg-[#f59e0b]/25 border-2 border-[#f59e0b] text-[#f59e0b] scale-110 shadow-[0_0_30px_rgba(245,158,11,0.3)]"
-                    : "border border-zinc-800/60 bg-black/40 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 hover:scale-105"
+                    ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/8"
+                    : "border-transparent text-zinc-500 hover:text-zinc-300 hover:border-zinc-600"
                 }`}
                 title={item.label}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_6px_rgba(245,158,11,0.4)]" : ""}`} />
+                <span className={`text-[8px] font-mono font-semibold tracking-wider mt-1 ${isActive ? "text-[#f59e0b]" : "text-zinc-500"}`}>
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Backdrop for left drawer — separate AnimatePresence */}
+        {/* Backdrop for left drawer — visible on all screens */}
         <AnimatePresence>
           {activePanel && (
             <motion.div
@@ -284,7 +301,7 @@ export default function AppDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden absolute inset-0 bg-black/50 z-20"
+              className="absolute inset-0 bg-black/50 z-20"
               onClick={() => setActivePanel(null)}
             />
           )}

@@ -176,7 +176,7 @@ export default function EventDetailPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden fixed inset-0 bg-black/50 z-[39]"
+            className="fixed inset-0 bg-black/50 z-[39]"
             onClick={onClose}
           />
           <motion.div
