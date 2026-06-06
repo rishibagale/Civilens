@@ -11,6 +11,8 @@ interface TimelineSliderProps {
   onEraChange: (era: EraType) => void;
   selectedEventId: string | null;
   onSelectEvent: (id: string | null) => void;
+  /** Compact mode: shows only the era selector strip (no event cards) */
+  compact?: boolean;
 }
 
 interface EraItem {
@@ -26,6 +28,7 @@ export default function TimelineSlider({
   onEraChange,
   selectedEventId,
   onSelectEvent,
+  compact = false,
 }: TimelineSliderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const eras: EraItem[] = [
@@ -94,8 +97,8 @@ export default function TimelineSlider({
       {/* Collapsible Content */}
       {!isCollapsed && (
         <>
-          {/* Era Timeline */}
-          <div className="relative px-4 py-3 flex-shrink-0 border-b border-zinc-800/40 bg-black/30">
+          {/* Era Timeline — always shown */}
+          <div className={`relative px-4 py-3 flex-shrink-0 ${compact ? "" : "border-b border-zinc-800/40"} bg-black/30`}>
             {/* Progress Line */}
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-zinc-800/50 z-0" />
             <div
@@ -136,7 +139,8 @@ export default function TimelineSlider({
             </div>
           </div>
 
-          {/* Events Carousel */}
+          {/* Events Carousel — hidden in compact mode */}
+          {!compact && (
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-4 py-2">
             <div className="text-[8px] font-bold text-zinc-400 tracking-widest uppercase mb-2 flex-shrink-0">
               {historicalEvents[activeEra].length} HISTORICAL EVENTS
@@ -187,6 +191,7 @@ export default function TimelineSlider({
               </div>
             </div>
           </div>
+          )}
         </>
       )}
     </div>

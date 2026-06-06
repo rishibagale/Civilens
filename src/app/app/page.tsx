@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -8,11 +8,12 @@ import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
 import EventDetailPanel from "@/components/EventDetailPanel";
-import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map } from "lucide-react";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map, ArrowLeft } from "lucide-react";
 import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 // Heavy components loaded client-side only
 const AiInsightEngine = dynamic(() => import("@/components/AiInsightEngine"), { ssr: false });
@@ -35,9 +36,18 @@ export default function AppDashboard() {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   // Track which timeline event is selected (used for map fly-to)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  // Listen for toggle-timeline custom event from MobileBottomNav
+  useEffect(() => {
+    const handler = () => setTimelineExpanded((prev) => !prev);
+    window.addEventListener("toggle-timeline", handler);
+    return () => window.removeEventListener("toggle-timeline", handler);
+  }, []);
 
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
@@ -132,8 +142,8 @@ export default function AppDashboard() {
         <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
       </div>
 
-      {/* ── MOBILE ONLY: FLOATING HEADER BAR ── */}
-      <div className="md:hidden shrink-0 flex items-center justify-between px-4 py-3 bg-[#020204]/90 backdrop-blur-sm border-b border-zinc-900/60 z-40">
+      {/* ── MOBILE ONLY: SIMPLE HEADER BAR ── */}
+      <div className="md:hidden shrink-0 flex items-center justify-between px-4 py-2.5 bg-[#020204]/90 backdrop-blur-sm border-b border-zinc-900/60 z-40">
         <div className="flex items-center space-x-2">
           <div className="w-6 h-6 rounded-full border border-[#f59e0b]/50 bg-[#f59e0b]/5 flex items-center justify-center">
             <Map className="w-3 h-3 text-[#f59e0b]" />
@@ -141,127 +151,82 @@ export default function AppDashboard() {
           <span className="text-xs font-bold tracking-[0.2em] text-white uppercase">Civilens</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Era indicator */}
           <span className="text-[9px] font-mono text-[#00f0ff] uppercase border border-[#00f0ff]/30 px-2 py-0.5 rounded bg-[#00f0ff]/5">
             {activeEra}
           </span>
-          {/* Menu toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-9 h-9 rounded-full border border-[#f59e0b]/40 bg-[#060609]/90 flex items-center justify-center text-[#f59e0b] hover:border-[#00f0ff]/50 transition-all"
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4 text-[#00f0ff]" /> : <Compass className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
-      {/* ── MOBILE MENU OVERLAY ── */}
+      {/* ── MOBILE: SEARCH MODAL ── */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {mobileSearchOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden absolute inset-0 bg-[#030408]/97 z-50 p-5 flex flex-col pt-16 overflow-y-auto"
-            style={{ top: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 bg-[#030408]/98 z-[60] flex flex-col"
           >
-            {/* Close button */}
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full border border-zinc-800 bg-zinc-950 flex items-center justify-center text-zinc-400"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Mobile Search */}
-            <div className="relative w-full mb-6">
-              <div className="flex items-center bg-black/50 border border-zinc-800 rounded-lg px-3.5 py-2.5 focus-within:border-[#f59e0b] transition-all">
-                <Search className="w-4 h-4 text-zinc-500 mr-2" />
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800/60">
+              <button
+                onClick={() => { setMobileSearchOpen(false); setSearchQuery(""); }}
+                className="shrink-0 p-2 rounded-full hover:bg-white/5 text-zinc-400"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="flex-1 flex items-center bg-black/50 border border-zinc-800 rounded-lg px-3 py-2.5 focus-within:border-[#f59e0b] transition-all">
+                <Search className="w-4 h-4 text-zinc-500 mr-2 shrink-0" />
                 <input
+                  autoFocus
                   type="text"
                   placeholder="Search countries, empires, climates..."
-                  className="bg-transparent text-xs text-white placeholder-zinc-500 outline-none w-full font-mono"
+                  className="bg-transparent text-sm text-white placeholder-zinc-500 outline-none w-full font-mono"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-
-              {searchResults.length > 0 && (
-                <div className="absolute left-0 right-0 mt-2 bg-[#060609] border border-[#f59e0b]/30 rounded-md shadow-2xl p-2 z-50">
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                <div className="p-3 space-y-1">
                   {searchResults.map((res) => (
                     <button
                       key={res.id}
-                      className="w-full text-left px-2 py-2 hover:bg-[#f59e0b]/10 rounded text-xs text-zinc-300 flex flex-col font-mono border-b border-zinc-900/50 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-[#f59e0b]/10 rounded-xl text-sm text-zinc-300 flex flex-col font-mono transition-all"
                       onClick={() => {
                         handleSearchSelect(res.type, res.id);
                         setSearchQuery("");
+                        setMobileSearchOpen(false);
                       }}
                     >
                       <span className="text-white font-semibold">{res.name}</span>
-                      <span className="text-[9px] text-zinc-500 mt-0.5">{res.subtitle}</span>
+                      <span className="text-[10px] text-zinc-500 mt-0.5">{res.subtitle}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : searchQuery.trim() ? (
+                <div className="flex flex-col items-center justify-center h-40 text-zinc-600 text-sm font-mono">
+                  No results found
+                </div>
+              ) : (
+                <div className="p-6 space-y-4">
+                  <div className="text-[10px] font-mono text-zinc-600 tracking-widest uppercase">Quick Access</div>
+                  {Object.values(countriesData).slice(0, 6).map((c) => (
+                    <button
+                      key={c.id}
+                      className="w-full text-left px-4 py-3 hover:bg-white/5 rounded-xl flex items-center gap-3 transition-all"
+                      onClick={() => { handleSearchSelect("country", c.id); setMobileSearchOpen(false); }}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-400 font-mono font-bold">
+                        {c.name.slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="text-sm text-white font-semibold">{c.name}</div>
+                        <div className="text-[10px] text-zinc-500">{c.capital}</div>
+                      </div>
                     </button>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Panel Navigation Buttons */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePanel === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActivePanel(isActive ? null : item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 border text-center transition-all duration-300 ${
-                      isActive
-                        ? "bg-[#f59e0b]/20 border-2 border-[#f59e0b] text-[#f59e0b] scale-105"
-                        : "border-zinc-800/50 bg-black/40 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-xs font-bold tracking-widest">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Era Selection */}
-            <div className="border-t border-zinc-900 pt-5 font-mono text-center">
-              <span className="text-[10px] text-zinc-600 block tracking-widest uppercase mb-3">SELECT ERA</span>
-              <div className="flex flex-wrap justify-center gap-2">
-                {(["ancient", "medieval", "colonial", "modern", "future"] as EraType[]).map((era) => (
-                  <button
-                    key={era}
-                    onClick={() => {
-                      setActiveEra(era);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`px-3 py-1.5 text-[9px] rounded-lg uppercase border tracking-widest transition-all ${
-                      activeEra === era
-                        ? "bg-[#00f0ff]/10 border-[#00f0ff] text-[#00f0ff]"
-                        : "border-zinc-900 bg-black/20 text-zinc-500"
-                    }`}
-                  >
-                    {era}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* View Map CTA */}
-            <div className="mt-auto pt-6">
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 rounded-xl border border-zinc-800 bg-black/40 text-zinc-300 text-sm font-serif tracking-wide flex items-center justify-center gap-2 hover:border-[#f59e0b]/40 hover:text-[#f59e0b] transition-all"
-              >
-                <Map className="w-4 h-4" />
-                Back to Globe
-              </button>
             </div>
           </motion.div>
         )}
@@ -365,27 +330,7 @@ export default function AppDashboard() {
               </div>
             </div>
 
-            {/* Mobile: floating action buttons on map (visible when menu is closed) */}
-            <div className="md:hidden absolute bottom-6 right-4 z-20 flex flex-col gap-3">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePanel === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActivePanel(isActive ? null : item.id)}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center border shadow-xl transition-all backdrop-blur-sm ${
-                      isActive
-                        ? "bg-[#f59e0b]/30 border-[#f59e0b] text-[#f59e0b] scale-110 shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-                        : "bg-[#020204]/80 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 hover:scale-105"
-                    }`}
-                    title={item.label}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </button>
-                );
-              })}
-            </div>
+            {/* Mobile: no FABs — bottom nav handles navigation */}
 
             {/* Country Panel (bottom sheet on mobile, right slide on desktop) */}
             <AnimatePresence>
@@ -408,16 +353,49 @@ export default function AppDashboard() {
           </div>
 
           {/* Timeline Slider — bottom strip */}
-          <div className="shrink-0 border-t border-zinc-800/60 bg-black/50 z-20" style={{ height: "35vh", minHeight: "200px" }}>
-            <TimelineSlider
-              activeEra={activeEra}
-              onEraChange={setActiveEra}
-              selectedEventId={selectedEventId}
-              onSelectEvent={handleSelectEvent}
-            />
+          {/* Mobile: collapsible timeline, Desktop: fixed height */}
+          <div className="md:shrink-0 border-t border-zinc-800/60 bg-black/50 z-20 md:block" style={{ height: timelineExpanded ? "55vh" : undefined, minHeight: undefined }}>
+            {/* Mobile: show compact era strip when collapsed, full timeline when expanded */}
+            {!timelineExpanded && (
+              <div className="md:hidden">
+                <TimelineSlider
+                  activeEra={activeEra}
+                  onEraChange={setActiveEra}
+                  selectedEventId={selectedEventId}
+                  onSelectEvent={handleSelectEvent}
+                  compact
+                />
+              </div>
+            )}
+            {!timelineExpanded && (
+              <div className="hidden md:block" style={{ height: "35vh", minHeight: "200px" }}>
+                <TimelineSlider
+                  activeEra={activeEra}
+                  onEraChange={setActiveEra}
+                  selectedEventId={selectedEventId}
+                  onSelectEvent={handleSelectEvent}
+                />
+              </div>
+            )}
+            {timelineExpanded && (
+              <div className="md:hidden" style={{ height: "55vh" }}>
+                <TimelineSlider
+                  activeEra={activeEra}
+                  onEraChange={setActiveEra}
+                  selectedEventId={selectedEventId}
+                  onSelectEvent={handleSelectEvent}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
+      {/* ── MOBILE: BOTTOM NAV BAR ── */}
+      <MobileBottomNav
+        activePanel={activePanel}
+        onPanelChange={setActivePanel}
+        onSearchOpen={() => setMobileSearchOpen(true)}
+      />
     </div>
   );
 }
