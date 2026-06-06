@@ -425,10 +425,12 @@ export default function AppDashboard() {
         </div>
       </div>
       {/* ── MOBILE: BOTTOM NAV BAR ── */}
+      {/* Hide bottom nav when panels, events, or countries are open */}
       <MobileBottomNav
         activePanel={activePanel}
         onPanelChange={setActivePanel}
         onSearchOpen={() => setMobileSearchOpen(true)}
+        hidden={selectedEventId !== null || activeCountryId !== null || activePanel !== null}
       />
     </div>
   );

@@ -9,6 +9,7 @@ interface MobileBottomNavProps {
   activePanel: PanelType;
   onPanelChange: (panel: PanelType) => void;
   onSearchOpen: () => void;
+  hidden?: boolean;
 }
 
 const tabs = [
@@ -22,9 +23,11 @@ export default function MobileBottomNav({
   activePanel,
   onPanelChange,
   onSearchOpen,
+  hidden = false,
 }: MobileBottomNavProps) {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#060609]/95 backdrop-blur-xl border-t border-zinc-800/60">
+    <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#060609]/95 backdrop-blur-xl border-t border-zinc-800/60 transition-transform duration-300 ${hidden ? "translate-y-full" : "translate-y-0"}`}>
+
       <div className="flex items-center justify-around px-2 py-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;

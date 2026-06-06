@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, Globe, CloudRain, Compass, HeartHandshake, Briefcase, BookOpen, Scroll, Flame, HelpCircle, type LucideIcon } from "lucide-react";
 import { countriesData } from "@/data/countriesData";
 
@@ -70,14 +70,24 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
   ];
 
   return (
-    <motion.div
-      initial={{ y: "100%", opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: "100%", opacity: 0 }}
-      transition={{ type: "spring", damping: 30, stiffness: 180 }}
-      // Bottom sheet layout on mobile, sliding right panel on desktop
-      className="fixed bottom-0 left-0 w-full h-[75vh] md:absolute md:top-0 md:right-0 md:w-[480px] md:h-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none"
-    >
+    <>
+      {/* Backdrop overlay — tap to dismiss (mobile only) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="md:hidden fixed inset-0 bg-black/50 z-[39]"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 30, stiffness: 180 }}
+        // Bottom sheet layout on mobile, sliding right panel on desktop
+        className="fixed bottom-0 left-0 w-full h-[75vh] md:absolute md:top-0 md:right-0 md:w-[480px] md:h-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none"
+      >
       {/* Visual drag indicator for mobile */}
       <div className="w-12 h-1 bg-zinc-800 rounded-full mx-auto my-3 shrink-0 md:hidden" />
 
@@ -370,5 +380,6 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
         </div>
       </div>
     </motion.div>
+    </>
   );
 }
