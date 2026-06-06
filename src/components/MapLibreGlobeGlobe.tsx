@@ -104,6 +104,7 @@ export default function MapLibreGlobeGlobe({
   const selectedEventPopupRef = useRef<maplibregl.Popup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mapLoadedRef = useRef(false);
 
   const propsRef = useRef({
     onSelectCountry,
@@ -679,33 +680,20 @@ export default function MapLibreGlobeGlobe({
       markersRef.current.push(marker);
     });
 
-    // 4. Add timeline event markers with glowing rings and popups
+  // 4. Add timeline event markers with glowing rings and popups
     const activeEvents = historicalEvents[activeEra] || [];
-    console.log(`[Markers] Active events for era "${activeEra}": ${activeEvents.length} total`);
-    
-    let markersAdded = 0;
-    let markersSkipped = 0;
     
     activeEvents.forEach((event) => {
       // Skip events without coordinates OR events at Null Island (0,0)
-      if (!event.coordinates) {
-        console.log(`[Markers] SKIP (no coords): ${event.title} (id: ${event.id})`);
-        markersSkipped++;
-        return;
-      }
+      if (!event.coordinates) return;
       
       const [lat, lng] = event.coordinates;
-      if (lat === 0 && lng === 0) {
-        console.log(`[Markers] SKIP (null island [0,0]): ${event.title} (id: ${event.id})`);
-        markersSkipped++;
-        return;
-      }
-      
-      console.log(`[Markers] CREATE: ${event.title} (id: ${event.id}) at [${lat}, ${lng}] impact: ${event.impact}`);
+      if (lat === 0 && lng === 0) return;
 
       const el = document.createElement("div");
       el.className = "group relative w-8 h-8 flex items-center justify-center cursor-pointer";
       el.style.pointerEvents = "auto"; el.style.zIndex = "1000";
+      el.dataset.eventId = event.id;
 
       const impactColorClass = {
         major: "border-red-500 bg-red-500/20 shadow-[0_0_8px_rgba(255,59,48,0.5)]",
@@ -714,11 +702,8 @@ export default function MapLibreGlobeGlobe({
       }[event.impact];
 
       const pin = document.createElement("div");
-      pin.className = `w-4 h-4 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass} ${
-        event.id === selectedEventId
-          ? "scale-150 ring-2 ring-white/80 shadow-[0_0_18px_rgba(255,255,255,0.8)]"
-          : ""
-      }`;
+      pin.className = `w-4 h-4 rounded-full border flex items-center justify-center transition-all hover:scale-125 ${impactColorClass}`;
+      pin.dataset.eventPin = event.id;
       
       const dot = document.createElement("div");
       dot.className = `w-2 h-2 rounded-full ${
@@ -739,7 +724,6 @@ export default function MapLibreGlobeGlobe({
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        // Use propsRef to avoid stale closure — onSelectEvent changes when the parent re-renders
         propsRef.current.onSelectEvent?.(event.id);
       });
 
@@ -747,16 +731,44 @@ export default function MapLibreGlobeGlobe({
         .setLngLat([event.coordinates[1], event.coordinates[0]])
         .addTo(map);
       markersRef.current.push(marker);
-      console.log("Marker added successfully for:", event.title);
     });
 
-  }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization, selectedEventId]);
+  }, [activeEra, activeCountryId, onSelectCountry, onSelectCivilization]);
+
+  // Keep latest callbacks in refs so the map init effect can use them without re-creating the map
+  const updateMarkersRef = useRef(updateMarkers);
+  updateMarkersRef.current = updateMarkers;
+  const updateEraLayersRef = useRef(updateEraLayers);
+  updateEraLayersRef.current = updateEraLayers;
+
+  // Highlight / un-highlight the selected event marker (imperative DOM, no full rebuild)
+  useEffect(() => {
+    const prevPins = markersRef.current
+      .map((m) => m.getElement().querySelector<HTMLElement>("[data-event-pin]"))
+      .filter(Boolean) as HTMLElement[];
+    prevPins.forEach((pin) => {
+      pin.classList.remove("scale-150", "ring-2", "ring-white/80");
+      pin.style.boxShadow = "";
+    });
+
+    if (!selectedEventId) return;
+
+    const target = markersRef.current
+      .map((m) => m.getElement())
+      .find((el) => el.dataset.eventId === selectedEventId);
+    if (!target) return;
+    const pin = target.querySelector<HTMLElement>("[data-event-pin]");
+    if (pin) {
+      pin.classList.add("scale-150", "ring-2", "ring-white/80");
+      pin.style.boxShadow = "0 0 18px rgba(255,255,255,0.8)";
+    }
+  }, [selectedEventId]);
 
   // Zoom/Fly-to Selected Event (panel handles the actual detail UI;
   // here we just animate the camera and the pulse ring / trail).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapLoadedRef.current) return;
 
     if (!selectedEventId) {
       // remove pulse + trail when deselected
@@ -824,6 +836,7 @@ export default function MapLibreGlobeGlobe({
     doFlyTo();
   }, [selectedEventId, activeEra]);
 
+  // Map init — runs ONCE on mount. Uses refs for latest callbacks to avoid re-creating the map.
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -831,6 +844,7 @@ export default function MapLibreGlobeGlobe({
       mapRef.current.remove();
       mapRef.current = null;
     }
+    mapLoadedRef.current = false;
 
     try {
       const map = new maplibregl.Map({
@@ -847,6 +861,7 @@ export default function MapLibreGlobeGlobe({
 
       map.on("load", () => {
         console.log("✓ Map loaded successfully");
+        mapLoadedRef.current = true;
         setIsLoading(false);
         setError(null);
 
@@ -864,10 +879,11 @@ export default function MapLibreGlobeGlobe({
           console.warn("Globe projection not available");
         }
 
+        // Use latest callbacks via refs so we don't need them as deps
         console.log("Calling updateMarkers...");
-        updateMarkers();
+        updateMarkersRef.current();
         console.log("Calling updateEraLayers...");
-        updateEraLayers();
+        updateEraLayersRef.current();
       });
 
       map.on("error", (e) => {
@@ -928,24 +944,27 @@ export default function MapLibreGlobeGlobe({
       });
     } catch (err) {
       console.error("Failed to initialize map:", err);
-      // Defer setError to avoid synchronous setState in effect
       setTimeout(() => setError("Failed to initialize map"), 0);
     }
 
     return () => {
       selectedEventPopupRef.current?.remove();
       selectedEventPopupRef.current = null;
+      mapLoadedRef.current = false;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, [updateMarkers, updateEraLayers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Re-render markers when era, selected country, or selection callbacks change
   useEffect(() => {
     updateMarkers();
   }, [activeEra, activeCountryId, updateMarkers]);
 
+  // Re-render era layers when era or active layers change
   useEffect(() => {
     updateEraLayers();
   }, [activeEra, activeLayers, updateEraLayers]);
