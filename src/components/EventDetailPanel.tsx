@@ -168,14 +168,25 @@ export default function EventDetailPanel({
   return (
     <AnimatePresence>
       {eventId && (
-        <motion.div
-          key="event-detail"
-          initial={{ x: "100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "100%", opacity: 0 }}
-          transition={{ type: "spring", damping: 32, stiffness: 220 }}
-          className="fixed bottom-0 left-0 w-full h-[88vh] md:absolute md:top-0 md:right-0 md:w-[520px] md:h-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none border-t md:border-t-0 md:border-l border-panel-border/40 overflow-hidden"
-        >
+        <>
+          {/* Backdrop overlay — tap to dismiss (Material Design pattern) */}
+          <motion.div
+            key="event-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 bg-black/50 z-[39]"
+            onClick={onClose}
+          />
+          <motion.div
+            key="event-detail"
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 32, stiffness: 220 }}
+            className="fixed bottom-0 left-0 w-full h-[80vh] md:absolute md:top-0 md:right-0 md:w-[520px] md:h-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none border-t md:border-t-0 md:border-l border-panel-border/40 overflow-hidden"
+          >
           {/* Era atmospheric gradient overlay */}
           <div
             className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${accent.gradient} opacity-50`}
@@ -520,6 +531,7 @@ export default function EventDetailPanel({
             )}
           </div>
         </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

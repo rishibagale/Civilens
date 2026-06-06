@@ -275,6 +275,21 @@ export default function AppDashboard() {
           })}
         </div>
 
+        {/* Backdrop for left drawer — separate AnimatePresence */}
+        <AnimatePresence>
+          {activePanel && (
+            <motion.div
+              key="drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden absolute inset-0 bg-black/50 z-20"
+              onClick={() => setActivePanel(null)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* LEFT COMPONENT DRAWER OVERLAY (slides in from left) */}
         <AnimatePresence mode="wait">
           {activePanel && (
