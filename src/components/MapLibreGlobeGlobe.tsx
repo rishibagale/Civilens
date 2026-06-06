@@ -86,6 +86,8 @@ interface MapLibreGlobeGlobeProps {
   onSelectCivilization?: (id: string) => void;
   onSelectEvent?: (id: string | null) => void;
   selectedEventId?: string | null;
+  /** Called when user clicks on empty map space (no marker hit) */
+  onMapClick?: () => void;
 }
 
 
@@ -97,6 +99,7 @@ export default function MapLibreGlobeGlobe({
   onSelectCivilization,
   onSelectEvent,
   selectedEventId = null,
+  onMapClick,
 }: MapLibreGlobeGlobeProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -110,6 +113,7 @@ export default function MapLibreGlobeGlobe({
     onSelectCountry,
     onSelectCivilization,
     onSelectEvent,
+    onMapClick,
   });
 
   useEffect(() => {
@@ -117,8 +121,9 @@ export default function MapLibreGlobeGlobe({
       onSelectCountry,
       onSelectCivilization,
       onSelectEvent,
+      onMapClick,
     };
-  }, [onSelectCountry, onSelectCivilization, onSelectEvent]);
+  }, [onSelectCountry, onSelectCivilization, onSelectEvent, onMapClick]);
 
   // Update layers based on era and active layers
   const updateEraLayers = useCallback(() => {
@@ -917,6 +922,9 @@ export default function MapLibreGlobeGlobe({
         // 8 degrees is a reasonable click range for a country on a globe (covers ~880km)
         if (minDistance < 8 && closestCountry) {
           propsRef.current.onSelectCountry?.(closestCountry);
+        } else {
+          // Clicked on empty map space — notify parent (Google Maps pattern: dismiss panels)
+          propsRef.current.onMapClick?.();
         }
       });
 

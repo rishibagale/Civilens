@@ -49,6 +49,24 @@ export default function AppDashboard() {
     return () => window.removeEventListener("toggle-timeline", handler);
   }, []);
 
+  // Google Maps pattern: auto-collapse timeline when event is selected
+  useEffect(() => {
+    if (selectedEventId) setTimelineExpanded(false);
+  }, [selectedEventId]);
+
+  // Auto-collapse timeline when another panel opens
+  useEffect(() => {
+    if (activePanel) setTimelineExpanded(false);
+  }, [activePanel]);
+
+  // Google Maps pattern: tap map = dismiss everything
+  const handleMapClick = useCallback(() => {
+    setTimelineExpanded(false);
+    setSelectedEventId(null);
+    setActiveCountryId(null);
+    // Don't close AI/Layers panels — those are intentional user choices
+  }, []);
+
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
@@ -313,6 +331,7 @@ export default function AppDashboard() {
               }}
               onSelectEvent={handleSelectEvent}
               selectedEventId={selectedEventId}
+              onMapClick={handleMapClick}
             />
             </div>
 
