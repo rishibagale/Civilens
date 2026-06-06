@@ -258,13 +258,12 @@ export default function LandingPage() {
           </div>
           <div>
             <span className="text-xs font-bold tracking-[0.3em] text-[#f1f5f9] block uppercase">
-              EARTH INTELLIGENCE
+              CIVILENS
             </span>
           </div>
         </Link>
         <div className="flex items-center space-x-6 text-[10px] font-mono tracking-widest text-[#a1a1aa]">
           <span className="hidden sm:inline-block text-[#f59e0b]/70 font-semibold">● TELEMETRY LIVE</span>
-          <span className="border border-[#e1e1e9]/10 px-2 py-1 rounded bg-[#111]/30">v1.2</span>
         </div>
       </nav>
 
@@ -462,7 +461,7 @@ export default function LandingPage() {
           <div className="w-4 h-4 rounded-full bg-[#f59e0b]/30 flex items-center justify-center">
             <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
           </div>
-          <span className="text-zinc-400 font-semibold tracking-wide">Earth Intelligence</span>
+          <span className="text-zinc-400 font-semibold tracking-wide">Civilens</span>
           <span>© 2026</span>
         </div>
         <div className="flex items-center space-x-3">

@@ -138,7 +138,7 @@ export default function AppDashboard() {
           <div className="w-6 h-6 rounded-full border border-[#f59e0b]/50 bg-[#f59e0b]/5 flex items-center justify-center">
             <Map className="w-3 h-3 text-[#f59e0b]" />
           </div>
-          <span className="text-xs font-bold tracking-[0.2em] text-white uppercase">Earth Intelligence</span>
+          <span className="text-xs font-bold tracking-[0.2em] text-white uppercase">Civilens</span>
         </div>
         <div className="flex items-center gap-2">
           {/* Era indicator */}
@@ -359,7 +359,7 @@ export default function AppDashboard() {
                   {activeEra} ERA
                 </span>
               </div>
-              <div className="text-zinc-600">MAPLIBRE 3D GLOBE</div>
+              <div className="text-zinc-600">GLOBE ENGINE</div>
               <div>
                 LAYERS: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length}</span>
               </div>

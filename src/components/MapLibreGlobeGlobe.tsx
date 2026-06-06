@@ -1000,7 +1000,7 @@ export default function MapLibreGlobeGlobe({
       />
       {isLoading && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "#00f0ff", textAlign: "center" }}>
-          <div style={{ fontSize: "12px", fontFamily: "monospace" }}>INITIALIZING MAPLIBRE GL...</div>
+          <div style={{ fontSize: "12px", fontFamily: "monospace" }}>INITIALIZING GLOBE...</div>
         </div>
       )}
       {error && (

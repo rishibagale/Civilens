@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Earth Intelligence — AI Civilization & Anthropological Explorer",
-  description: "An interactive, futuristic WebGL platform exploring how climate, geography, migration, and culture shaped humanity across Earth's historical systems.",
+  title: "Civilens — AI Civilization & Anthropological Explorer",
+  description: "An interactive, futuristic platform exploring how climate, geography, migration, and culture shaped humanity across historical systems.",
 };
 
 export default function RootLayout({

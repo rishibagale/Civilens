@@ -340,7 +340,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
               </div>
 
               <div className="border-t border-[#00f0ff]/10 pt-4 flex justify-between items-center text-[10px] text-zinc-500 font-serif">
-                <span>Earth Intelligence Model</span>
+                <span>Civilens Model</span>
                 <span>Analysis Complete</span>
               </div>
             </div>

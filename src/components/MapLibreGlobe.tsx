@@ -299,10 +299,10 @@ export default function MapLibreGlobe({
       <div className="absolute bottom-4 right-4 bg-panel-bg/90 backdrop-blur border border-panel-border px-3 py-2 rounded font-mono text-[9px] text-gray-400 pointer-events-none z-10">
         <div className="flex items-center space-x-1.5 mb-0.5">
           <span className="w-1.5 h-1.5 rounded-full bg-cyber-green animate-pulse" />
-          <span className="text-white">MAPLIBRE GLOBE</span>
+        <span className="text-white">GLOBE ENGINE</span>
         </div>
         <div>STYLE: demotiles.maplibre.org</div>
-        <div>RENDER: MapLibre GL · FREE</div>
+        <div>RENDER: 3D Globe</div>
       </div>
     </div>
   );

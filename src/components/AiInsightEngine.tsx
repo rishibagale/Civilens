@@ -105,7 +105,7 @@ export default function AiInsightEngine({ externalQuery, onClearExternalQuery }:
             <Sparkles className="w-4 h-4 text-[#f59e0b] animate-pulse" />
           </div>
           <div>
-            <h3 className="text-sm font-serif font-bold tracking-wide text-white">Earth Intelligence</h3>
+            <h3 className="text-sm font-serif font-bold tracking-wide text-white">Civilens</h3>
             <p className="text-[10px] text-zinc-500">Exploring the deep connections of our world</p>
           </div>
         </div>

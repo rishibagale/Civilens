@@ -65,9 +65,9 @@ export default function Navbar({ activeEra, onSearchSelect }: NavbarProps) {
           </div>
           <div>
             <span className="block text-white text-sm font-bold tracking-widest neon-text-cyan">
-              EARTH INTELLIGENCE
+              CIVILENS
             </span>
-            <span className="block text-[8px] text-gray-500 tracking-tight">CIVILIZATION TELEMETRY SYSTEM v1.2</span>
+            <span className="block text-[8px] text-gray-500 tracking-tight">CIVILIZATION EXPLORATION ENGINE</span>
           </div>
         </Link>
       </div>
@@ -114,7 +114,7 @@ export default function Navbar({ activeEra, onSearchSelect }: NavbarProps) {
 
         <div className="hidden lg:flex flex-col text-right">
           <span className="text-gray-500">GLOBE ENGINE</span>
-          <span className="text-white">MAPLIBRE · FREE</span>
+          <span className="text-white">GLOBE ENGINE</span>
         </div>
 
         <div className="flex items-center space-x-2">
