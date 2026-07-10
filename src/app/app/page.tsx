@@ -12,7 +12,7 @@ import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map, 
 import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
-import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
+import HoloGlobe from "@/components/HoloGlobe";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import Fuse from "fuse.js";
 
@@ -346,7 +346,7 @@ export default function AppDashboard() {
           {/* Map Area */}
           <div className="flex-1 relative w-full min-h-0 overflow-hidden">
             <div className="absolute inset-0 w-full h-full">
-            <MapLibreGlobeGlobe
+            <HoloGlobe
               activeEra={activeEra}
               activeLayers={activeLayers}
               activeCountryId={activeCountryId}
@@ -361,7 +361,6 @@ export default function AppDashboard() {
               }}
               onSelectEvent={handleSelectEvent}
               selectedEventId={selectedEventId}
-              onMapClick={handleMapClick}
             />
             </div>
 
