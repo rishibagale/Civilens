@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { countriesData } from "@/data/countriesData";
 import { civilizationsData } from "@/data/civilizationsData";
@@ -33,14 +33,15 @@ export default function HoloGlobe({
   const [hoveredName, setHoveredName] = useState<string | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const globeGroupRef = useRef<THREE.Group | null>(null);
+  const targetRotationRef = useRef<{ y: number; x: number } | null>(null);
+  const flyToEnabledRef = useRef(false);
 
-  // Keep latest props in refs for rendering loop usage
   const propsRef = useRef({ activeCountryId, activeEra, activeLayers, onSelectCountry, onSelectCivilization, onSelectEvent, selectedEventId });
   useEffect(() => {
     propsRef.current = { activeCountryId, activeEra, activeLayers, onSelectCountry, onSelectCivilization, onSelectEvent, selectedEventId };
   }, [activeCountryId, activeEra, activeLayers, onSelectCountry, onSelectCivilization, onSelectEvent, selectedEventId]);
 
-  // Helper: lat/lng to 3D position on sphere surface
   function latLngToVector3(lat: number, lng: number, r: number): THREE.Vector3 {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lng + 180) * (Math.PI / 180);
@@ -50,40 +51,45 @@ export default function HoloGlobe({
     return new THREE.Vector3(x, y, z);
   }
 
-  // Create a circle polygon on the globe surface for layer overlays
   function createGlobeCircle(lat: number, lng: number, radiusKm: number, globeRadius: number, segments = 48): number[][] {
     const coords: number[][] = [];
     const distanceRadians = radiusKm / 6371;
     const latRadians = (lat * Math.PI) / 180;
     const lngRadians = (lng * Math.PI) / 180;
-
     for (let i = 0; i <= segments; i++) {
       const angle = (i * 2 * Math.PI) / segments;
-      const drawLatRadians = Math.asin(
-        Math.sin(latRadians) * Math.cos(distanceRadians) +
-          Math.cos(latRadians) * Math.sin(distanceRadians) * Math.cos(angle)
-      );
-      const drawLngRadians = lngRadians + Math.atan2(
-        Math.sin(angle) * Math.sin(distanceRadians) * Math.cos(latRadians),
-        Math.cos(distanceRadians) - Math.sin(latRadians) * Math.sin(drawLatRadians)
-      );
+      const drawLatRadians = Math.asin(Math.sin(latRadians) * Math.cos(distanceRadians) + Math.cos(latRadians) * Math.sin(distanceRadians) * Math.cos(angle));
+      const drawLngRadians = lngRadians + Math.atan2(Math.sin(angle) * Math.sin(distanceRadians) * Math.cos(latRadians), Math.cos(distanceRadians) - Math.sin(latRadians) * Math.sin(drawLatRadians));
       const pos = latLngToVector3((drawLatRadians * 180) / Math.PI, (drawLngRadians * 180) / Math.PI, globeRadius);
       coords.push([pos.x, pos.y, pos.z]);
     }
     return coords;
   }
 
+  function flyToLatLng(lat: number, lng: number) {
+    const globeRadius = 60;
+    const target = latLngToVector3(lat, lng, globeRadius);
+    const dir = target.clone().normalize();
+    targetRotationRef.current = { y: -Math.atan2(dir.x, dir.z), x: -Math.asin(dir.y) };
+    flyToEnabledRef.current = true;
+  }
+
+  useEffect(() => {
+    if (!selectedEventId || !cameraRef.current) return;
+    const allEvents = Object.values(historicalEvents).flat();
+    const ev = allEvents.find((e) => e.id === selectedEventId);
+    if (!ev || !ev.coordinates) return;
+    flyToLatLng(ev.coordinates[0], ev.coordinates[1]);
+  }, [selectedEventId]);
+
   useEffect(() => {
     if (!containerRef.current) return;
-
     const container = containerRef.current;
     const width = Math.max(container.clientWidth, 2);
     const height = Math.max(container.clientHeight, 2);
 
-    // Scene setup
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x030408, 0.00035);
-
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.z = 250;
     cameraRef.current = camera;
@@ -97,62 +103,33 @@ export default function HoloGlobe({
 
     const globeRadius = 60;
 
-    // Core sphere
     const oceanGeo = new THREE.SphereGeometry(globeRadius - 0.5, 64, 64);
-    const oceanMat = new THREE.MeshPhongMaterial({
-      color: 0x050811,
-      emissive: 0x020306,
-      specular: 0x0b132b,
-      shininess: 15,
-      transparent: true,
-      opacity: 0.85,
-    });
+    const oceanMat = new THREE.MeshPhongMaterial({ color: 0x050811, emissive: 0x020306, specular: 0x0b132b, shininess: 15, transparent: true, opacity: 0.85 });
     const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
 
-    // Wireframe globe
     const gridGeo = new THREE.SphereGeometry(globeRadius, 40, 40);
-    const gridMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.28,
-    });
+    const gridMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.28 });
     const gridMesh = new THREE.Mesh(gridGeo, gridMat);
 
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
+    globeGroupRef.current = globeGroup;
     globeGroup.add(oceanMesh, gridMesh);
 
-    // Starfield
     const starCount = 2200;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i++) {
-      starPos[i] = (Math.random() - 0.5) * 900;
-    }
+    for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 900;
     starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
-    scene.add(
-      new THREE.Points(
-        starGeo,
-        new THREE.PointsMaterial({ color: 0xffffff, size: 0.65, transparent: true, opacity: 0.5 })
-      )
-    );
+    scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.65, transparent: true, opacity: 0.5 })));
 
-    // Atmosphere ring
     const atmosGeo = new THREE.RingGeometry(globeRadius + 0.1, globeRadius + 4, 64);
-    const atmosMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.05,
-    });
+    const atmosMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.05 });
     const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
     atmosMesh.lookAt(camera.position);
     scene.add(atmosMesh);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
-    scene.add(ambientLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.15));
     const dirLight1 = new THREE.DirectionalLight(0x00f0ff, 1.2);
     dirLight1.position.set(100, 50, 100);
     scene.add(dirLight1);
@@ -160,35 +137,27 @@ export default function HoloGlobe({
     dirLight2.position.set(-100, -50, -100);
     scene.add(dirLight2);
 
-    // Continent outlines
     const continentsGroup = new THREE.Group();
     const continentMat = new THREE.LineBasicMaterial({ color: 0x39ff14, transparent: true, opacity: 0.5 });
     continentOutlines.forEach((ring) => {
       const pts = ring.map(([lat, lng]) => latLngToVector3(lat, lng, globeRadius + 0.15));
       if (pts.length > 2) pts.push(pts[0].clone());
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      continentsGroup.add(new THREE.Line(geo, continentMat));
+      continentsGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), continentMat));
     });
     globeGroup.add(continentsGroup);
 
-    // Groups for dynamic markers and overlays
     const markersGroup = new THREE.Group();
     globeGroup.add(markersGroup);
-
     const arcsGroup = new THREE.Group();
     globeGroup.add(arcsGroup);
-
     const labelsGroup = new THREE.Group();
     globeGroup.add(labelsGroup);
-
     const overlaysGroup = new THREE.Group();
     globeGroup.add(overlaysGroup);
 
     const markersDataMap = new Map<string, { id: string; name: string; isCountry: boolean }>();
 
-    function clearGroup(group: THREE.Group) {
-      while (group.children.length > 0) group.remove(group.children[0]);
-    }
+    function clearGroup(group: THREE.Group) { while (group.children.length > 0) group.remove(group.children[0]); }
 
     function rebuildMarkers() {
       clearGroup(markersGroup);
@@ -196,43 +165,29 @@ export default function HoloGlobe({
       clearGroup(labelsGroup);
       clearGroup(overlaysGroup);
       markersDataMap.clear();
-
       const { activeEra: era, activeLayers: layers, activeCountryId: selectedId } = propsRef.current;
 
-      // Country markers + labels
       Object.values(countriesData).forEach((country) => {
         const pos = latLngToVector3(country.coordinates[0], country.coordinates[1], globeRadius);
         const isSelected = country.id === selectedId;
 
-        // Glowing ring
-        const ringGeo = new THREE.RingGeometry(1.5, 2.5, 32);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: isSelected ? 0x39ff14 : 0x00f0ff,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: isSelected ? 0.9 : 0.5,
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 2.5, 32), new THREE.MeshBasicMaterial({ color: isSelected ? 0x39ff14 : 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: isSelected ? 0.9 : 0.5 }));
         ring.position.copy(pos);
         ring.lookAt(new THREE.Vector3(0, 0, 0));
         markersGroup.add(ring);
 
-        // Core pin
-        const coreGeo = new THREE.SphereGeometry(0.8, 16, 16);
-        const coreMat = new THREE.MeshBasicMaterial({ color: isSelected ? 0x39ff14 : 0x00f0ff });
-        const core = new THREE.Mesh(coreGeo, coreMat);
+        const core = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), new THREE.MeshBasicMaterial({ color: isSelected ? 0x39ff14 : 0x00f0ff }));
         core.position.copy(pos);
         markersGroup.add(core);
 
         markersDataMap.set(core.uuid, { id: country.id, name: country.name, isCountry: true });
         markersDataMap.set(ring.uuid, { id: country.id, name: country.name, isCountry: true });
 
-        // Label sprite (always visible, scales with zoom)
         const canvas = document.createElement("canvas");
         canvas.width = 256;
         canvas.height = 128;
         const ctx = canvas.getContext("2d")!;
-        ctx.fillStyle = "rgba(0,0,0,0)";
+        ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, 256, 128);
         ctx.font = "bold 28px monospace";
         ctx.fillStyle = isSelected ? "#39ff14" : "#00f0ff";
@@ -241,103 +196,67 @@ export default function HoloGlobe({
         ctx.font = "20px monospace";
         ctx.fillStyle = "#9ca3af";
         ctx.fillText(country.capital, 128, 70);
-
         const texture = new THREE.CanvasTexture(canvas);
-        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.9, depthTest: false });
+        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: false, depthTest: false });
         const sprite = new THREE.Sprite(spriteMat);
         sprite.position.copy(pos.clone().multiplyScalar(1.15));
         sprite.scale.set(12, 6, 1);
         labelsGroup.add(sprite);
       });
 
-      // Civilization markers
-      civilizationsData
-        .filter((civ) => civ.era === era)
-        .forEach((civ) => {
-          const pos = latLngToVector3(civ.centerCoordinates[0], civ.centerCoordinates[1], globeRadius + 0.5);
-          const ringGeo = new THREE.RingGeometry(2.0, 3.2, 8);
-          const ringMat = new THREE.MeshBasicMaterial({ color: 0xbd00ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-          const ring = new THREE.Mesh(ringGeo, ringMat);
-          ring.position.copy(pos);
-          ring.lookAt(new THREE.Vector3(0, 0, 0));
-          markersGroup.add(ring);
+      civilizationsData.filter((civ) => civ.era === era).forEach((civ) => {
+        const pos = latLngToVector3(civ.centerCoordinates[0], civ.centerCoordinates[1], globeRadius + 0.5);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(2.0, 3.2, 8), new THREE.MeshBasicMaterial({ color: 0xbd00ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+        ring.position.copy(pos);
+        ring.lookAt(new THREE.Vector3(0, 0, 0));
+        markersGroup.add(ring);
+        const core = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.5, 4), new THREE.MeshBasicMaterial({ color: 0xbd00ff }));
+        core.position.copy(pos);
+        core.quaternion.copy(ring.quaternion);
+        core.rotateX(Math.PI / 2);
+        markersGroup.add(core);
+        markersDataMap.set(core.uuid, { id: civ.id, name: civ.name, isCountry: false });
+        markersDataMap.set(ring.uuid, { id: civ.id, name: civ.name, isCountry: false });
+      });
 
-          const coreGeo = new THREE.ConeGeometry(0.8, 2.5, 4);
-          const coreMat = new THREE.MeshBasicMaterial({ color: 0xbd00ff });
-          const core = new THREE.Mesh(coreGeo, coreMat);
-          core.position.copy(pos);
-          core.quaternion.copy(ring.quaternion);
-          core.rotateX(Math.PI / 2);
-          markersGroup.add(core);
-
-          markersDataMap.set(core.uuid, { id: civ.id, name: civ.name, isCountry: false });
-          markersDataMap.set(ring.uuid, { id: civ.id, name: civ.name, isCountry: false });
-        });
-
-      // City markers
-      const activeCities = historicalCities.filter((city) => city.eraInfo.some((info) => info.era === era));
-      activeCities.forEach((city) => {
+      historicalCities.filter((city) => city.eraInfo.some((info) => info.era === era)).forEach((city) => {
         const pos = latLngToVector3(city.coordinates[0], city.coordinates[1], globeRadius + 0.3);
-        const diamondGeo = new THREE.OctahedronGeometry(1.2, 0);
-        const diamondMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.9 });
-        const diamond = new THREE.Mesh(diamondGeo, diamondMat);
+        const diamond = new THREE.Mesh(new THREE.OctahedronGeometry(1.2, 0), new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.9 }));
         diamond.position.copy(pos);
         markersGroup.add(diamond);
         markersDataMap.set(diamond.uuid, { id: city.id, name: city.name, isCountry: false });
       });
 
-      // Event markers
-      const activeEvents = historicalEvents[era] || [];
-      activeEvents.forEach((event) => {
+      (historicalEvents[era] || []).forEach((event) => {
         if (!event.coordinates) return;
         const [lat, lng] = event.coordinates;
         if (lat === 0 && lng === 0) return;
-
         const pos = latLngToVector3(lat, lng, globeRadius + 0.5);
         const color = event.impact === "major" ? 0xff3b30 : event.impact === "significant" ? 0xf59e0b : 0x00f0ff;
-        const ringGeo = new THREE.RingGeometry(1.8, 2.8, 32);
-        const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.8, 2.8, 32), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
         ring.position.copy(pos);
         ring.lookAt(new THREE.Vector3(0, 0, 0));
         markersGroup.add(ring);
-
-        const coreGeo = new THREE.SphereGeometry(1.0, 16, 16);
-        const coreMat = new THREE.MeshBasicMaterial({ color });
-        const core = new THREE.Mesh(coreGeo, coreMat);
+        const core = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), new THREE.MeshBasicMaterial({ color }));
         core.position.copy(pos);
         markersGroup.add(core);
-
         markersDataMap.set(core.uuid, { id: event.id, name: event.title, isCountry: false });
         markersDataMap.set(ring.uuid, { id: event.id, name: event.title, isCountry: false });
       });
 
-      // Trade routes and migration flows
       if (layers.includes("trade_routes") || layers.includes("migration_flows")) {
         const animatedDots: Array<{ mesh: THREE.Mesh; curve: THREE.QuadraticBezierCurve3; speed: number; progress: number }> = [];
-
         civilizationsData.filter((civ) => civ.era === era).forEach((civ) => {
-          if (layers.includes("trade_routes")) {
-            civ.tradeRoutes.forEach((route) => {
-              for (let i = 0; i < route.path.length - 1; i++) {
-                createArc(route.path[i], route.path[i + 1], 0x00f0ff, false, globeRadius, arcsGroup, animatedDots);
-              }
-            });
-          }
-          if (layers.includes("migration_flows")) {
-            civ.migrationFlows.forEach((flow) => {
-              for (let i = 0; i < flow.path.length - 1; i++) {
-                createArc(flow.path[i], flow.path[i + 1], 0xbd00ff, true, globeRadius, arcsGroup, animatedDots);
-              }
-            });
-          }
+          if (layers.includes("trade_routes")) civ.tradeRoutes.forEach((route) => {
+            for (let i = 0; i < route.path.length - 1; i++) createArc(route.path[i], route.path[i + 1], 0x00f0ff, false, globeRadius, arcsGroup, animatedDots);
+          });
+          if (layers.includes("migration_flows")) civ.migrationFlows.forEach((flow) => {
+            for (let i = 0; i < flow.path.length - 1; i++) createArc(flow.path[i], flow.path[i + 1], 0xbd00ff, true, globeRadius, arcsGroup, animatedDots);
+          });
         });
-
-        // Store for animation
         (globeGroup as any).userData.animatedDots = animatedDots;
       }
 
-      // Layer overlays
       if (layers.includes("climate")) renderClimateOverlay(globeRadius, overlaysGroup);
       if (layers.includes("biodiversity")) renderBiodiversityOverlay(globeRadius, overlaysGroup);
       if (layers.includes("population_density")) renderPopulationOverlay(globeRadius, overlaysGroup);
@@ -353,17 +272,11 @@ export default function HoloGlobe({
       mid.normalize().multiplyScalar(globeRadius + distance * 0.18);
       const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
       const points = curve.getPoints(30);
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = dashed
-        ? new THREE.LineDashedMaterial({ color: colorCode, dashSize: 2, gapSize: 1, transparent: true, opacity: 0.6 })
-        : new THREE.LineBasicMaterial({ color: colorCode, transparent: true, opacity: 0.7 });
-      const line = new THREE.Line(geometry, material);
+      const material = dashed ? new THREE.LineDashedMaterial({ color: colorCode, dashSize: 2, gapSize: 1, transparent: true, opacity: 0.6 }) : new THREE.LineBasicMaterial({ color: colorCode, transparent: true, opacity: 0.7 });
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material);
       if (dashed) line.computeLineDistances();
       parentGroup.add(line);
-
-      const dotGeo = new THREE.SphereGeometry(0.35, 8, 8);
-      const dotMat = new THREE.MeshBasicMaterial({ color: colorCode });
-      const dot = new THREE.Mesh(dotGeo, dotMat);
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), new THREE.MeshBasicMaterial({ color: colorCode }));
       parentGroup.add(dot);
       animatedDots.push({ mesh: dot, curve, speed: 0.005 + Math.random() * 0.008, progress: Math.random() });
     }
@@ -426,10 +339,9 @@ export default function HoloGlobe({
         thai: 0x10b981, vietnamese: 0x10b981, filipino: 0x10b981, indonesian: 0x10b981,
         swahili: 0x84cc16, zulu: 0x84cc16, xhosa: 0x84cc16, yoruba: 0x84cc16, hausa: 0x84cc16,
       };
-
       Object.values(countriesData).forEach((country) => {
         const primary = (country.languages[0] || "").toLowerCase();
-        let color = colorMap[primary] || 0x00f0ff;
+        const color = colorMap[primary] || 0x00f0ff;
         const coords = createGlobeCircle(country.coordinates[0], country.coordinates[1], 700, globeRadius);
         const geo = new THREE.BufferGeometry().setFromPoints(coords.map((c) => new THREE.Vector3(c[0], c[1], c[2])));
         const mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.14, depthWrite: false });
@@ -444,14 +356,10 @@ export default function HoloGlobe({
         const rings: number[][][] = [];
         emp.controlledCountries.forEach((code) => {
           const coords = countriesData[code]?.coordinates;
-          if (coords) {
-            const ring = createGlobeCircle(coords[0], coords[1], 650, globeRadius);
-            rings.push(ring);
-          }
+          if (coords) rings.push(createGlobeCircle(coords[0], coords[1], 650, globeRadius));
         });
         if (rings.length > 0) {
-          const allPoints = rings.flat();
-          const geo = new THREE.BufferGeometry().setFromPoints(allPoints.map((c) => new THREE.Vector3(c[0], c[1], c[2])));
+          const geo = new THREE.BufferGeometry().setFromPoints(rings.flat().map((c) => new THREE.Vector3(c[0], c[1], c[2])));
           const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(emp.color || "rgba(189,0,255,0.3)"), side: THREE.DoubleSide, transparent: true, opacity: 0.35, depthWrite: false });
           const mesh = new THREE.Mesh(geo, mat);
           parentGroup.add(mesh);
@@ -461,36 +369,26 @@ export default function HoloGlobe({
 
     rebuildMarkers();
 
-    // Interaction state
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     const rotationVelocity = { x: 0.0005, y: 0.002 };
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const handleMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    };
+    const handleMouseDown = (e: MouseEvent) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; };
+    const handleMouseUp = () => { isDragging = false; };
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(markersGroup.children);
-
       if (intersects.length > 0) {
         const item = markersDataMap.get(intersects[0].object.uuid);
-        if (item) {
-          setHoveredName(item.name);
-          container.style.cursor = "pointer";
-        }
-      } else {
-        setHoveredName(null);
-        container.style.cursor = "default";
-      }
+        if (item) { setHoveredName(item.name); container.style.cursor = "pointer"; }
+        else { setHoveredName(null); container.style.cursor = "default"; }
+      } else { setHoveredName(null); container.style.cursor = "default"; }
 
       if (!isDragging) return;
       const deltaMove = { x: e.clientX - previousMousePosition.x, y: e.clientY - previousMousePosition.y };
@@ -501,22 +399,22 @@ export default function HoloGlobe({
       previousMousePosition = { x: e.clientX, y: e.clientY };
     };
 
-    const handleMouseUp = () => { isDragging = false; };
-
     const handleClick = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(markersGroup.children);
-
       if (intersects.length > 0) {
         const item = markersDataMap.get(intersects[0].object.uuid);
         if (item) {
           if (item.isCountry) onSelectCountry(item.id);
           else if (item.id && onSelectEvent) {
             const event = Object.values(historicalEvents).flat().find((ev) => ev.id === item.id);
-            if (event) onSelectEvent(event.id);
+            if (event) {
+              onSelectEvent(event.id);
+              if (event.coordinates) flyToLatLng(event.coordinates[0], event.coordinates[1]);
+            }
           } else if (onSelectCivilization) onSelectCivilization(item.id);
         }
       }
@@ -527,21 +425,26 @@ export default function HoloGlobe({
     window.addEventListener("mouseup", handleMouseUp);
     container.addEventListener("click", handleClick);
 
-    // Zoom with scroll
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(150, Math.min(400, camera.position.z + e.deltaY * 0.5));
-    };
+    const handleWheel = (e: WheelEvent) => { e.preventDefault(); camera.position.z = Math.max(150, Math.min(400, camera.position.z + e.deltaY * 0.5)); };
     container.addEventListener("wheel", handleWheel, { passive: false });
 
-    // Animation loop
     const animate = () => {
       if (!isDragging) {
         globeGroup.rotation.y += rotationVelocity.y;
         globeGroup.rotation.x += rotationVelocity.x;
         rotationVelocity.y *= 0.95;
         rotationVelocity.x *= 0.95;
-        if (Math.abs(rotationVelocity.y) < 0.0015) rotationVelocity.y = 0.0012;
+
+        if (flyToEnabledRef.current && targetRotationRef.current && globeGroupRef.current) {
+          const g = globeGroupRef.current;
+          g.rotation.y += (targetRotationRef.current.y - g.rotation.y) * 0.05;
+          g.rotation.x += (targetRotationRef.current.x - g.rotation.x) * 0.05;
+          if (Math.abs(g.rotation.y - targetRotationRef.current.y) < 0.0005 && Math.abs(g.rotation.x - targetRotationRef.current.x) < 0.0005) {
+            g.rotation.y = targetRotationRef.current.y;
+            g.rotation.x = targetRotationRef.current.x;
+            flyToEnabledRef.current = false;
+          }
+        }
       }
 
       const time = Date.now() * 0.003;
@@ -552,7 +455,6 @@ export default function HoloGlobe({
         }
       });
 
-      // Animate arc dots
       const animatedDots = (globeGroup as any).userData.animatedDots || [];
       animatedDots.forEach((dot: any) => {
         dot.progress += dot.speed;
@@ -566,7 +468,6 @@ export default function HoloGlobe({
     };
     renderer.setAnimationLoop(animate);
 
-    // Resize handler
     const handleResize = () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -579,12 +480,9 @@ export default function HoloGlobe({
     resizeObserver.observe(container);
     handleResize();
 
-    // Rebuild on prop changes
     const intervalId = setInterval(() => {
       const { activeCountryId: cid, activeEra: er, activeLayers: ly } = propsRef.current;
-      if (cid !== activeCountryId || er !== activeEra || [...ly].sort().join(",") !== [...activeLayers].sort().join(",")) {
-        rebuildMarkers();
-      }
+      if (cid !== activeCountryId || er !== activeEra || [...ly].sort().join(",") !== [...activeLayers].sort().join(",")) rebuildMarkers();
     }, 100);
 
     return () => {
@@ -604,41 +502,16 @@ export default function HoloGlobe({
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="absolute inset-0 select-none cursor-grab active:cursor-grabbing" />
-
-      {/* Zoom controls */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-        <button
-          onClick={() => {
-            if (cameraRef.current) cameraRef.current.position.z = Math.max(150, cameraRef.current.position.z - 20);
-          }}
-          className="w-10 h-10 bg-panel-bg/90 backdrop-blur border border-panel-border rounded flex items-center justify-center text-white hover:bg-white/10 transition-all text-lg font-bold"
-        >
-          +
-        </button>
-        <button
-          onClick={() => {
-            if (cameraRef.current) cameraRef.current.position.z = Math.min(400, cameraRef.current.position.z + 20);
-          }}
-          className="w-10 h-10 bg-panel-bg/90 backdrop-blur border border-panel-border rounded flex items-center justify-center text-white hover:bg-white/10 transition-all text-lg font-bold"
-        >
-          −
-        </button>
+        <button onClick={() => { if (cameraRef.current) cameraRef.current.position.z = Math.max(150, cameraRef.current.position.z - 20); }} className="w-10 h-10 bg-panel-bg/90 backdrop-blur border border-panel-border rounded flex items-center justify-center text-white hover:bg-white/10 transition-all text-lg font-bold">+</button>
+        <button onClick={() => { if (cameraRef.current) cameraRef.current.position.z = Math.min(400, cameraRef.current.position.z + 20); }} className="w-10 h-10 bg-panel-bg/90 backdrop-blur border border-panel-border rounded flex items-center justify-center text-white hover:bg-white/10 transition-all text-lg font-bold">−</button>
       </div>
-
       <div className="absolute bottom-4 right-20 bg-panel-bg/90 backdrop-blur border border-panel-border px-3 py-2 rounded font-mono text-[9px] text-gray-400 pointer-events-none z-10">
-        <div className="flex items-center space-x-1.5 mb-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyber-green animate-pulse" />
-          <span className="text-white">HOLOGRAPHIC GLOBE</span>
-        </div>
+        <div className="flex items-center space-x-1.5 mb-0.5"><span className="w-1.5 h-1.5 rounded-full bg-cyber-green animate-pulse" /><span className="text-white">HOLOGRAPHIC GLOBE</span></div>
         <div>ENGINE: THREE.JS · NO API KEY</div>
         <div>DRAG TO ORBIT · SCROLL TO ZOOM</div>
       </div>
-
-      {hoveredName && (
-        <div className="absolute pointer-events-none bg-panel-bg backdrop-blur border border-cyber-cyan/50 text-white font-mono px-3 py-1.5 rounded-md text-xs shadow-lg shadow-black/80 left-1/2 -translate-x-1/2 top-4 animate-pulse z-20">
-          <span className="text-cyber-cyan font-semibold">📡 TARGET DETECTED:</span> {hoveredName}
-        </div>
-      )}
+      {hoveredName && <div className="absolute pointer-events-none bg-panel-bg backdrop-blur border border-cyber-cyan/50 text-white font-mono px-3 py-1.5 rounded-md text-xs shadow-lg shadow-black/80 left-1/2 -translate-x-1/2 top-4 animate-pulse z-20"><span className="text-cyber-cyan font-semibold">📡 TARGET DETECTED:</span> {hoveredName}</div>}
     </div>
   );
 }
