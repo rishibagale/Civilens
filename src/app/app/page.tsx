@@ -13,6 +13,7 @@ import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents"
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
 import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
+import HoloGlobe from "@/components/HoloGlobe";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import Fuse from "fuse.js";
 
@@ -28,11 +29,14 @@ export default function AppDashboard() {
   const [activeCountryId, setActiveCountryId] = useState<string | null>(null);
   const [activeEra, setActiveEra] = useState<EraType>("ancient");
   const [activeLayers, setActiveLayers] = useState<string[]>([
+    "earth_imagery",
+    "clouds",
     "climate",
     "biodiversity",
     "trade_routes",
     "migration_flows",
   ]);
+  const [globeEngine, setGlobeEngine] = useState<"holo" | "maplibre">("holo");
   // Default null so map is immediately visible — user opens panels by tapping icons
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
@@ -346,36 +350,64 @@ export default function AppDashboard() {
           {/* Map Area */}
           <div className="flex-1 relative w-full min-h-0 overflow-hidden">
             <div className="absolute inset-0 w-full h-full">
-            <MapLibreGlobeGlobe
-              activeEra={activeEra}
-              activeLayers={activeLayers}
-              activeCountryId={activeCountryId}
-              onSelectCountry={handleSelectCountry}
-              onSelectCivilization={(civId) => {
-                const civ = civilizationsData.find((c) => c.id === civId);
-                if (civ) {
-                  setActiveEra(civ.era);
-                  setActiveCountryId(null);
-                  setSelectedEventId(null);
-                }
-              }}
-              onSelectEvent={handleSelectEvent}
-              selectedEventId={selectedEventId}
-              onMapClick={handleMapClick}
-            />
+              {globeEngine === "holo" ? (
+                <HoloGlobe
+                  activeEra={activeEra}
+                  activeLayers={activeLayers}
+                  activeCountryId={activeCountryId}
+                  onSelectCountry={handleSelectCountry}
+                  onSelectCivilization={(civId) => {
+                    const civ = civilizationsData.find((c) => c.id === civId);
+                    if (civ) {
+                      setActiveEra(civ.era);
+                      setActiveCountryId(null);
+                      setSelectedEventId(null);
+                    }
+                  }}
+                  onSelectEvent={handleSelectEvent}
+                  selectedEventId={selectedEventId}
+                />
+              ) : (
+                <MapLibreGlobeGlobe
+                  activeEra={activeEra}
+                  activeLayers={activeLayers}
+                  activeCountryId={activeCountryId}
+                  onSelectCountry={handleSelectCountry}
+                  onSelectCivilization={(civId) => {
+                    const civ = civilizationsData.find((c) => c.id === civId);
+                    if (civ) {
+                      setActiveEra(civ.era);
+                      setActiveCountryId(null);
+                      setSelectedEventId(null);
+                    }
+                  }}
+                  onSelectEvent={handleSelectEvent}
+                  selectedEventId={selectedEventId}
+                  onMapClick={handleMapClick}
+                />
+              )}
             </div>
 
             {/* Cinematic HUD Overlays */}
-            <div className="absolute top-3 left-3 font-mono text-[8px] text-zinc-500 pointer-events-none space-y-1 z-10 bg-black/30 backdrop-blur-sm p-2.5 rounded-lg border border-zinc-900/50">
+            <div className="absolute top-3 left-3 font-mono text-[8px] text-zinc-500 pointer-events-auto space-y-1.5 z-20 bg-black/80 backdrop-blur-md p-2.5 rounded-lg border border-zinc-800 shadow-xl">
               <div className="flex items-center space-x-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
                 <span className="text-zinc-400 font-semibold uppercase tracking-wider">
                   {activeEra} ERA
                 </span>
               </div>
-              <div className="text-zinc-600">GLOBE ENGINE</div>
-              <div>
-                LAYERS: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length}</span>
+              <div className="flex items-center space-x-1.5">
+                <span className="text-zinc-500">ENGINE:</span>
+                <button
+                  onClick={() => setGlobeEngine((prev) => (prev === "holo" ? "maplibre" : "holo"))}
+                  className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-700 text-[#00f0ff] hover:text-white font-bold tracking-wider uppercase transition-all text-[8px]"
+                  title="Switch between Three.js Earth and MapLibre"
+                >
+                  {globeEngine === "holo" ? "THREE.JS EARTH" : "MAPLIBRE 3D"}
+                </button>
+              </div>
+              <div className="text-zinc-500">
+                LAYERS: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length} ACTIVE</span>
               </div>
             </div>
 

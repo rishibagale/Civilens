@@ -16,7 +16,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const WIKIMEDIA_API = "https://commons.wikimedia.org/w/api.php";
-const USER_AGENT = "CuriosEarthIntelligence/1.0 (educational; https://github.com/rishibagale/curios)";
+const USER_AGENT = "CuriosCivilens/1.0 (educational; https://github.com/rishibagale/Civilens)";
 
 interface ImageInfo {
   url: string;

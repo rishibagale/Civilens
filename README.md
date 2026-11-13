@@ -1,35 +1,54 @@
-# Earth Intelligence (Curios)
+# Civilens (Earth Intelligence / Curios)
 
-Interactive exploration app connecting geography, climate, migration, anthropology, and civilization.
+**Repository**: [https://github.com/rishibagale/Civilens](https://github.com/rishibagale/Civilens)
 
-## Globe (free — no API key)
+Interactive exploration app connecting geography, climate, migration, anthropology, and civilization through dual-lens Earth observation: historical anthropological intelligence and spaceborne 3D planetary rendering.
 
-The dashboard uses **[MapLibre GL JS](https://maplibre.org/)** with the official free demo style:
+---
 
-`https://demotiles.maplibre.org/style.json`
+## 🌍 Dual-Engine 3D Globes (Free — No API Key Required)
 
-No Mapbox account or paid plan required. If MapLibre fails to load (offline, blocked CDN), the app falls back to the built-in **Three.js holographic globe**.
+Civilens includes two complementary visualization engines with instant one-click switching in the HUD:
 
-## Getting Started
+1. **Three.js Earth & HoloGlobe (Primary)**:
+   - **Photorealistic NASA Blue Marble**: Equirectangular day surface texture, ocean specular glint, and night-side city lights (amber sodium illumination).
+   - **Atmospheric Clouds**: Floating cloud sphere with real-time slow rotational drift and limb atmospheric scattering.
+   - **3 Visual Modes**:
+     - **HYBRID (Default)**: Photorealistic satellite Earth underneath glowing neon continent outlines, trade routes, migration vectors, and historical event markers.
+     - **EARTH**: Pure NASA Blue Marble satellite view with night lights.
+     - **CYBER**: Classic HoloGlobe dark ocean with cyan wireframe grid.
+   - **Physics-Based Orbital Controls**: Direct 1:1 surface dragging (`radiansPerPixel`), exponential momentum coasting on release, smooth logarithmic zoom easing, tilt/heading angles, and great-circle slerp camera flights to historical events.
+   - **Real-Time Geodetic Telemetry**: Live cursor raycasting showing exact latitude/longitude, altitude in kilometers, animated precision targeting reticle, and ground distance magnitude.
+
+2. **MapLibre GL JS 3D Globe**:
+   - Uses the official free MapLibre demo style: `https://demotiles.maplibre.org/style.json`.
+   - Free, zero-API-key vector tile exploration.
+
+---
+
+## 🚀 Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-- [http://localhost:3000](http://localhost:3000) — landing page  
-- [http://localhost:3000/app](http://localhost:3000/app) — dashboard with 3D globe
+- [http://localhost:3000](http://localhost:3000) (or `/app`) — Dashboard with 3D Globe & Earth Intelligence Explorer
 
-## Scripts
+---
 
-- `npm run dev` — development server
-- `npm run build` — production build
-- `npm run start` — serve production build
-- `npm run lint` — ESLint
+## 🛠️ Scripts
 
-## Stack
+- `npm run dev` — Start Next.js development server
+- `npm run build` — Optimized Next.js 16 production build
+- `npm run start` — Serve production build
+- `npm run lint` — ESLint verification
 
-- Next.js 16, React 19
-- MapLibre GL JS (primary map)
-- Three.js (fallback globe)
-- Framer Motion, Tailwind CSS 4
+---
+
+## 📦 Tech Stack
+
+- **Framework**: Next.js 16 (App Router), React 19, TypeScript
+- **3D Visualization**: Three.js (HoloGlobe with custom Earth shader, clouds, and physics controls), MapLibre GL JS
+- **Styling & Animation**: Tailwind CSS 4, Framer Motion, Lucide Icons
+- **Data & Intelligence**: Curated historical events across 5 eras, civilization knowledge graphs, country narratives, and causal chains

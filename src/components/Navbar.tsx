@@ -59,7 +59,7 @@ export default function Navbar({ activeEra, onSearchSelect }: NavbarProps) {
   return (
     <header className="relative w-full z-40 bg-panel-bg backdrop-blur border-b border-panel-border px-6 py-3 flex items-center justify-between font-mono">
       <div className="flex items-center space-x-3">
-        <Link href="/" className="flex items-center space-x-2 group">
+        <Link href="/app" className="flex items-center space-x-2 group">
           <div className="w-8 h-8 rounded border border-cyber-cyan flex items-center justify-center bg-cyber-cyan/5 group-hover:bg-cyber-cyan/25 transition-all">
             <Globe className="w-4 h-4 text-cyber-cyan animate-pulse" />
           </div>

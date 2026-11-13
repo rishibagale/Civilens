@@ -21,6 +21,20 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
   const layers: LayerItem[] = [
     // Environmental Layers
     {
+      id: "earth_imagery",
+      label: "Satellite Earth Imagery",
+      category: "environmental",
+      colorClass: "text-[#00f0ff] font-bold",
+      description: "NASA Blue Marble photoreal surface, night city lights, and specular ocean glint.",
+    },
+    {
+      id: "clouds",
+      label: "Atmospheric Clouds",
+      category: "environmental",
+      colorClass: "text-blue-200",
+      description: "Dynamic cloud layer with real-time rotational atmospheric drift.",
+    },
+    {
       id: "climate",
       label: "Climate Overlays",
       category: "environmental",
