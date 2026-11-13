@@ -86,6 +86,39 @@ const _localNear = new THREE.Vector3();
 const _localFar = new THREE.Vector3();
 const _localDir = new THREE.Vector3();
 const _invMatrix = new THREE.Matrix4();
+const _occD = new THREE.Vector3();
+const _occP = new THREE.Vector3();
+
+/**
+ * Horizon occlusion test: checks if the line of sight from camera position
+ * to worldPos penetrates the spherical Earth of globeRadius.
+ * Returns true if the point is hidden behind the Earth's curvature.
+ *
+ * Mathematically:
+ * 1. Finds the point of closest approach tMin on the line segment camPos -> worldPos.
+ * 2. If closest approach lies on the segment (0 < tMin < 1), tests whether the distance
+ *    to the globe center is strictly less than globeRadius.
+ * 3. For surface points near the horizon, verifies the outward normal faces the camera.
+ */
+export function occludedByEarth(
+  camPos: THREE.Vector3,
+  worldPos: THREE.Vector3,
+  globeRadius = 60,
+): boolean {
+  _occD.copy(worldPos).sub(camPos);
+  const dLenSq = _occD.lengthSq();
+  if (dLenSq < 1e-6) return false;
+
+  const tMin = -camPos.dot(_occD) / dLenSq;
+  if (tMin > 0 && tMin < 1) {
+    const closestDistSq = camPos.lengthSq() - (camPos.dot(_occD) ** 2) / dLenSq;
+    return closestDistSq < globeRadius * globeRadius;
+  }
+
+  // Horizon dot product test for points at or beyond closest approach
+  _occP.copy(worldPos);
+  return _occP.dot(_occD.copy(camPos).sub(worldPos)) <= 0;
+}
 
 /**
  * Surface picking: computes the exact (lat, lon) on the globe under NDC coordinates (x, y).

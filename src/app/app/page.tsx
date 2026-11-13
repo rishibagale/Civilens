@@ -366,6 +366,7 @@ export default function AppDashboard() {
                   }}
                   onSelectEvent={handleSelectEvent}
                   selectedEventId={selectedEventId}
+                  panelOpen={Boolean(activeCountryId || selectedEventId)}
                 />
               ) : (
                 <MapLibreGlobeGlobe

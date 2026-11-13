@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import * as THREE from "three";
+import { Compass } from "lucide-react";
 import { countriesData } from "@/data/countriesData";
 import { civilizationsData } from "@/data/civilizationsData";
 import { continentOutlines } from "@/data/continentOutlines";
@@ -11,7 +12,7 @@ import {
   latLonToWorld,
   createGlobeCircle,
   pickSurface,
-  haversineKm,
+  occludedByEarth,
   EARTH_RADIUS_KM,
 } from "@/lib/geoMath";
 import {
@@ -20,15 +21,19 @@ import {
   attachOrbitControls,
   updateCameraAndGlobe,
   startFlightTo,
+  applyLensShift,
   MIN_CAMERA_RANGE,
   MAX_CAMERA_RANGE,
   DEFAULT_CAMERA_RANGE,
   type ControlInput,
   type ControlState,
 } from "@/lib/cameraDirector";
+import { findNearestEntity } from "@/lib/proximityIndexer";
 import CoordinateTelemetry, {
   type GlobeVisualMode,
+  type CoordinateTelemetryHandle,
 } from "./CoordinateTelemetry";
+import GlobeOverlay, { type GlobeOverlayHandle } from "./GlobeOverlay";
 
 interface HoloGlobeProps {
   activeCountryId: string | null;
@@ -38,6 +43,14 @@ interface HoloGlobeProps {
   onSelectCivilization?: (id: string) => void;
   onSelectEvent?: (id: string | null) => void;
   selectedEventId?: string | null;
+  panelOpen?: boolean;
+}
+
+interface AnimatedRouteDot {
+  mesh: THREE.Mesh;
+  curve: THREE.QuadraticBezierCurve3;
+  speed: number;
+  progress: number;
 }
 
 export default function HoloGlobe({
@@ -48,12 +61,21 @@ export default function HoloGlobe({
   onSelectCivilization,
   onSelectEvent,
   selectedEventId = null,
+  panelOpen = false,
 }: HoloGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const overlayRef = useRef<GlobeOverlayHandle>(null);
+  const telemetryRef = useRef<CoordinateTelemetryHandle>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipTextRef = useRef<HTMLSpanElement>(null);
+
   const [visualMode, setVisualMode] = useState<GlobeVisualMode>("hybrid");
-  const [cursorCoords, setCursorCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [cameraAltitudeKm, setCameraAltitudeKm] = useState<number>(20000);
+  const [customLocus, setCustomLocus] = useState<{
+    name: string;
+    lat: number;
+    lon: number;
+    subtitle?: string;
+  } | null>(null);
 
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -61,10 +83,17 @@ export default function HoloGlobe({
   const earthMatRef = useRef<THREE.ShaderMaterial | null>(null);
   const cloudsMeshRef = useRef<THREE.Mesh | null>(null);
   const cyberGridGroupRef = useRef<THREE.Group | null>(null);
-  const reticleGroupRef = useRef<THREE.Group | null>(null);
+  const astrolabeGroupRef = useRef<THREE.Group | null>(null);
+  const astrolabeArrivalStartRef = useRef<number>(0);
+  const astrolabeWorldPosRef = useRef<THREE.Vector3>(new THREE.Vector3());
+
+  // Optical lens shift smoothing refs
+  const lensShiftRef = useRef<{ currentX: number; currentY: number }>({ currentX: 0, currentY: 0 });
 
   const controlInputRef = useRef<ControlInput>(createControlInput());
   const controlStateRef = useRef<ControlState>(createControlState());
+
+  const rebuildMarkersRef = useRef<() => void>(() => {});
 
   const propsRef = useRef({
     activeCountryId,
@@ -74,6 +103,7 @@ export default function HoloGlobe({
     onSelectCivilization,
     onSelectEvent,
     selectedEventId,
+    panelOpen,
   });
 
   useEffect(() => {
@@ -85,6 +115,7 @@ export default function HoloGlobe({
       onSelectCivilization,
       onSelectEvent,
       selectedEventId,
+      panelOpen,
     };
   }, [
     activeCountryId,
@@ -94,41 +125,73 @@ export default function HoloGlobe({
     onSelectCivilization,
     onSelectEvent,
     selectedEventId,
+    panelOpen,
   ]);
 
   const globeRadius = 60;
 
-  // Selected Target Info for Telemetry
-  const selectedTarget = React.useMemo(() => {
+  // Selected Target Info for Telemetry & Overlay
+  const selectedTarget = useMemo(() => {
     if (selectedEventId) {
       const allEvents = Object.values(historicalEvents).flat();
       const ev = allEvents.find((e) => e.id === selectedEventId);
       if (ev && ev.coordinates) {
-        const dist = cursorCoords
-          ? haversineKm(cursorCoords.lat, cursorCoords.lon, ev.coordinates[0], ev.coordinates[1])
-          : undefined;
         return {
           name: ev.title,
           lat: ev.coordinates[0],
           lon: ev.coordinates[1],
-          distanceKm: dist,
+          subtitle: `${ev.era.toUpperCase()} ERA · ${ev.impact.toUpperCase()}`,
         };
       }
     }
+    if (customLocus) {
+      return {
+        name: customLocus.name,
+        lat: customLocus.lat,
+        lon: customLocus.lon,
+        subtitle: customLocus.subtitle || "Cartographic Survey Site",
+      };
+    }
     if (activeCountryId && countriesData[activeCountryId]) {
       const c = countriesData[activeCountryId];
-      const dist = cursorCoords
-        ? haversineKm(cursorCoords.lat, cursorCoords.lon, c.coordinates[0], c.coordinates[1])
-        : undefined;
       return {
         name: c.name,
         lat: c.coordinates[0],
         lon: c.coordinates[1],
-        distanceKm: dist,
+        subtitle: `${c.capital} · ${c.climate.type}`,
       };
     }
     return null;
-  }, [selectedEventId, activeCountryId, cursorCoords]);
+  }, [selectedEventId, customLocus, activeCountryId]);
+
+  // Update Screen-Space DOM Overlay with Inspected Locus
+  useEffect(() => {
+    if (!overlayRef.current) return;
+    if (selectedTarget) {
+      overlayRef.current.setInspectedLocus({
+        name: selectedTarget.name,
+        lat: selectedTarget.lat,
+        lon: selectedTarget.lon,
+        subtitle: selectedTarget.subtitle,
+      });
+    } else {
+      overlayRef.current.setInspectedLocus(null);
+    }
+  }, [selectedTarget]);
+
+  // Update Astrolabe Locus Ring 3D position reactively without recreating Three.js scene
+  useEffect(() => {
+    if (!astrolabeGroupRef.current) return;
+    if (selectedTarget) {
+      const pos = latLonToWorld(selectedTarget.lat, selectedTarget.lon, globeRadius + 0.7);
+      astrolabeGroupRef.current.position.copy(pos);
+      astrolabeGroupRef.current.lookAt(pos.clone().multiplyScalar(2));
+      astrolabeGroupRef.current.visible = true;
+      astrolabeArrivalStartRef.current = performance.now();
+    } else {
+      astrolabeGroupRef.current.visible = false;
+    }
+  }, [selectedTarget, globeRadius]);
 
   // Smooth Camera Fly-To on Event Selection
   useEffect(() => {
@@ -148,9 +211,10 @@ export default function HoloGlobe({
     );
   }, [selectedEventId]);
 
-  // Smooth Camera Fly-To on Country Selection
+  // Smooth Camera Fly-To on Country Selection (when not already covered by city locus)
   useEffect(() => {
     if (!activeCountryId || !cameraRef.current || !globeGroupRef.current) return;
+    if (customLocus) return; // Keep city/locus focus
     const c = countriesData[activeCountryId];
     if (!c || !c.coordinates) return;
 
@@ -163,7 +227,7 @@ export default function HoloGlobe({
       1.35,
       160,
     );
-  }, [activeCountryId]);
+  }, [activeCountryId, customLocus]);
 
   // Visual Mode Switching updates shader uniforms & visibility
   useEffect(() => {
@@ -190,7 +254,12 @@ export default function HoloGlobe({
     }
   }, [visualMode]);
 
-  // Main Three.js Setup
+  // Rebuild interactive markers when active Era, Layers, Country, or Event change
+  useEffect(() => {
+    rebuildMarkersRef.current();
+  }, [activeEra, activeLayers, activeCountryId, selectedEventId]);
+
+  // Main Three.js Engine Lifecycle (Runs ONCE on mount)
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
@@ -225,10 +294,12 @@ export default function HoloGlobe({
       transparent: true,
       opacity: 0.55,
     });
-    scene.add(new THREE.Points(starGeo, starMat));
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
 
     // Ambient Space Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.22));
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.22);
+    scene.add(ambientLight);
     const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
     sunLight.position.set(120, 45, 90);
     scene.add(sunLight);
@@ -297,13 +368,13 @@ export default function HoloGlobe({
 
           vec3 dayCol = texture2D(uDay, vUv).rgb;
           vec3 nightCol = texture2D(uNight, vUv).rgb;
-          vec4 dataCol = texture2D(uData, vUv); // G = ocean mask, R = elevation
+          vec4 dataCol = texture2D(uData, vUv);
 
           // Specular Glint on Ocean
           vec3 H = normalize(L + V);
           float spec = pow(max(0.0, dot(N, H)), 24.0) * dataCol.g * 0.38 * dayFactor;
 
-          // In Hybrid mode: darken oceans to deep ink navy so glowing routes & borders shine
+          // In Hybrid mode: darken oceans to deep ink navy
           if (uOceanDarkness > 0.01) {
             vec3 deepOcean = dayCol * 0.18 + vec3(0.015, 0.025, 0.055);
             dayCol = mix(dayCol, deepOcean, dataCol.g * uOceanDarkness);
@@ -397,55 +468,108 @@ export default function HoloGlobe({
     });
     globeGroup.add(continentsGroup);
 
-    // Dynamic Markers, Arcs, and Reticle Groups
+    // Dynamic Markers, Arcs, and Overlays Groups
     const markersGroup = new THREE.Group();
     globeGroup.add(markersGroup);
     const arcsGroup = new THREE.Group();
     globeGroup.add(arcsGroup);
-    const labelsGroup = new THREE.Group();
-    globeGroup.add(labelsGroup);
     const overlaysGroup = new THREE.Group();
     globeGroup.add(overlaysGroup);
 
-    // Precision Targeting Reticle Group
-    const reticleGroup = new THREE.Group();
-    reticleGroupRef.current = reticleGroup;
-    globeGroup.add(reticleGroup);
+    // ────────────────────────────────────────────────────────
+    // Classical Astrolabe Locus Ring (Double Hairline + Cardinal Ticks)
+    // ────────────────────────────────────────────────────────
+    const astrolabeGroup = new THREE.Group();
+    astrolabeGroupRef.current = astrolabeGroup;
+    globeGroup.add(astrolabeGroup);
 
-    const reticleRing = new THREE.Mesh(
-      new THREE.RingGeometry(2.0, 2.5, 32),
-      new THREE.MeshBasicMaterial({
-        color: 0x00f0ff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.95,
-      }),
-    );
-    const reticleBrackets = new THREE.Mesh(
-      new THREE.RingGeometry(3.0, 3.6, 4, 1, Math.PI / 4, Math.PI / 2),
-      new THREE.MeshBasicMaterial({
-        color: 0x39ff14,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.9,
-      }),
-    );
-    reticleGroup.add(reticleRing, reticleBrackets);
-    reticleGroup.visible = false;
+    // 1. Inner Ring (Antique Gold Hairline)
+    const innerRingGeo = new THREE.RingGeometry(1.65, 1.8, 64);
+    const innerRingMat = new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.95,
+      depthTest: true,
+      depthWrite: false,
+    });
+    const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
 
-    const markersDataMap = new Map<string, { id: string; name: string; isCountry: boolean }>();
+    // 2. Outer Ring (Warm Ivory Hairline)
+    const outerRingGeo = new THREE.RingGeometry(2.35, 2.5, 64);
+    const outerRingMat = new THREE.MeshBasicMaterial({
+      color: 0xfef3c7,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: true,
+      depthWrite: false,
+    });
+    const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat);
 
+    // 3. Four Cardinal Ticks (N, S, E, W)
+    const tickPoints: THREE.Vector3[] = [
+      new THREE.Vector3(0, 2.5, 0),
+      new THREE.Vector3(0, 3.25, 0),
+      new THREE.Vector3(0, -2.5, 0),
+      new THREE.Vector3(0, -3.25, 0),
+      new THREE.Vector3(2.5, 0, 0),
+      new THREE.Vector3(3.25, 0, 0),
+      new THREE.Vector3(-2.5, 0, 0),
+      new THREE.Vector3(-3.25, 0, 0),
+    ];
+    const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPoints);
+    const tickMat = new THREE.LineBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.9,
+      depthTest: true,
+      depthWrite: false,
+    });
+    const cardinalTicks = new THREE.LineSegments(tickGeo, tickMat);
+
+    // 4. Subtle Armillary Crosshair at Center
+    const crossPoints: THREE.Vector3[] = [
+      new THREE.Vector3(-0.6, 0, 0),
+      new THREE.Vector3(0.6, 0, 0),
+      new THREE.Vector3(0, -0.6, 0),
+      new THREE.Vector3(0, 0.6, 0),
+    ];
+    const crossGeo = new THREE.BufferGeometry().setFromPoints(crossPoints);
+    const crossMat = new THREE.LineBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.6,
+      depthTest: true,
+      depthWrite: false,
+    });
+    const armillaryCross = new THREE.LineSegments(crossGeo, crossMat);
+
+    astrolabeGroup.add(innerRing, outerRing, cardinalTicks, armillaryCross);
+    astrolabeGroup.visible = false;
+
+    const markersDataMap = new Map<string, { id: string; name: string; isCountry: boolean; isEvent: boolean }>();
+
+    // Dispose geometries and materials cleanly to prevent VRAM memory leaks
     function clearGroup(group: THREE.Group) {
       while (group.children.length > 0) {
-        group.remove(group.children[0]);
+        const child = group.children[0];
+        group.remove(child);
+        if (child instanceof THREE.Mesh || child instanceof THREE.Line || child instanceof THREE.Points) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => m.dispose());
+          } else {
+            child.material?.dispose();
+          }
+        }
       }
     }
 
-    // Rebuild Interactive Markers and Layers
+    // Rebuild Interactive Markers and Layers (Clean geometry, zero DOM canvas text leaks)
     function rebuildMarkers() {
       clearGroup(markersGroup);
       clearGroup(arcsGroup);
-      clearGroup(labelsGroup);
       clearGroup(overlaysGroup);
       markersDataMap.clear();
 
@@ -456,18 +580,18 @@ export default function HoloGlobe({
         selectedEventId: selectedEvId,
       } = propsRef.current;
 
-      // 1. Countries
+      // 1. Countries (Crisp geometric markers)
       Object.values(countriesData).forEach((country) => {
         const pos = latLonToWorld(country.coordinates[0], country.coordinates[1], globeRadius);
         const isSelected = country.id === selectedId;
 
         const ring = new THREE.Mesh(
-          new THREE.RingGeometry(1.5, 2.4, 32),
+          new THREE.RingGeometry(1.4, 2.2, 32),
           new THREE.MeshBasicMaterial({
-            color: isSelected ? 0x39ff14 : 0x00f0ff,
+            color: isSelected ? 0xf59e0b : 0x00f0ff,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: isSelected ? 0.95 : 0.5,
+            opacity: isSelected ? 0.95 : 0.45,
           }),
         );
         ring.position.copy(pos);
@@ -475,36 +599,14 @@ export default function HoloGlobe({
         markersGroup.add(ring);
 
         const core = new THREE.Mesh(
-          new THREE.SphereGeometry(0.8, 16, 16),
-          new THREE.MeshBasicMaterial({ color: isSelected ? 0x39ff14 : 0x00f0ff }),
+          new THREE.SphereGeometry(0.7, 16, 16),
+          new THREE.MeshBasicMaterial({ color: isSelected ? 0xf59e0b : 0x00f0ff }),
         );
         core.position.copy(pos);
         markersGroup.add(core);
 
-        markersDataMap.set(core.uuid, { id: country.id, name: country.name, isCountry: true });
-        markersDataMap.set(ring.uuid, { id: country.id, name: country.name, isCountry: true });
-
-        // Country Sprite Label
-        const canvas = document.createElement("canvas");
-        canvas.width = 256;
-        canvas.height = 128;
-        const ctx = canvas.getContext("2d")!;
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, 256, 128);
-        ctx.font = "bold 28px monospace";
-        ctx.fillStyle = isSelected ? "#39ff14" : "#00f0ff";
-        ctx.textAlign = "center";
-        ctx.fillText(country.name, 128, 40);
-        ctx.font = "20px monospace";
-        ctx.fillStyle = "#9ca3af";
-        ctx.fillText(country.capital, 128, 70);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: false, depthTest: false });
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.position.copy(pos.clone().multiplyScalar(1.15));
-        sprite.scale.set(12, 6, 1);
-        labelsGroup.add(sprite);
+        markersDataMap.set(core.uuid, { id: country.id, name: country.name, isCountry: true, isEvent: false });
+        markersDataMap.set(ring.uuid, { id: country.id, name: country.name, isCountry: true, isEvent: false });
       });
 
       // 2. Civilizations
@@ -513,9 +615,9 @@ export default function HoloGlobe({
         .forEach((civ) => {
           const pos = latLonToWorld(civ.centerCoordinates[0], civ.centerCoordinates[1], globeRadius + 0.5);
           const ring = new THREE.Mesh(
-            new THREE.RingGeometry(2.0, 3.2, 8),
+            new THREE.RingGeometry(1.8, 2.8, 8),
             new THREE.MeshBasicMaterial({
-              color: 0xbd00ff,
+              color: 0xd97706,
               side: THREE.DoubleSide,
               transparent: true,
               opacity: 0.8,
@@ -526,16 +628,16 @@ export default function HoloGlobe({
           markersGroup.add(ring);
 
           const core = new THREE.Mesh(
-            new THREE.ConeGeometry(0.8, 2.5, 4),
-            new THREE.MeshBasicMaterial({ color: 0xbd00ff }),
+            new THREE.ConeGeometry(0.75, 2.2, 4),
+            new THREE.MeshBasicMaterial({ color: 0xd97706 }),
           );
           core.position.copy(pos);
           core.quaternion.copy(ring.quaternion);
           core.rotateX(Math.PI / 2);
           markersGroup.add(core);
 
-          markersDataMap.set(core.uuid, { id: civ.id, name: civ.name, isCountry: false });
-          markersDataMap.set(ring.uuid, { id: civ.id, name: civ.name, isCountry: false });
+          markersDataMap.set(core.uuid, { id: civ.id, name: civ.name, isCountry: false, isEvent: false });
+          markersDataMap.set(ring.uuid, { id: civ.id, name: civ.name, isCountry: false, isEvent: false });
         });
 
       // 3. Historical Cities
@@ -544,12 +646,12 @@ export default function HoloGlobe({
         .forEach((city) => {
           const pos = latLonToWorld(city.coordinates[0], city.coordinates[1], globeRadius + 0.3);
           const diamond = new THREE.Mesh(
-            new THREE.OctahedronGeometry(1.2, 0),
-            new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.9 }),
+            new THREE.OctahedronGeometry(1.1, 0),
+            new THREE.MeshBasicMaterial({ color: 0xfef3c7, transparent: true, opacity: 0.85 }),
           );
           diamond.position.copy(pos);
           markersGroup.add(diamond);
-          markersDataMap.set(diamond.uuid, { id: city.id, name: city.name, isCountry: false });
+          markersDataMap.set(diamond.uuid, { id: city.id, name: city.name, isCountry: false, isEvent: false });
         });
 
       // 4. Historical Events
@@ -560,20 +662,20 @@ export default function HoloGlobe({
         const pos = latLonToWorld(lat, lng, globeRadius + 0.5);
         const isSelected = event.id === selectedEvId;
         const color = isSelected
-          ? 0x39ff14
+          ? 0xf59e0b
           : event.impact === "major"
-          ? 0xff3b30
+          ? 0xef4444
           : event.impact === "significant"
           ? 0xf59e0b
-          : 0x00f0ff;
+          : 0x38bdf8;
 
         const ring = new THREE.Mesh(
-          new THREE.RingGeometry(1.8, 2.8, 32),
+          new THREE.RingGeometry(1.6, 2.5, 32),
           new THREE.MeshBasicMaterial({
             color,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: isSelected ? 1.0 : 0.8,
+            opacity: isSelected ? 1.0 : 0.75,
           }),
         );
         ring.position.copy(pos);
@@ -581,37 +683,17 @@ export default function HoloGlobe({
         markersGroup.add(ring);
 
         const core = new THREE.Mesh(
-          new THREE.SphereGeometry(isSelected ? 1.4 : 1.0, 16, 16),
+          new THREE.SphereGeometry(isSelected ? 1.3 : 0.9, 16, 16),
           new THREE.MeshBasicMaterial({ color }),
         );
         core.position.copy(pos);
         markersGroup.add(core);
 
-        markersDataMap.set(core.uuid, { id: event.id, name: event.title, isCountry: false });
-        markersDataMap.set(ring.uuid, { id: event.id, name: event.title, isCountry: false });
+        markersDataMap.set(core.uuid, { id: event.id, name: event.title, isCountry: false, isEvent: true });
+        markersDataMap.set(ring.uuid, { id: event.id, name: event.title, isCountry: false, isEvent: true });
       });
 
-      // 5. Targeting Reticle Placement
-      let targetPos: THREE.Vector3 | null = null;
-      if (selectedEvId) {
-        const ev = Object.values(historicalEvents).flat().find((e) => e.id === selectedEvId);
-        if (ev && ev.coordinates) {
-          targetPos = latLonToWorld(ev.coordinates[0], ev.coordinates[1], globeRadius + 0.8);
-        }
-      } else if (selectedId && countriesData[selectedId]) {
-        const c = countriesData[selectedId];
-        targetPos = latLonToWorld(c.coordinates[0], c.coordinates[1], globeRadius + 0.8);
-      }
-
-      if (targetPos) {
-        reticleGroup.position.copy(targetPos);
-        reticleGroup.lookAt(targetPos.clone().multiplyScalar(2));
-        reticleGroup.visible = true;
-      } else {
-        reticleGroup.visible = false;
-      }
-
-      // 6. Animated Trade Routes & Migration Flows
+      // 5. Animated Trade Routes & Migration Flows
       if (layers.includes("trade_routes") || layers.includes("migration_flows")) {
         const animatedDots: Array<{
           mesh: THREE.Mesh;
@@ -629,7 +711,7 @@ export default function HoloGlobe({
                   createArc(
                     route.path[i],
                     route.path[i + 1],
-                    0x00f0ff,
+                    0xf59e0b,
                     false,
                     globeRadius,
                     arcsGroup,
@@ -644,7 +726,7 @@ export default function HoloGlobe({
                   createArc(
                     flow.path[i],
                     flow.path[i + 1],
-                    0xbd00ff,
+                    0x818cf8,
                     true,
                     globeRadius,
                     arcsGroup,
@@ -654,13 +736,15 @@ export default function HoloGlobe({
               });
             }
           });
-        (globeGroup as any).userData.animatedDots = animatedDots;
+        globeGroup.userData.animatedDots = animatedDots;
       }
 
-      // 7. Overlays (Climate, Biodiversity)
+      // 6. Overlays (Climate, Biodiversity)
       if (layers.includes("climate")) renderClimateOverlay(globeRadius, overlaysGroup);
       if (layers.includes("biodiversity")) renderBiodiversityOverlay(globeRadius, overlaysGroup);
     }
+
+    rebuildMarkersRef.current = rebuildMarkers;
 
     function createArc(
       p1: [number, number],
@@ -669,7 +753,7 @@ export default function HoloGlobe({
       dashed: boolean,
       globeRadius: number,
       parentGroup: THREE.Group,
-      animatedDots: any[],
+      animatedDots: AnimatedRouteDot[],
     ) {
       const start = latLonToWorld(p1[0], p1[1], globeRadius);
       const end = latLonToWorld(p2[0], p2[1], globeRadius);
@@ -770,63 +854,130 @@ export default function HoloGlobe({
       });
     }
 
-    // Attach Physics Orbit Controls
-    const detachControls = attachOrbitControls(container, controlInputRef.current, () => {
-      controlStateRef.current.isFlying = false;
-    });
-
     // Raycaster for Hover & Selection
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
+    // Zero-React-re-render Pointer Move: Direct DOM updates for coordinates and hover tooltip
     const handlePointerMove = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const ndcY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-      // Surface Coordinates Raycast
+      // Surface Coordinates Raycast -> updates CoordinateTelemetry via imperative handle
       const hit = pickSurface(ndcX, ndcY, camera, globeGroup, globeRadius);
-      if (hit) {
-        setCursorCoords({ lat: hit.lat, lon: hit.lon });
-      }
+      telemetryRef.current?.setCursorCoords(hit);
 
-      // Marker Tooltip Hover
+      // Marker Tooltip Hover -> direct style mutation without setState
       mouse.set(ndcX, ndcY);
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(markersGroup.children);
       if (intersects.length > 0) {
         const item = markersDataMap.get(intersects[0].object.uuid);
-        if (item) setHoveredName(item.name);
-        else setHoveredName(null);
-      } else {
-        setHoveredName(null);
+        if (item && tooltipRef.current && tooltipTextRef.current) {
+          tooltipTextRef.current.textContent = item.name;
+          tooltipRef.current.style.display = "flex";
+        } else if (tooltipRef.current) {
+          tooltipRef.current.style.display = "none";
+        }
+      } else if (tooltipRef.current) {
+        tooltipRef.current.style.display = "none";
       }
     };
 
-    const handleClick = (e: MouseEvent) => {
+    // Clean Gesture-Filtered Selection (Invoked only on true clicks, never on drag release)
+    const handleCleanClick = (clientX: number, clientY: number) => {
       const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
 
+      // 1. Check direct hit on interactive marker meshes
       const intersects = raycaster.intersectObjects(markersGroup.children);
       if (intersects.length > 0) {
         const item = markersDataMap.get(intersects[0].object.uuid);
         if (item) {
           if (item.isCountry) {
-            onSelectCountry(item.id);
-          } else if (item.id && onSelectEvent) {
-            const ev = Object.values(historicalEvents).flat().find((event) => event.id === item.id);
-            if (ev) onSelectEvent(ev.id);
-          } else if (onSelectCivilization) {
-            onSelectCivilization(item.id);
+            setCustomLocus(null);
+            propsRef.current.onSelectCountry(item.id);
+          } else if (item.isEvent && propsRef.current.onSelectEvent) {
+            setCustomLocus(null);
+            propsRef.current.onSelectEvent(item.id);
+          } else if (propsRef.current.onSelectCivilization) {
+            setCustomLocus(null);
+            propsRef.current.onSelectCivilization(item.id);
           }
+          return;
         }
+      }
+
+      // 2. Raycast surface of globe: check proximity indexer (<250 km threshold)
+      const hit = pickSurface(mouse.x, mouse.y, camera, globeGroup, globeRadius);
+      if (hit) {
+        const nearby = findNearestEntity(hit.lat, hit.lon, 250, propsRef.current.activeEra);
+        if (nearby) {
+          if (nearby.type === "country") {
+            setCustomLocus(null);
+            propsRef.current.onSelectCountry(nearby.countryId || nearby.id);
+          } else if (nearby.type === "event" && propsRef.current.onSelectEvent) {
+            setCustomLocus(null);
+            propsRef.current.onSelectEvent(nearby.id);
+          } else if (nearby.type === "city") {
+            // Keep specific city locus active with exact city coordinates
+            setCustomLocus({
+              name: nearby.name,
+              lat: nearby.coordinates[0],
+              lon: nearby.coordinates[1],
+              subtitle: nearby.snippet,
+            });
+            if (nearby.countryId) propsRef.current.onSelectCountry(nearby.countryId);
+
+            startFlightTo(
+              globeGroup,
+              camera,
+              nearby.coordinates[0],
+              nearby.coordinates[1],
+              controlStateRef.current,
+              1.35,
+              140,
+            );
+          }
+        } else {
+          // Open Sea / Wilderness click: cleanly display geodetic coordinates, dismiss open panels
+          (propsRef.current.onSelectCountry as (id: string | null) => void)?.(null);
+          if (propsRef.current.onSelectEvent) propsRef.current.onSelectEvent(null);
+
+          setCustomLocus({
+            name: "Geodetic Locus",
+            lat: hit.lat,
+            lon: hit.lon,
+            subtitle: "Open Horizon · Uncharted Coordinate",
+          });
+        }
+      } else {
+        // Space click outside Earth: dismiss panels and clear locus
+        (propsRef.current.onSelectCountry as (id: string | null) => void)?.(null);
+        if (propsRef.current.onSelectEvent) propsRef.current.onSelectEvent(null);
+        setCustomLocus(null);
       }
     };
 
+    // Attach Physics Orbit Controls with gesture slop filter
+    const detachControls = attachOrbitControls(
+      container,
+      controlInputRef.current,
+      () => {
+        controlStateRef.current.isFlying = false;
+      },
+      (coords) => {
+        handleCleanClick(coords.clientX, coords.clientY);
+      },
+    );
+
     container.addEventListener("mousemove", handlePointerMove);
-    container.addEventListener("click", handleClick);
+
+    // Initial marker construction
+    rebuildMarkers();
 
     // Main 60 FPS Render Loop
     let lastTime = performance.now();
@@ -845,16 +996,62 @@ export default function HoloGlobe({
         container.clientHeight,
       );
 
+      // Off-Axis Optical Lens Shift: Glide globe smoothly to the unobstructed view
+      const isPanelOpen = propsRef.current.panelOpen;
+      const isDesktop = container.clientWidth >= 768;
+      let targetShiftX = 0;
+      let targetShiftY = 0;
+
+      if (isPanelOpen) {
+        if (isDesktop) {
+          // Desktop panel width ~500px on the right
+          const panelWidthFraction = 500 / Math.max(1, container.clientWidth);
+          targetShiftX = panelWidthFraction * 0.95;
+        } else {
+          // Mobile bottom sheet covers ~75% at bottom; shift content upward
+          targetShiftY = -0.45;
+        }
+      }
+
+      const shiftSmoothing = 1 - Math.exp(-dt / 0.18);
+      lensShiftRef.current.currentX += (targetShiftX - lensShiftRef.current.currentX) * shiftSmoothing;
+      lensShiftRef.current.currentY += (targetShiftY - lensShiftRef.current.currentY) * shiftSmoothing;
+      applyLensShift(camera, lensShiftRef.current.currentX, lensShiftRef.current.currentY);
+
       // Rotate Clouds Atmosphere slowly
       if (cloudsMesh) {
         cloudsMesh.rotation.y += 0.00015;
       }
 
-      // Animate Precision Reticle
-      if (reticleGroup.visible) {
-        reticleBrackets.rotation.z += 0.015;
-        const pulse = 1 + Math.sin(now * 0.004) * 0.06;
-        reticleRing.scale.set(pulse, pulse, 1);
+      // Animate Astrolabe Locus Ring with 280ms arrival contraction ease & subtle breathing
+      if (astrolabeGroup.visible) {
+        // Horizon occlusion check: hide astrolabe if site is on the opposite side of Earth
+        astrolabeWorldPosRef.current.copy(astrolabeGroup.position).applyMatrix4(globeGroup.matrixWorld);
+        const isOccluded = occludedByEarth(camera.position, astrolabeWorldPosRef.current, globeRadius);
+
+        if (isOccluded) {
+          innerRingMat.opacity = 0;
+          outerRingMat.opacity = 0;
+          tickMat.opacity = 0;
+          crossMat.opacity = 0;
+        } else {
+          const elapsed = now - astrolabeArrivalStartRef.current;
+          const t = Math.min(1, elapsed / 280);
+          // easeOutCubic: 1 - (1 - t)^3
+          const ease = 1 - Math.pow(1 - t, 3);
+          const arrivalScale = 2.0 - 1.0 * ease;
+
+          // Subtle classical breathing pulse (±2%)
+          const pulse = 1 + Math.sin(now * 0.0025) * 0.02;
+          const totalScale = arrivalScale * pulse;
+          astrolabeGroup.scale.set(totalScale, totalScale, 1);
+
+          const ringOpacity = Math.min(1, ease * 1.2);
+          innerRingMat.opacity = 0.95 * ringOpacity;
+          outerRingMat.opacity = 0.85 * ringOpacity;
+          tickMat.opacity = 0.9 * ringOpacity;
+          crossMat.opacity = 0.6 * ringOpacity;
+        }
       }
 
       // Pulse Selection Rings
@@ -867,8 +1064,8 @@ export default function HoloGlobe({
       });
 
       // Animate Trade Route Dots
-      const animatedDots = (globeGroup as any).userData.animatedDots || [];
-      animatedDots.forEach((dot: any) => {
+      const animatedDots = (globeGroup.userData.animatedDots as AnimatedRouteDot[]) || [];
+      animatedDots.forEach((dot: AnimatedRouteDot) => {
         dot.progress += dot.speed;
         if (dot.progress > 1) dot.progress = 0;
         const pos = dot.curve.getPointAt(dot.progress);
@@ -877,9 +1074,18 @@ export default function HoloGlobe({
 
       atmosMesh.lookAt(camera.position);
 
-      // Altitude Calculation
+      // Altitude Calculation -> Direct DOM write via CoordinateTelemetry imperative handle
       const altKm = Math.max(0, (camera.position.z - globeRadius) * (EARTH_RADIUS_KM / globeRadius));
-      setCameraAltitudeKm(altKm);
+      telemetryRef.current?.setAltitudeKm(altKm);
+
+      // Update Screen-Space DOM Labels & Locus Pin without React re-render
+      overlayRef.current?.update(
+        camera,
+        globeGroup,
+        container.clientWidth,
+        container.clientHeight,
+        altKm,
+      );
 
       renderer.render(scene, camera);
     };
@@ -893,51 +1099,57 @@ export default function HoloGlobe({
       if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      applyLensShift(camera, lensShiftRef.current.currentX, lensShiftRef.current.currentY);
       renderer.setSize(w, h);
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
 
-    // Rebuild markers when props change
-    rebuildMarkers();
-    const intervalId = setInterval(() => {
-      const {
-        activeCountryId: cid,
-        activeEra: er,
-        activeLayers: ly,
-        selectedEventId: seid,
-      } = propsRef.current;
-      if (
-        cid !== activeCountryId ||
-        er !== activeEra ||
-        seid !== selectedEventId ||
-        [...ly].sort().join(",") !== [...activeLayers].sort().join(",")
-      ) {
-        rebuildMarkers();
-      }
-    }, 150);
-
     return () => {
       renderer.setAnimationLoop(null);
-      clearInterval(intervalId);
       resizeObserver.disconnect();
       detachControls();
       container.removeEventListener("mousemove", handlePointerMove);
-      container.removeEventListener("click", handleClick);
+
+      // Deep GPU resource disposal
+      dayTex.dispose();
+      nightTex.dispose();
+      cloudsTex.dispose();
+      dataTex.dispose();
+
+      earthGeo.dispose();
+      earthMat.dispose();
+      cloudsGeo.dispose();
+      cloudsMat.dispose();
+      oceanGeo.dispose();
+      oceanMat.dispose();
+      gridGeo.dispose();
+      gridMat.dispose();
+      atmosGeo.dispose();
+      atmosMat.dispose();
+      starGeo.dispose();
+      starMat.dispose();
+      continentMat.dispose();
+
+      innerRingGeo.dispose();
+      innerRingMat.dispose();
+      outerRingGeo.dispose();
+      outerRingMat.dispose();
+      tickGeo.dispose();
+      tickMat.dispose();
+      crossGeo.dispose();
+      crossMat.dispose();
+
+      clearGroup(markersGroup);
+      clearGroup(arcsGroup);
+      clearGroup(overlaysGroup);
+
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [
-    activeLayers,
-    activeCountryId,
-    activeEra,
-    selectedEventId,
-    onSelectCountry,
-    onSelectCivilization,
-    onSelectEvent,
-  ]);
+  }, [globeRadius]);
 
   // Zoom Button Handlers with smooth log targets
   const handleZoomIn = useCallback(() => {
@@ -966,11 +1178,34 @@ export default function HoloGlobe({
         className="absolute inset-0 select-none cursor-grab active:cursor-grabbing"
       />
 
-      {/* Cyberpunk Telemetry HUD Widget */}
+      {/* Screen-Space DOM Overlay Layer (Crisp Typography, Horizon Occlusion, Zero Re-renders) */}
+      <GlobeOverlay
+        ref={overlayRef}
+        onSelectLocus={(lat, lon, name) => {
+          if (globeGroupRef.current && cameraRef.current) {
+            startFlightTo(
+              globeGroupRef.current,
+              cameraRef.current,
+              lat,
+              lon,
+              controlStateRef.current,
+              1.3,
+              155,
+            );
+            setCustomLocus({
+              name,
+              lat,
+              lon,
+              subtitle: "Civilizational Hearth",
+            });
+          }
+        }}
+      />
+
+      {/* Astrolabe Cartographic Telemetry Bar (Zero React Re-renders on mousemove / altitude) */}
       <CoordinateTelemetry
-        cursorCoords={cursorCoords}
+        ref={telemetryRef}
         selectedTarget={selectedTarget}
-        cameraAltitudeKm={cameraAltitudeKm}
         visualMode={visualMode}
         onSetVisualMode={setVisualMode}
       />
@@ -979,27 +1214,29 @@ export default function HoloGlobe({
       <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-20">
         <button
           onClick={handleZoomIn}
-          className="w-10 h-10 bg-black/80 backdrop-blur-md border border-zinc-800 hover:border-[#00f0ff]/60 rounded-md flex items-center justify-center text-white hover:text-[#00f0ff] transition-all text-lg font-bold shadow-lg"
+          className="w-10 h-10 bg-black/80 backdrop-blur-md border border-zinc-800 hover:border-[#f59e0b]/60 rounded-md flex items-center justify-center text-white hover:text-[#f59e0b] transition-all text-lg font-bold shadow-lg"
           title="Zoom In"
         >
           +
         </button>
         <button
           onClick={handleZoomOut}
-          className="w-10 h-10 bg-black/80 backdrop-blur-md border border-zinc-800 hover:border-[#00f0ff]/60 rounded-md flex items-center justify-center text-white hover:text-[#00f0ff] transition-all text-lg font-bold shadow-lg"
+          className="w-10 h-10 bg-black/80 backdrop-blur-md border border-zinc-800 hover:border-[#f59e0b]/60 rounded-md flex items-center justify-center text-white hover:text-[#f59e0b] transition-all text-lg font-bold shadow-lg"
           title="Zoom Out"
         >
           −
         </button>
       </div>
 
-      {/* Target Detected Floating Badge */}
-      {hoveredName && (
-        <div className="absolute pointer-events-none bg-black/90 backdrop-blur-md border border-[#00f0ff]/60 text-white font-mono px-3.5 py-1.5 rounded-md text-xs shadow-xl shadow-black/80 left-1/2 -translate-x-1/2 top-4 animate-in fade-in duration-200 z-30">
-          <span className="text-[#00f0ff] font-semibold">📡 TARGET DETECTED:</span>{" "}
-          <span className="font-bold text-white tracking-wide">{hoveredName}</span>
-        </div>
-      )}
+      {/* Cartographic Hover Tooltip (Imperative DOM mutation, Zero React Re-render) */}
+      <div
+        ref={tooltipRef}
+        style={{ display: "none" }}
+        className="absolute pointer-events-none bg-black/90 backdrop-blur-md border border-[#f59e0b]/60 text-white font-serif px-3.5 py-1.5 rounded-lg text-xs shadow-xl shadow-black/80 left-1/2 -translate-x-1/2 top-4 animate-in fade-in duration-200 z-30 items-center space-x-2"
+      >
+        <Compass className="w-3.5 h-3.5 text-[#f59e0b]" />
+        <span ref={tooltipTextRef} className="font-bold text-amber-100 tracking-wide" />
+      </div>
     </div>
   );
 }

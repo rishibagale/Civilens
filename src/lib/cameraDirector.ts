@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { DEG, latLonToWorld } from "./geoMath";
+import { DEG } from "./geoMath";
 
 export interface ControlInput {
   panX: number;
@@ -50,19 +50,45 @@ export function createControlState(): ControlState {
 export const MIN_CAMERA_RANGE = 80;
 export const MAX_CAMERA_RANGE = 350;
 export const DEFAULT_CAMERA_RANGE = 220;
+export const CLICK_SLOP_PX = 5;
+export const CLICK_MAX_MS = 500;
+
+/**
+ * Applies an off-axis optical lens shift to a PerspectiveCamera by adjusting
+ * projectionMatrix elements [8] and [9] and updating projectionMatrixInverse.
+ *
+ * @param camera PerspectiveCamera to adjust
+ * @param shiftX Horizontal shift in NDC (-1 to +1). Positive moves optical center left.
+ * @param shiftY Vertical shift in NDC (-1 to +1). Positive moves optical center down.
+ */
+export function applyLensShift(
+  camera: THREE.PerspectiveCamera,
+  shiftX: number,
+  shiftY: number,
+): void {
+  camera.projectionMatrix.elements[8] = shiftX;
+  camera.projectionMatrix.elements[9] = shiftY;
+  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+}
 
 /**
  * Attaches pointer and wheel event listeners to the canvas container.
+ * Enforces gesture slop filtering (CLICK_SLOP_PX = 5, CLICK_MAX_MS = 500)
+ * so that dragging to orbit never triggers an accidental selection upon release.
  * Returns a cleanup unsubscribe function.
  */
 export function attachOrbitControls(
   el: HTMLElement,
   input: ControlInput,
   onInterruptFlight?: () => void,
+  onClick?: (coords: { clientX: number; clientY: number }, e: PointerEvent) => void,
 ): () => void {
   const pointers = new Map<number, { x: number; y: number }>();
   let mode: "pan" | "turn" = "pan";
   let pinchDist = 0;
+  let pointerDownPos: { x: number; y: number } | null = null;
+  let pointerDownTime = 0;
+  let hasMovedBeyondSlop = false;
 
   const mark = () => {
     input.lastInputAt = performance.now();
@@ -72,6 +98,14 @@ export function attachOrbitControls(
     if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
     el.setPointerCapture?.(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 1) {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+      pointerDownTime = performance.now();
+      hasMovedBeyondSlop = false;
+    } else {
+      hasMovedBeyondSlop = true;
+    }
 
     mode = e.button === 2 || e.shiftKey || e.ctrlKey || e.metaKey ? "turn" : "pan";
 
@@ -95,6 +129,13 @@ export function attachOrbitControls(
     p.x = e.clientX;
     p.y = e.clientY;
 
+    if (pointerDownPos && !hasMovedBeyondSlop) {
+      const totalMoved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (totalMoved > CLICK_SLOP_PX) {
+        hasMovedBeyondSlop = true;
+      }
+    }
+
     if (pointers.size >= 2) {
       const pts = Array.from(pointers.values());
       const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -115,12 +156,35 @@ export function attachOrbitControls(
   };
 
   const onPointerUp = (e: PointerEvent) => {
+    const duration = performance.now() - pointerDownTime;
+    const totalDist = pointerDownPos
+      ? Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y)
+      : Infinity;
+
+    const isCleanClick =
+      !hasMovedBeyondSlop &&
+      totalDist <= CLICK_SLOP_PX &&
+      duration <= CLICK_MAX_MS &&
+      pointers.size === 1;
+
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchDist = 0;
     if (pointers.size === 0) {
       input.dragging = false;
     }
     mark();
+
+    if (isCleanClick && onClick) {
+      onClick({ clientX: e.clientX, clientY: e.clientY }, e);
+    }
+  };
+
+  const onCaptureClick = (e: MouseEvent) => {
+    // If the gesture moved > CLICK_SLOP_PX or was held > CLICK_MAX_MS, suppress native click
+    if (hasMovedBeyondSlop || performance.now() - pointerDownTime > CLICK_MAX_MS) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
   };
 
   const onWheel = (e: WheelEvent) => {
@@ -143,6 +207,7 @@ export function attachOrbitControls(
   el.addEventListener("pointercancel", onPointerUp);
   el.addEventListener("wheel", onWheel, { passive: false });
   el.addEventListener("contextmenu", onContextMenu);
+  el.addEventListener("click", onCaptureClick, true);
 
   return () => {
     el.removeEventListener("pointerdown", onPointerDown);
@@ -151,6 +216,7 @@ export function attachOrbitControls(
     el.removeEventListener("pointercancel", onPointerUp);
     el.removeEventListener("wheel", onWheel);
     el.removeEventListener("contextmenu", onContextMenu);
+    el.removeEventListener("click", onCaptureClick, true);
   };
 }
 
