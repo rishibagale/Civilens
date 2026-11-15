@@ -16,6 +16,11 @@ import {
   ChevronRight,
   Clock,
   Compass,
+  Thermometer,
+  Dna,
+  CloudRain,
+  CalendarCheck,
+  Building,
 } from "lucide-react";
 import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { fetchEventImage, formatYear, type EventImage } from "@/services/eventImages";
@@ -279,6 +284,36 @@ export default function EventDetailPanel({
               )}
             </div>
 
+            {/* ── ARCHAEOLOGICAL EXCAVATION & CALIBRATED CHRONOLOGY ── */}
+            {(event.siteName || event.exactDate) && (
+              <div className="px-6 py-3 border-b border-panel-border/20 bg-amber-500/[0.04]">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-1.5 text-[9px] font-mono text-amber-400 uppercase tracking-widest font-bold">
+                    <Building className="w-3 h-3 text-amber-400" /> Excavation Site & Chronology
+                  </div>
+                  {event.datingMethod && (
+                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/30 text-amber-300">
+                      {event.datingMethod}
+                    </span>
+                  )}
+                </div>
+                {event.siteName && (
+                  <div className="text-xs text-white font-semibold flex items-baseline gap-1.5">
+                    <span>{event.siteName}</span>
+                    {event.modernCountry && (
+                      <span className="text-[10px] text-zinc-400 font-mono">({event.modernCountry})</span>
+                    )}
+                  </div>
+                )}
+                {event.exactDate && (
+                  <div className="text-[11px] text-zinc-300 font-mono mt-0.5 flex items-center gap-1.5">
+                    <CalendarCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                    <span>{event.exactDate}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ── QUICK FACTS ROW ──────────────────────────── */}
             <div className="px-6 py-4 grid grid-cols-2 gap-2.5 border-b border-panel-border/20 bg-black/20">
               <div className="bg-black/40 border border-panel-border/30 rounded-lg p-3">
@@ -287,7 +322,7 @@ export default function EventDetailPanel({
                 </div>
                 <div className="text-xs text-white font-semibold">
                   {event.coordinates
-                    ? `${event.coordinates[0].toFixed(1)}°, ${event.coordinates[1].toFixed(1)}°`
+                    ? `${event.coordinates[0].toFixed(2)}°, ${event.coordinates[1].toFixed(2)}°`
                     : "Global"}
                 </div>
               </div>
@@ -338,6 +373,109 @@ export default function EventDetailPanel({
                   {event.narrative.split("\n\n").map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── PALEOCLIMATE & ENVIRONMENTAL SHIFT MODULE ── */}
+            {event.environmentalShift && (
+              <motion.section
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="px-6 pb-5"
+              >
+                <div className="border border-emerald-500/30 bg-emerald-500/[0.05] rounded-xl p-4 shadow-[0_0_20px_rgba(16,185,129,0.08)]">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <CloudRain className="w-4 h-4 text-emerald-400" />
+                      <h3 className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">
+                        Paleoclimate & Environmental Shift
+                      </h3>
+                    </div>
+                    {event.environmentalShift.temperatureDelta && (
+                      <span className="flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold">
+                        <Thermometer className="w-2.5 h-2.5" />
+                        {event.environmentalShift.temperatureDelta}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-white font-semibold mb-1">
+                    {event.environmentalShift.climateEvent}
+                  </div>
+
+                  {event.environmentalShift.droughtOrPluvial && (
+                    <div className="text-[10px] font-mono text-emerald-300/80 mb-2">
+                      Regime: {event.environmentalShift.droughtOrPluvial}
+                    </div>
+                  )}
+
+                  <p className="text-[12px] text-zinc-200 font-serif leading-relaxed text-justify border-t border-emerald-500/20 pt-2 mt-2">
+                    {event.environmentalShift.ecologicalImpact}
+                  </p>
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── HUMAN GENETICS & ADAPTIVE DIVERGENCE MODULE ── */}
+            {event.geneticContext && (
+              <motion.section
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="px-6 pb-5"
+              >
+                <div className="border border-pink-500/30 bg-pink-500/[0.05] rounded-xl p-4 shadow-[0_0_20px_rgba(236,72,153,0.08)]">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Dna className="w-4 h-4 text-pink-400" />
+                    <h3 className="text-[10px] font-mono text-pink-400 uppercase tracking-widest font-bold">
+                      Human Genetics & Adaptive Divergence
+                    </h3>
+                  </div>
+
+                  {/* Adaptive Alleles Pill Badges */}
+                  {event.geneticContext.adaptiveAlleles && event.geneticContext.adaptiveAlleles.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                        Selective Alleles & Metabolic Sweeps:
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {event.geneticContext.adaptiveAlleles.map((allele, i) => (
+                          <span
+                            key={i}
+                            className="text-[9.5px] font-mono px-2 py-0.5 bg-pink-500/15 border border-pink-500/40 text-pink-200 rounded-md font-semibold flex items-center gap-1"
+                          >
+                            <span className="w-1 h-1 rounded-full bg-pink-400" />
+                            {allele}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Haplogroups */}
+                  {event.geneticContext.haplogroups && event.geneticContext.haplogroups.length > 0 && (
+                    <div className="mb-2.5">
+                      <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider mb-1">
+                        Ancestral Haplogroup Lineages:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {event.geneticContext.haplogroups.map((hg, i) => (
+                          <span
+                            key={i}
+                            className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800/80 border border-zinc-700 text-zinc-300 rounded"
+                          >
+                            {hg}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-[12px] text-zinc-200 font-serif leading-relaxed text-justify border-t border-pink-500/20 pt-2 mt-2">
+                    {event.geneticContext.demographicPattern}
+                  </p>
                 </div>
               </motion.section>
             )}

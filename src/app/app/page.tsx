@@ -31,6 +31,8 @@ export default function AppDashboard() {
   const [activeLayers, setActiveLayers] = useState<string[]>([
     "earth_imagery",
     "clouds",
+    "paleoclimate",
+    "genetics",
     "climate",
     "biodiversity",
     "trade_routes",

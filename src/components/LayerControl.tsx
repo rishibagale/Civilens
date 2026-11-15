@@ -55,7 +55,21 @@ export default function LayerControl({ activeLayers, onToggleLayer }: LayerContr
       colorClass: "text-blue-400",
       description: "Maps core oceanic currents driving heat transport and navigation routes.",
     },
+    {
+      id: "paleoclimate",
+      label: "Paleoclimate & Environmental Shifts",
+      category: "environmental",
+      colorClass: "text-[#10b981] font-bold",
+      description: "Visualizes the Green Sahara lush savanna, 4.2k drought belt, and Last Glacial Maximum (LGM) ice sheets.",
+    },
     // Human Layers
+    {
+      id: "genetics",
+      label: "Human Genetics & Gene Flow",
+      category: "human",
+      colorClass: "text-[#ec4899] font-bold",
+      description: "Animates selective allele sweeps (LCT lactase, EPAS1 hypoxia, HbS malaria) and ancient haplogroup corridors.",
+    },
     {
       id: "population_density",
       label: "Population Densities",

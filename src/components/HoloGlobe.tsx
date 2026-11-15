@@ -274,7 +274,8 @@ export default function HoloGlobe({
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Clamp pixel ratio to 1.5 for buttery 60 FPS performance on laptops and integrated GPUs
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0x030408, 1);
     renderer.setSize(width, height);
     rendererRef.current = renderer;
@@ -322,12 +323,13 @@ export default function HoloGlobe({
     cloudsTex.wrapS = THREE.RepeatWrapping;
     dataTex.wrapS = THREE.RepeatWrapping;
 
-    // Earth Photoreal / Hybrid Surface Shader
+    // Earth Ultra-Realistic Photoreal / Hybrid Surface Shader
     const earthGeo = new THREE.SphereGeometry(globeRadius - 0.2, 64, 64);
     const earthMat = new THREE.ShaderMaterial({
       uniforms: {
         uDay: { value: dayTex },
         uNight: { value: nightTex },
+        uClouds: { value: cloudsTex },
         uData: { value: dataTex },
         uSunDir: { value: new THREE.Vector3(1.2, 0.45, 0.9).normalize() },
         uOceanDarkness: { value: 0.75 },
@@ -347,6 +349,7 @@ export default function HoloGlobe({
       fragmentShader: `
         uniform sampler2D uDay;
         uniform sampler2D uNight;
+        uniform sampler2D uClouds;
         uniform sampler2D uData;
         uniform vec3 uSunDir;
         uniform float uOceanDarkness;
@@ -363,18 +366,42 @@ export default function HoloGlobe({
           vec3 L = normalize(uSunDir);
           vec3 V = normalize(cameraPosition - vWorldPos);
 
-          float NdL = dot(N, L);
-          float dayFactor = smoothstep(-0.2, 0.25, NdL);
+          vec4 dataCol = texture2D(uData, vUv);
+          float isLand = 1.0 - dataCol.g;
+
+          // 1. Central-Difference Elevation Relief Bump-Mapping from NASA DEM
+          // Super-lightweight & branchless: only 2 extra taps on 1K texture
+          float elevR = texture2D(uData, vUv + vec2(0.0012, 0.0)).r;
+          float elevU = texture2D(uData, vUv + vec2(0.0, 0.0012)).r;
+          float dElevX = (elevR - dataCol.r) * 3.8;
+          float dElevY = (elevU - dataCol.r) * 3.8;
+          vec3 bumpNorm = normalize(N + vec3(-dElevX, -dElevY, 0.0) * isLand * 0.42);
+
+          // 2. Diffuse illumination with mountain micro-relief
+          float NdL = dot(bumpNorm, L);
+          float dayFactor = smoothstep(-0.16, 0.24, NdL);
 
           vec3 dayCol = texture2D(uDay, vUv).rgb;
           vec3 nightCol = texture2D(uNight, vUv).rgb;
-          vec4 dataCol = texture2D(uData, vUv);
 
-          // Specular Glint on Ocean
+          // 3. Terrain Cloud Shadows: Sun-vector projected onto Earth surface
+          vec2 cloudShadowUv = vUv - L.xy * 0.0045;
+          float cloudCover = texture2D(uClouds, cloudShadowUv).r;
+          float cloudShadow = mix(1.0, 0.60, cloudCover * isLand * dayFactor);
+          dayCol *= cloudShadow;
+
+          // 4. Rayleigh & Mie Sunset Twilight Absorption along terminator (N · L ≈ 0)
+          float twilight = smoothstep(-0.12, 0.10, NdL) * smoothstep(0.32, 0.02, NdL);
+          vec3 sunsetAmber = vec3(1.0, 0.52, 0.16);
+          dayCol += sunsetAmber * (twilight * 0.40 * isLand + twilight * 0.22 * (1.0 - isLand));
+
+          // 5. Specular Glint & Schlick Fresnel on Oceans
           vec3 H = normalize(L + V);
-          float spec = pow(max(0.0, dot(N, H)), 24.0) * dataCol.g * 0.38 * dayFactor;
+          float specGlint = pow(max(0.0, dot(N, H)), 26.0) * dataCol.g * 0.42 * dayFactor;
+          float fresnel = pow(1.0 - max(0.0, dot(V, N)), 4.0);
+          float oceanFresnel = fresnel * dataCol.g * 0.32 * dayFactor;
 
-          // In Hybrid mode: darken oceans to deep ink navy
+          // In Hybrid mode: darken deep oceans to ink navy
           if (uOceanDarkness > 0.01) {
             vec3 deepOcean = dayCol * 0.18 + vec3(0.015, 0.025, 0.055);
             dayCol = mix(dayCol, deepOcean, dataCol.g * uOceanDarkness);
@@ -383,7 +410,7 @@ export default function HoloGlobe({
           // Warm sodium amber city lights on the night hemisphere
           vec3 nightLights = nightCol * (1.0 - dayFactor) * 1.85 * vec3(1.0, 0.88, 0.65);
 
-          vec3 baseColor = dayCol * dayFactor + nightLights + vec3(spec);
+          vec3 baseColor = dayCol * dayFactor + nightLights + vec3(specGlint) + vec3(0.08, 0.22, 0.40) * oceanFresnel;
 
           // Atmospheric limb glow
           float rim = 1.0 - max(0.0, dot(V, N));
@@ -693,15 +720,10 @@ export default function HoloGlobe({
         markersDataMap.set(ring.uuid, { id: event.id, name: event.title, isCountry: false, isEvent: true });
       });
 
-      // 5. Animated Trade Routes & Migration Flows
-      if (layers.includes("trade_routes") || layers.includes("migration_flows")) {
-        const animatedDots: Array<{
-          mesh: THREE.Mesh;
-          curve: THREE.QuadraticBezierCurve3;
-          speed: number;
-          progress: number;
-        }> = [];
+      // 5. Animated Trade Routes, Migration Flows & Genetic Arcs
+      const animatedDots: AnimatedRouteDot[] = [];
 
+      if (layers.includes("trade_routes") || layers.includes("migration_flows")) {
         civilizationsData
           .filter((civ) => civ.era === era)
           .forEach((civ) => {
@@ -736,12 +758,15 @@ export default function HoloGlobe({
               });
             }
           });
-        globeGroup.userData.animatedDots = animatedDots;
       }
 
-      // 6. Overlays (Climate, Biodiversity)
+      // 6. Overlays (Climate, Biodiversity, Paleoclimate, Genetics)
       if (layers.includes("climate")) renderClimateOverlay(globeRadius, overlaysGroup);
       if (layers.includes("biodiversity")) renderBiodiversityOverlay(globeRadius, overlaysGroup);
+      if (layers.includes("paleoclimate")) renderPaleoclimateOverlay(globeRadius, overlaysGroup);
+      if (layers.includes("genetics")) renderGeneticsOverlay(globeRadius, overlaysGroup, arcsGroup, animatedDots);
+
+      globeGroup.userData.animatedDots = animatedDots;
     }
 
     rebuildMarkersRef.current = rebuildMarkers;
@@ -851,6 +876,154 @@ export default function HoloGlobe({
           depthWrite: false,
         });
         parentGroup.add(new THREE.Mesh(geo, mat));
+      });
+    }
+
+    function renderPaleoclimateOverlay(globeRadius: number, parentGroup: THREE.Group) {
+      // 1. The Green Sahara (African Humid Period, 11,000–5,000 BP)
+      const saharaRegions = [
+        { lat: 21.0, lon: 14.0, radiusKm: 2300, color: 0x10b981, opacity: 0.22 }, // Lush Savanna Grasslands
+        { lat: 14.0, lon: 16.0, radiusKm: 1100, color: 0x06b6d4, opacity: 0.32 }, // Lake Mega-Chad Basin
+      ];
+      saharaRegions.forEach((reg) => {
+        const pts = createGlobeCircle(reg.lat, reg.lon, reg.radiusKm, globeRadius + 0.15);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.MeshBasicMaterial({
+          color: reg.color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: reg.opacity,
+          depthWrite: false,
+        });
+        parentGroup.add(new THREE.Mesh(geo, mat));
+      });
+
+      // 2. 4.2-Kiloyear Aridification Drought Belt (Near East & Mesopotamia)
+      const droughtBelt = [
+        { lat: 34.5, lon: 42.0, radiusKm: 1700, color: 0xd97706, opacity: 0.18 },
+      ];
+      droughtBelt.forEach((reg) => {
+        const pts = createGlobeCircle(reg.lat, reg.lon, reg.radiusKm, globeRadius + 0.16);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.MeshBasicMaterial({
+          color: reg.color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: reg.opacity,
+          depthWrite: false,
+        });
+        parentGroup.add(new THREE.Mesh(geo, mat));
+      });
+
+      // 3. Last Glacial Maximum (LGM, ~20,000 BP) Ice Sheets & Continental Land Bridges
+      const lgmFeatures = [
+        { lat: 58.0, lon: -85.0, radiusKm: 2800, color: 0xdbeafe, opacity: 0.30 }, // Laurentide Ice Sheet (N. America)
+        { lat: 64.0, lon: 22.0, radiusKm: 1800, color: 0xcffafe, opacity: 0.30 },  // Fennoscandian Ice Sheet (N. Europe)
+        { lat: 65.0, lon: -170.0, radiusKm: 900, color: 0xca8a04, opacity: 0.25 }, // Beringia Land Bridge
+        { lat: 1.0, lon: 108.0, radiusKm: 1300, color: 0xca8a04, opacity: 0.25 },   // Sundaland Shelf
+      ];
+      lgmFeatures.forEach((reg) => {
+        const pts = createGlobeCircle(reg.lat, reg.lon, reg.radiusKm, globeRadius + 0.17);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.MeshBasicMaterial({
+          color: reg.color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: reg.opacity,
+          depthWrite: false,
+        });
+        parentGroup.add(new THREE.Mesh(geo, mat));
+      });
+    }
+
+    function renderGeneticsOverlay(
+      globeRadius: number,
+      overlaysGroup: THREE.Group,
+      arcsGroup: THREE.Group,
+      animatedDots: AnimatedRouteDot[],
+    ) {
+      // 1. Ancestral Selective Sweep Hotspots
+      const geneticHotspots = [
+        { lat: 48.0, lon: 48.0, radiusKm: 600, color: 0xec4899, opacity: 0.25 }, // Steppe Pastoralist LCT Zone
+        { lat: 51.4, lon: 84.7, radiusKm: 400, color: 0xa855f7, opacity: 0.28 }, // Denisova Altai EPAS1 Zone
+        { lat: 5.5, lon: 10.0, radiusKm: 550, color: 0xf43f5e, opacity: 0.25 },  // Cameroon Grassfields HbS Zone
+        { lat: 23.5, lon: 121.0, radiusKm: 450, color: 0x06b6d4, opacity: 0.28 }, // Taiwan Austronesian Origin
+      ];
+      geneticHotspots.forEach((spot) => {
+        const pts = createGlobeCircle(spot.lat, spot.lon, spot.radiusKm, globeRadius + 0.18);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.MeshBasicMaterial({
+          color: spot.color,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: spot.opacity,
+          depthWrite: false,
+        });
+        overlaysGroup.add(new THREE.Mesh(geo, mat));
+      });
+
+      // 2. Trans-Continental Adaptive Gene Flow Arcs
+      const geneticCorridors: Array<{
+        name: string;
+        allele: string;
+        color: number;
+        points: [number, number][];
+      }> = [
+        {
+          name: "LCT Lactase Persistence Pastoralist Expansion",
+          allele: "LCT-13910*T",
+          color: 0xec4899,
+          points: [
+            [48.0, 48.0],
+            [51.0, 10.0],
+            [54.0, -2.0],
+          ],
+        },
+        {
+          name: "EPAS1 High-Altitude Hypoxia Introgression",
+          allele: "EPAS1 (Denisovan)",
+          color: 0xa855f7,
+          points: [
+            [51.4, 84.7],
+            [38.0, 85.0],
+            [31.5, 89.0],
+          ],
+        },
+        {
+          name: "HbS Malaria Resistance Bantu Corridor",
+          allele: "HbS / ACKR1",
+          color: 0xf43f5e,
+          points: [
+            [5.5, 10.0],
+            [-4.0, 22.0],
+            [-20.0, 28.0],
+          ],
+        },
+        {
+          name: "Austronesian Voyaging Motif Expansion",
+          allele: "CREBRF / mtDNA B4a1a1",
+          color: 0x06b6d4,
+          points: [
+            [23.5, 121.0],
+            [14.5, 121.0],
+            [-8.5, 125.5],
+            [-16.8, -151.4],
+          ],
+        },
+      ];
+
+      geneticCorridors.forEach((corridor) => {
+        for (let i = 0; i < corridor.points.length - 1; i++) {
+          createArc(
+            corridor.points[i],
+            corridor.points[i + 1],
+            corridor.color,
+            true,
+            globeRadius,
+            arcsGroup,
+            animatedDots,
+          );
+        }
       });
     }
 
