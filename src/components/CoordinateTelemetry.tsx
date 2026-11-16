@@ -75,7 +75,7 @@ const CoordinateTelemetry = forwardRef<CoordinateTelemetryHandle, CoordinateTele
     );
 
     return (
-      <div className="absolute bottom-4 left-4 z-20 pointer-events-auto flex flex-col gap-2 font-mono select-none">
+      <div className="hidden md:flex absolute bottom-4 left-4 z-20 pointer-events-auto flex-col gap-2 font-mono select-none">
         {/* Inspected Locus Card (Astrolabe Cartographic Telemetry) */}
         {selectedTarget && (
           <div className="bg-black/90 backdrop-blur-md border border-[#f59e0b]/50 shadow-xl shadow-black/80 px-3.5 py-2.5 rounded-lg text-[10px] text-zinc-300 flex items-center space-x-3 animate-in fade-in slide-in-from-bottom-2 duration-300">

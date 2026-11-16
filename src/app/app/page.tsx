@@ -178,19 +178,26 @@ export default function AppDashboard() {
         <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
       </div>
 
-      {/* ── MOBILE ONLY: SIMPLE HEADER BAR ── */}
-      <div className="md:hidden shrink-0 flex items-center justify-between px-4 py-2.5 bg-[#020204]/90 backdrop-blur-sm border-b border-zinc-900/60 z-40">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 rounded-full border border-[#f59e0b]/50 bg-[#f59e0b]/5 flex items-center justify-center">
-            <Map className="w-3 h-3 text-[#f59e0b]" />
-          </div>
-          <span className="text-xs font-bold tracking-[0.2em] text-white uppercase">Civilens</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-mono text-[#00f0ff] uppercase border border-[#00f0ff]/30 px-2 py-0.5 rounded bg-[#00f0ff]/5">
-            {activeEra}
-          </span>
-        </div>
+      {/* ── MOBILE ONLY: FLOATING TOP SEARCH & ERA PILL (Overlays 100dvh Canvas) ── */}
+      <div className="md:hidden absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 pointer-events-none">
+        {/* Search Pill */}
+        <button
+          onClick={() => setMobileSearchOpen(true)}
+          className="pointer-events-auto flex-1 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#060609]/85 backdrop-blur-xl border border-zinc-800/80 shadow-[0_4px_20px_rgba(0,0,0,0.6)] text-left touch-manipulation active:scale-[0.98] transition-all"
+        >
+          <Search className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+          <span className="text-xs font-mono text-zinc-400 truncate">Search Civilens...</span>
+        </button>
+
+        {/* Quick Era Pill */}
+        <button
+          onClick={() => setTimelineExpanded((prev) => !prev)}
+          className="pointer-events-auto shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#060609]/85 backdrop-blur-xl border border-[#00f0ff]/30 shadow-[0_4px_20px_rgba(0,0,0,0.6)] text-[10px] font-mono font-bold text-[#00f0ff] uppercase tracking-wider touch-manipulation active:scale-95 transition-all"
+          title="Toggle Timeline"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
+          <span>{activeEra}</span>
+        </button>
       </div>
 
       {/* ── MOBILE: SEARCH MODAL ── */}
@@ -311,22 +318,25 @@ export default function AppDashboard() {
           )}
         </AnimatePresence>
 
-        {/* LEFT COMPONENT DRAWER OVERLAY (slides in from left) */}
+        {/* LEFT COMPONENT DRAWER OVERLAY (slides in from left on desktop, bottom sheet on mobile) */}
         <AnimatePresence mode="wait">
           {activePanel && (
             <motion.div
               key={activePanel}
-              initial={{ opacity: 0, x: -50, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -50, scale: 0.95 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-0 top-0 h-full w-[85vw] sm:w-96 md:w-96 z-30 shrink-0 border-r border-zinc-900/60 bg-[#020204]/98 flex flex-col min-h-0 overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-x-0 bottom-0 h-[82dvh] max-h-[85vh] rounded-t-3xl border-t border-zinc-800 bg-[#060609]/98 z-50 flex flex-col min-h-0 overflow-hidden shadow-2xl backdrop-blur-2xl md:absolute md:inset-auto md:left-0 md:top-0 md:h-full md:w-96 md:rounded-none md:border-t-0 md:border-r md:border-zinc-900/60 md:z-30"
             >
+              {/* Drag indicator on mobile */}
+              <div className="w-12 h-1 bg-zinc-600 rounded-full mx-auto my-2.5 shrink-0 md:hidden" />
               {/* Close button visible on all screens */}
               <div className="absolute right-3 top-3 z-50">
                 <button
                   onClick={() => setActivePanel(null)}
                   className="p-1.5 rounded-full bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-all"
+                  aria-label="Close panel"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -347,76 +357,77 @@ export default function AppDashboard() {
           )}
         </AnimatePresence>
 
-        {/* INTERACTIVE MAP CENTER */}
+        {/* INTERACTIVE MAP CENTER + DETAIL COLUMN */}
         <div className="flex-1 relative min-h-0 w-full overflow-hidden z-0 isolate flex flex-col">
-          {/* Map Area */}
-          <div className="flex-1 relative w-full min-h-0 overflow-hidden">
-            <div className="absolute inset-0 w-full h-full">
-              {globeEngine === "holo" ? (
-                <HoloGlobe
-                  activeEra={activeEra}
-                  activeLayers={activeLayers}
-                  activeCountryId={activeCountryId}
-                  onSelectCountry={handleSelectCountry}
-                  onSelectCivilization={(civId) => {
-                    const civ = civilizationsData.find((c) => c.id === civId);
-                    if (civ) {
-                      setActiveEra(civ.era);
-                      setActiveCountryId(null);
-                      setSelectedEventId(null);
-                    }
-                  }}
-                  onSelectEvent={handleSelectEvent}
-                  selectedEventId={selectedEventId}
-                  panelOpen={Boolean(activeCountryId || selectedEventId)}
-                />
-              ) : (
-                <MapLibreGlobeGlobe
-                  activeEra={activeEra}
-                  activeLayers={activeLayers}
-                  activeCountryId={activeCountryId}
-                  onSelectCountry={handleSelectCountry}
-                  onSelectCivilization={(civId) => {
-                    const civ = civilizationsData.find((c) => c.id === civId);
-                    if (civ) {
-                      setActiveEra(civ.era);
-                      setActiveCountryId(null);
-                      setSelectedEventId(null);
-                    }
-                  }}
-                  onSelectEvent={handleSelectEvent}
-                  selectedEventId={selectedEventId}
-                  onMapClick={handleMapClick}
-                />
-              )}
+          {/* Map Area + Side Panel Container (Side-by-side flex row on desktop) */}
+          <div className="flex-1 relative w-full min-h-0 overflow-hidden flex flex-col md:flex-row">
+            {/* 3D Globe Container (shrinks smoothly when panel is open on desktop) */}
+            <div className="flex-1 relative h-full min-w-0 overflow-hidden">
+              <div className="absolute inset-0 w-full h-full">
+                {globeEngine === "holo" ? (
+                  <HoloGlobe
+                    activeEra={activeEra}
+                    activeLayers={activeLayers}
+                    activeCountryId={activeCountryId}
+                    onSelectCountry={handleSelectCountry}
+                    onSelectCivilization={(civId) => {
+                      const civ = civilizationsData.find((c) => c.id === civId);
+                      if (civ) {
+                        setActiveEra(civ.era);
+                        setActiveCountryId(null);
+                        setSelectedEventId(null);
+                      }
+                    }}
+                    onSelectEvent={handleSelectEvent}
+                    selectedEventId={selectedEventId}
+                    panelOpen={Boolean(activeCountryId || selectedEventId)}
+                  />
+                ) : (
+                  <MapLibreGlobeGlobe
+                    activeEra={activeEra}
+                    activeLayers={activeLayers}
+                    activeCountryId={activeCountryId}
+                    onSelectCountry={handleSelectCountry}
+                    onSelectCivilization={(civId) => {
+                      const civ = civilizationsData.find((c) => c.id === civId);
+                      if (civ) {
+                        setActiveEra(civ.era);
+                        setActiveCountryId(null);
+                        setSelectedEventId(null);
+                      }
+                    }}
+                    onSelectEvent={handleSelectEvent}
+                    selectedEventId={selectedEventId}
+                    onMapClick={handleMapClick}
+                  />
+                )}
+              </div>
+
+              {/* Cinematic HUD Overlays (Desktop only) */}
+              <div className="hidden md:block absolute top-3 left-3 font-mono text-[8px] text-zinc-500 pointer-events-auto space-y-1.5 z-20 bg-black/80 backdrop-blur-md p-2.5 rounded-lg border border-zinc-800 shadow-xl">
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
+                  <span className="text-zinc-400 font-semibold uppercase tracking-wider">
+                    {activeEra} ERA
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-zinc-500">ENGINE:</span>
+                  <button
+                    onClick={() => setGlobeEngine((prev) => (prev === "holo" ? "maplibre" : "holo"))}
+                    className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-700 text-[#00f0ff] hover:text-white font-bold tracking-wider uppercase transition-all text-[8px]"
+                    title="Switch between Three.js Earth and MapLibre"
+                  >
+                    {globeEngine === "holo" ? "THREE.JS EARTH" : "MAPLIBRE 3D"}
+                  </button>
+                </div>
+                <div className="text-zinc-500">
+                  LAYERS: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length} ACTIVE</span>
+                </div>
+              </div>
             </div>
 
-            {/* Cinematic HUD Overlays */}
-            <div className="absolute top-3 left-3 font-mono text-[8px] text-zinc-500 pointer-events-auto space-y-1.5 z-20 bg-black/80 backdrop-blur-md p-2.5 rounded-lg border border-zinc-800 shadow-xl">
-              <div className="flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
-                <span className="text-zinc-400 font-semibold uppercase tracking-wider">
-                  {activeEra} ERA
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <span className="text-zinc-500">ENGINE:</span>
-                <button
-                  onClick={() => setGlobeEngine((prev) => (prev === "holo" ? "maplibre" : "holo"))}
-                  className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-700 text-[#00f0ff] hover:text-white font-bold tracking-wider uppercase transition-all text-[8px]"
-                  title="Switch between Three.js Earth and MapLibre"
-                >
-                  {globeEngine === "holo" ? "THREE.JS EARTH" : "MAPLIBRE 3D"}
-                </button>
-              </div>
-              <div className="text-zinc-500">
-                LAYERS: <span className="text-[#f59e0b] uppercase font-bold">{activeLayers.length} ACTIVE</span>
-              </div>
-            </div>
-
-            {/* Mobile: no FABs — bottom nav handles navigation */}
-
-            {/* Country Panel (bottom sheet on mobile, right slide on desktop) */}
+            {/* Country Panel (bottom sheet on mobile, right column on desktop) */}
             <AnimatePresence>
               {activeCountryId && (
                 <CountryPanel
@@ -427,7 +438,7 @@ export default function AppDashboard() {
               )}
             </AnimatePresence>
 
-            {/* Event Detail Panel — mutually exclusive with CountryPanel */}
+            {/* Event Detail Panel (bottom sheet on mobile, right column on desktop) */}
             <EventDetailPanel
               eventId={selectedEventId}
               onClose={() => setSelectedEventId(null)}
@@ -436,51 +447,71 @@ export default function AppDashboard() {
             />
           </div>
 
-          {/* Timeline Slider — bottom strip */}
-          {/* Mobile: collapsible timeline, Desktop: fixed height */}
-          <div className="md:shrink-0 border-t border-zinc-800/60 bg-black/50 z-20 md:block" style={{ height: timelineExpanded ? "55vh" : undefined, minHeight: undefined }}>
-            {/* Mobile: show compact era strip when collapsed, full timeline when expanded */}
-            {!timelineExpanded && (
-              <div className="md:hidden">
-                <TimelineSlider
-                  activeEra={activeEra}
-                  onEraChange={setActiveEra}
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={handleSelectEvent}
-                  compact
-                />
-              </div>
-            )}
-            {!timelineExpanded && (
-              <div className="hidden md:block" style={{ height: "35vh", minHeight: "200px" }}>
-                <TimelineSlider
-                  activeEra={activeEra}
-                  onEraChange={setActiveEra}
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={handleSelectEvent}
-                />
-              </div>
-            )}
-            {timelineExpanded && (
-              <div className="md:hidden" style={{ height: "55vh" }}>
-                <TimelineSlider
-                  activeEra={activeEra}
-                  onEraChange={setActiveEra}
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={handleSelectEvent}
-                />
-              </div>
-            )}
+          {/* Desktop Timeline Slider — fixed bottom strip */}
+          <div className="hidden md:block shrink-0 border-t border-zinc-800/60 bg-black/50 z-20" style={{ height: "35vh", minHeight: "200px" }}>
+            <TimelineSlider
+              activeEra={activeEra}
+              onEraChange={setActiveEra}
+              selectedEventId={selectedEventId}
+              onSelectEvent={handleSelectEvent}
+            />
           </div>
+
+          {/* Mobile Collapsible Timeline Drawer (Zero pixel footprint when closed) */}
+          <AnimatePresence>
+            {timelineExpanded && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-xs"
+                  onClick={() => setTimelineExpanded(false)}
+                />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 28, stiffness: 220 }}
+                  className="md:hidden fixed inset-x-0 bottom-0 z-50 h-[58dvh] rounded-t-3xl border-t border-zinc-800 bg-[#060609]/98 backdrop-blur-2xl flex flex-col min-h-0 overflow-hidden shadow-2xl"
+                >
+                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/60 shrink-0">
+                    <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+                    <span className="text-[11px] font-mono uppercase font-bold tracking-widest text-[#f59e0b]">
+                      Civilizational Eras
+                    </span>
+                    <button
+                      onClick={() => setTimelineExpanded(false)}
+                      className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
+                      aria-label="Close timeline"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden p-2">
+                    <TimelineSlider
+                      activeEra={activeEra}
+                      onEraChange={(era) => {
+                        setActiveEra(era);
+                      }}
+                      selectedEventId={selectedEventId}
+                      onSelectEvent={handleSelectEvent}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-      {/* ── MOBILE: BOTTOM NAV BAR ── */}
-      {/* Hide bottom nav when panels, events, or countries are open */}
+
+      {/* ── MOBILE: FLOATING BOTTOM DOCK ── */}
       <MobileBottomNav
         activePanel={activePanel}
         onPanelChange={setActivePanel}
-        onSearchOpen={() => setMobileSearchOpen(true)}
-        hidden={selectedEventId !== null || activeCountryId !== null || activePanel !== null}
+        timelineOpen={timelineExpanded}
+        onToggleTimeline={() => setTimelineExpanded((prev) => !prev)}
+        hidden={selectedEventId !== null || activeCountryId !== null || activePanel !== null || timelineExpanded}
       />
     </div>
   );

@@ -1177,12 +1177,13 @@ export default function HoloGlobe({
 
       if (isPanelOpen) {
         if (isDesktop) {
-          // Desktop panel width ~500px on the right
-          const panelWidthFraction = 500 / Math.max(1, container.clientWidth);
-          targetShiftX = panelWidthFraction * 0.95;
+          // On desktop, the container itself shrinks via flexbox (side-by-side layout).
+          // Three.js ResizeObserver automatically frames the Earth in the left portion.
+          targetShiftX = 0;
         } else {
-          // Mobile bottom sheet covers ~75% at bottom; shift content upward
-          targetShiftY = -0.45;
+          // Mobile bottom sheet covers ~150px at bottom in peek mode;
+          // Apply optical shift upward so the locus is framed in the upper visible area.
+          targetShiftY = -0.22;
         }
       }
 

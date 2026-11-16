@@ -1,76 +1,107 @@
 "use client";
 
 import React from "react";
-import { Globe, MessageSquare, Clock, Layers, Search } from "lucide-react";
+import { Globe, MessageSquare, Clock, Layers, Sparkles } from "lucide-react";
 
 type PanelType = "ai" | "graph" | "cards" | "layers" | null;
 
 interface MobileBottomNavProps {
   activePanel: PanelType;
   onPanelChange: (panel: PanelType) => void;
-  onSearchOpen: () => void;
+  timelineOpen?: boolean;
+  onToggleTimeline?: () => void;
   hidden?: boolean;
 }
-
-const tabs = [
-  { id: "globe" as const, icon: Globe, label: "Globe" },
-  { id: "ai" as PanelType, icon: MessageSquare, label: "Ask AI" },
-  { id: "timeline" as const, icon: Clock, label: "Eras" },
-  { id: "layers" as PanelType, icon: Layers, label: "Layers" },
-];
 
 export default function MobileBottomNav({
   activePanel,
   onPanelChange,
-  onSearchOpen,
+  timelineOpen = false,
+  onToggleTimeline,
   hidden = false,
 }: MobileBottomNavProps) {
+  const tabs = [
+    {
+      id: "globe",
+      icon: Globe,
+      label: "Globe",
+      isActive: activePanel === null && !timelineOpen,
+      onClick: () => {
+        onPanelChange(null);
+        if (timelineOpen && onToggleTimeline) onToggleTimeline();
+      },
+    },
+    {
+      id: "timeline",
+      icon: Clock,
+      label: "Eras",
+      isActive: timelineOpen,
+      onClick: () => {
+        onPanelChange(null);
+        if (onToggleTimeline) onToggleTimeline();
+        else window.dispatchEvent(new CustomEvent("toggle-timeline"));
+      },
+    },
+    {
+      id: "layers",
+      icon: Layers,
+      label: "Layers",
+      isActive: activePanel === "layers",
+      onClick: () => {
+        if (timelineOpen && onToggleTimeline) onToggleTimeline();
+        onPanelChange(activePanel === "layers" ? null : "layers");
+      },
+    },
+    {
+      id: "ai",
+      icon: Sparkles,
+      label: "Ask AI",
+      isActive: activePanel === "ai",
+      onClick: () => {
+        if (timelineOpen && onToggleTimeline) onToggleTimeline();
+        onPanelChange(activePanel === "ai" ? null : "ai");
+      },
+    },
+  ];
+
   return (
-    <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#060609]/95 backdrop-blur-xl border-t border-zinc-800/60 transition-transform duration-300 ${hidden ? "translate-y-full" : "translate-y-0"}`}>
+    <nav
+      aria-label="Mobile navigation"
+      className={`md:hidden fixed bottom-4 inset-x-4 max-w-sm mx-auto z-40 bg-[#060609]/92 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_32px_rgba(0,0,0,0.85)] rounded-2xl py-1.5 px-2 flex items-center justify-around transition-all duration-300 ${
+        hidden ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+      }`}
+      style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = tab.isActive;
 
-      <div className="flex items-center justify-around px-2 py-1.5">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive =
-            tab.id === "globe"
-              ? activePanel === null
-              : tab.id === "timeline"
-                ? false
-                : activePanel === tab.id;
-
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                if (tab.id === "globe") {
-                  onPanelChange(null);
-                } else if (tab.id === "timeline") {
-                  window.dispatchEvent(new CustomEvent("toggle-timeline"));
-                } else {
-                  onPanelChange(isActive ? null : tab.id);
-                }
-              }}
-              className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[56px] ${
-                isActive
-                  ? "text-[#f59e0b] bg-[#f59e0b]/10"
-                  : "text-zinc-500 active:text-zinc-300"
+        return (
+          <button
+            key={tab.id}
+            onClick={tab.onClick}
+            aria-label={tab.label}
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl transition-all duration-200 min-w-[64px] touch-manipulation active:scale-95 ${
+              isActive
+                ? "text-[#f59e0b] bg-[#f59e0b]/15 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                : "text-zinc-500 hover:text-zinc-300 active:text-white"
+            }`}
+          >
+            <Icon
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isActive ? "scale-110 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]" : ""
+              }`}
+            />
+            <span
+              className={`text-[9.5px] font-mono font-semibold tracking-wider ${
+                isActive ? "text-[#f59e0b]" : ""
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_6px_rgba(245,158,11,0.4)]" : ""}`} />
-              <span className={`text-[9px] font-mono font-semibold tracking-wider ${isActive ? "text-[#f59e0b]" : ""}`}>
-                {tab.label}
-              </span>
-            </button>
-          );
-        })}
-        <button
-          onClick={onSearchOpen}
-          className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl text-zinc-500 active:text-zinc-300 transition-all duration-200 min-w-[56px]"
-        >
-          <Search className="w-5 h-5" />
-          <span className="text-[9px] font-mono font-semibold tracking-wider">Search</span>
-        </button>
-      </div>
-    </div>
+              {tab.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }

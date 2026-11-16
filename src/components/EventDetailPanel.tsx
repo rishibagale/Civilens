@@ -14,6 +14,8 @@ import {
   Loader2,
   ImageOff,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Clock,
   Compass,
   Thermometer,
@@ -90,6 +92,11 @@ export default function EventDetailPanel({
   const [imageError, setImageError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+
+  useEffect(() => {
+    setMobileExpanded(false);
+  }, [eventId]);
 
   useEffect(() => {
     if (!event?.imageQuery) {
@@ -174,31 +181,47 @@ export default function EventDetailPanel({
     <AnimatePresence>
       {eventId && (
         <>
-          {/* Backdrop overlay — tap to dismiss (Material Design pattern) */}
-          <motion.div
-            key="event-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-[39]"
-            onClick={onClose}
-          />
+          {/* Backdrop overlay — only on mobile when expanded, NEVER on desktop */}
+          {mobileExpanded && (
+            <motion.div
+              key="event-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden fixed inset-0 bg-black/40 z-[39]"
+              onClick={() => setMobileExpanded(false)}
+            />
+          )}
           <motion.div
             key="event-detail"
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 32, stiffness: 220 }}
-            className="fixed bottom-0 left-0 w-full h-[80vh] md:absolute md:top-0 md:right-0 md:w-[520px] md:h-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none border-t md:border-t-0 md:border-l border-panel-border/40 overflow-hidden"
+            transition={{ type: "spring", damping: 30, stiffness: 220 }}
+            className={`fixed bottom-0 left-0 w-full z-40 glass-panel-heavy shadow-2xl flex flex-col rounded-t-3xl md:rounded-t-none border-t md:border-t-0 md:border-l border-panel-border/40 overflow-hidden md:relative md:w-[480px] md:h-full md:shrink-0 transition-[height] duration-300 ease-out ${
+              mobileExpanded ? "h-[85dvh]" : "h-[155px]"
+            } md:h-full`}
           >
           {/* Era atmospheric gradient overlay */}
           <div
             className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${accent.gradient} opacity-50`}
           />
 
-          {/* Drag handle (mobile) */}
-          <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto my-3 shrink-0 md:hidden relative z-10" />
+          {/* Drag indicator / tap to toggle (mobile) */}
+          <button
+            onClick={() => setMobileExpanded((prev) => !prev)}
+            className="w-full flex flex-col items-center justify-center py-2 md:hidden relative z-10 shrink-0 text-zinc-400 hover:text-white"
+            aria-label={mobileExpanded ? "Collapse event details" : "Expand event details"}
+          >
+            <div className="w-12 h-1 bg-zinc-600 rounded-full mb-1" />
+            {!mobileExpanded && (
+              <div className="flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] uppercase tracking-wider font-semibold">
+                <span>Story, Climate & Genetics</span>
+                <ChevronUp className="w-3 h-3 animate-bounce" />
+              </div>
+            )}
+          </button>
 
           {/* Header */}
           <div className="relative shrink-0 px-6 pt-2 pb-4 border-b border-panel-border/30 flex items-start justify-between gap-3 bg-black/40">
