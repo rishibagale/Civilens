@@ -2,16 +2,84 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, CloudRain, Compass, HeartHandshake, Briefcase, BookOpen, Scroll, Flame, HelpCircle, ChevronUp, ChevronDown, type LucideIcon } from "lucide-react";
+import {
+  X,
+  Globe,
+  CloudRain,
+  Compass,
+  HeartHandshake,
+  Briefcase,
+  BookOpen,
+  Scroll,
+  Flame,
+  HelpCircle,
+  ChevronUp,
+  ChevronDown,
+  Network,
+  ArrowDown,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { countriesData } from "@/data/countriesData";
+import { getCausalChain, getChainsForCountry, type ChainStep } from "@/data/causal-chains";
 
 interface CountryPanelProps {
   countryId: string | null;
   onClose: () => void;
   onAskQuestion?: (question: string) => void;
+  activeEra?: "ancient" | "medieval" | "colonial" | "modern" | "future";
 }
 
-type TabType = "overview" | "geography" | "history" | "culture" | "ai_analysis";
+type TabType = "overview" | "causal" | "geography" | "history" | "culture" | "ai_analysis";
+
+// Category styling for causal matrix
+const categoryColors: Record<
+  ChainStep["category"],
+  { bg: string; border: string; text: string; icon: string }
+> = {
+  geography: {
+    bg: "from-emerald-500/20 to-emerald-600/10",
+    border: "border-emerald-400/30",
+    text: "text-emerald-300",
+    icon: "🌍",
+  },
+  climate: {
+    bg: "from-blue-500/20 to-blue-600/10",
+    border: "border-blue-400/30",
+    text: "text-blue-300",
+    icon: "⛅",
+  },
+  agriculture: {
+    bg: "from-green-500/20 to-green-600/10",
+    border: "border-green-400/30",
+    text: "text-green-300",
+    icon: "🌾",
+  },
+  demographics: {
+    bg: "from-cyan-500/20 to-cyan-600/10",
+    border: "border-cyan-400/30",
+    text: "text-cyan-300",
+    icon: "👥",
+  },
+  institutions: {
+    bg: "from-purple-500/20 to-purple-600/10",
+    border: "border-purple-400/30",
+    text: "text-purple-300",
+    icon: "🏛️",
+  },
+  culture: {
+    bg: "from-pink-500/20 to-pink-600/10",
+    border: "border-pink-400/30",
+    text: "text-pink-300",
+    icon: "🎭",
+  },
+  economics: {
+    bg: "from-yellow-500/20 to-yellow-600/10",
+    border: "border-yellow-400/30",
+    text: "text-yellow-300",
+    icon: "💰",
+  },
+};
 
 // Provocative, curated country-specific questions (Carl Sagan/interdisciplinary tone)
 const COUNTRY_RABBIT_HOLES: Record<string, string[]> = {
@@ -47,7 +115,12 @@ const COUNTRY_RABBIT_HOLES: Record<string, string[]> = {
   ]
 };
 
-export default function CountryPanel({ countryId, onClose, onAskQuestion }: CountryPanelProps) {
+export default function CountryPanel({
+  countryId,
+  onClose,
+  onAskQuestion,
+  activeEra = "ancient",
+}: CountryPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
@@ -62,11 +135,18 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
 
   const tabs: Array<{ id: TabType; label: string; icon: LucideIcon }> = [
     { id: "overview", label: "Essence", icon: Globe },
+    { id: "causal", label: "Causal", icon: Network },
     { id: "geography", label: "Landscape", icon: CloudRain },
     { id: "history", label: "Timeline", icon: Compass },
     { id: "culture", label: "Spirit", icon: HeartHandshake },
     { id: "ai_analysis", label: "Insight", icon: Scroll },
   ];
+
+  // Retrieve causal chain for country and era
+  const causalChain =
+    getCausalChain(data.id, activeEra as "ancient" | "medieval" | "colonial" | "modern" | "future") ||
+    getChainsForCountry(data.id)[0] ||
+    null;
 
   // Retrieve rabbit holes for current country, fall back if missing
   const rabbitHoles = COUNTRY_RABBIT_HOLES[data.id] || [
@@ -118,7 +198,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
             {data.id === "EG" ? "🇪🇬" : data.id === "JP" ? "🇯🇵" : data.id === "IS" ? "🇮🇸" : data.id === "IN" ? "🇮🇳" : data.id === "BR" ? "🇧🇷" : data.id === "NO" ? "🇳🇴" : "🌍"}
           </div>
           <div>
-            <h2 className="text-white text-xl md:text-2xl font-serif font-bold tracking-wide">
+            <h2 className="text-white text-xl md:text-2xl font-serif font-bold tracking-wide font-cinzel">
               {data.name}
             </h2>
             <p className="text-[10px] text-zinc-500 font-serif">A story written in stone and sky</p>
@@ -140,14 +220,14 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[80px] py-4 text-xs font-serif font-medium tracking-wide border-b-2 flex flex-col items-center justify-center transition-all space-y-2 ${
+              className={`flex-1 min-w-[70px] py-3 text-xs font-serif font-medium tracking-wide border-b-2 flex flex-col items-center justify-center transition-all space-y-1.5 ${
                 activeTab === tab.id
                   ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/5"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"
               }`}
             >
               <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline-block">{tab.label}</span>
+              <span className="text-[10px] sm:inline-block">{tab.label}</span>
             </button>
           );
         })}
@@ -209,7 +289,137 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           </motion.div>
         )}
 
-        {/* Tab 2: Geography & Ecology */}
+        {/* Tab 2: Causal Matrix (Connecting Geology, Climate, Agriculture & Statecraft) */}
+        {activeTab === "causal" && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {causalChain ? (
+              <div className="space-y-5">
+                <div className="border border-[#f59e0b]/40 bg-[#f59e0b]/5 rounded-2xl p-5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-mono uppercase font-bold text-[#f59e0b] tracking-widest border border-[#f59e0b]/30 px-2 py-0.5 rounded">
+                      Causal Web · {causalChain.era.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-mono">
+                      {causalChain.chain.length} Structural Steps
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white font-cinzel tracking-wide">
+                    {causalChain.title}
+                  </h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-serif">
+                    {causalChain.shortDescription}
+                  </p>
+                </div>
+
+                {/* Step Flow with arrow connectors */}
+                <div className="space-y-3">
+                  {causalChain.chain.map((step, idx) => {
+                    const cfg = categoryColors[step.category] || categoryColors.geography;
+                    return (
+                      <React.Fragment key={step.id}>
+                        <div
+                          className={`p-4 rounded-xl border bg-gradient-to-br ${cfg.bg} ${cfg.border} space-y-2 relative group hover:border-opacity-100 transition-all`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg">{step.icon}</span>
+                              <span className="text-xs font-bold text-white font-serif">{step.title}</span>
+                            </div>
+                            <span
+                              className={`text-[8.5px] font-mono uppercase font-bold px-2 py-0.5 rounded border border-white/10 ${cfg.text}`}
+                            >
+                              {step.category}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-300 leading-relaxed font-serif">
+                            {step.description}
+                          </p>
+                          {step.relatedGraphNodes && step.relatedGraphNodes.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {step.relatedGraphNodes.map((node) => (
+                                <span
+                                  key={node}
+                                  className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400"
+                                >
+                                  🔗 {node}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {idx < causalChain.chain.length - 1 && (
+                          <div className="flex justify-center my-1 text-zinc-600">
+                            <ArrowDown className="w-4 h-4 animate-bounce" />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* Synthesized Causal Evolution for countries without handcrafted chains */
+              <div className="space-y-4">
+                <div className="border border-[#00f0ff]/30 bg-[#00f0ff]/5 rounded-2xl p-5 space-y-2">
+                  <span className="text-[9px] font-mono uppercase font-bold text-[#00f0ff] tracking-widest border border-[#00f0ff]/30 px-2 py-0.5 rounded">
+                    Environmental Matrix
+                  </span>
+                  <h3 className="text-base font-bold text-white font-cinzel">
+                    Geological & Ecological Causality
+                  </h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-serif">
+                    How {data.name}&apos;s physical landscape forges its societal institutions.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-300 font-serif">1. Terrain & Natural Shielding</span>
+                      <span className="text-[8.5px] font-mono uppercase text-emerald-400">GEOGRAPHY</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-serif">{data.geography.terrain}</p>
+                  </div>
+                  <div className="flex justify-center text-zinc-600">
+                    <ArrowDown className="w-4 h-4" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-300 font-serif">2. Atmospheric & Caloric Rhythm</span>
+                      <span className="text-[8.5px] font-mono uppercase text-blue-400">CLIMATE</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-serif">{data.climate.description}</p>
+                  </div>
+                  <div className="flex justify-center text-zinc-600">
+                    <ArrowDown className="w-4 h-4" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-purple-300 font-serif">3. Adaptive Survival Strategy</span>
+                      <span className="text-[8.5px] font-mono uppercase text-purple-400">ADAPTATION</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-serif">{data.adaptation.description}</p>
+                  </div>
+                  <div className="flex justify-center text-zinc-600">
+                    <ArrowDown className="w-4 h-4" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-300 font-serif">4. Social Order & Governance</span>
+                      <span className="text-[8.5px] font-mono uppercase text-amber-400">INSTITUTIONS</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-serif">{data.anthropology.socialStructures}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Tab 3: Geography & Ecology */}
         {activeTab === "geography" && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -270,7 +480,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           </motion.div>
         )}
 
-        {/* Tab 3: History & Anthropology */}
+        {/* Tab 4: History & Anthropology */}
         {activeTab === "history" && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -312,7 +522,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           </motion.div>
         )}
 
-        {/* Tab 4: Culture & Preservation */}
+        {/* Tab 5: Culture & Preservation */}
         {activeTab === "culture" && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -346,7 +556,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
           </motion.div>
         )}
 
-        {/* Tab 5: AI Integration Report */}
+        {/* Tab 6: AI Integration Report */}
         {activeTab === "ai_analysis" && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -381,7 +591,7 @@ export default function CountryPanel({ countryId, onClose, onAskQuestion }: Coun
         <div className="border border-[#f59e0b]/30 bg-[#f59e0b]/5 rounded-2xl p-6 space-y-4">
           <div className="flex items-center space-x-3 border-b border-[#f59e0b]/10 pb-3">
             <HelpCircle className="w-5 h-5 text-[#f59e0b]" />
-            <h3 className="text-sm text-white font-serif font-bold tracking-wide">✦ Fall Deeper</h3>
+            <h3 className="text-sm text-white font-serif font-bold tracking-wide font-cinzel">✦ Fall Deeper</h3>
           </div>
           <p className="text-sm text-zinc-400 leading-relaxed font-serif">
             Click to activate the AI and explore the mysteries of this land:

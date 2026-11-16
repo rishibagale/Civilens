@@ -34,6 +34,7 @@ import CoordinateTelemetry, {
   type CoordinateTelemetryHandle,
 } from "./CoordinateTelemetry";
 import GlobeOverlay, { type GlobeOverlayHandle } from "./GlobeOverlay";
+import { ambientAudio } from "@/services/ambientAudio";
 
 interface HoloGlobeProps {
   activeCountryId: string | null;
@@ -1168,6 +1169,10 @@ export default function HoloGlobe({
         dt,
         container.clientHeight,
       );
+
+      // Procedural audio: modulate orbital wind by rotation speed
+      const orbitSpeed = controlStateRef.current.spin.length();
+      ambientAudio.setOrbitSpeed(orbitSpeed);
 
       // Off-Axis Optical Lens Shift: Glide globe smoothly to the unobstructed view
       const isPanelOpen = propsRef.current.panelOpen;

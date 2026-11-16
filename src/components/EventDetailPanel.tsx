@@ -23,6 +23,7 @@ import {
   CloudRain,
   CalendarCheck,
   Building,
+  Globe,
 } from "lucide-react";
 import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { fetchEventImage, formatYear, type EventImage } from "@/services/eventImages";
@@ -142,6 +143,23 @@ export default function EventDetailPanel({
       .filter((e): e is HistoricalEvent => Boolean(e));
   }, [event]);
 
+  // Contemporaneous events worldwide ("Meanwhile Across the Globe")
+  const synchronousEvents = useMemo<HistoricalEvent[]>(() => {
+    if (!event) return [];
+    const all = Object.values(historicalEvents).flat();
+    const windowYears = Math.abs(event.year) > 500 ? 350 : 120;
+    return all
+      .filter(
+        (e) =>
+          e.id !== event.id &&
+          Math.abs(e.year - event.year) <= windowYears &&
+          e.coordinates &&
+          (!event.coordinates ||
+            Math.hypot(e.coordinates[0] - event.coordinates[0], e.coordinates[1] - event.coordinates[1]) > 10)
+      )
+      .slice(0, 4);
+  }, [event]);
+
   if (!event) return null;
 
   const accent = ERA_ACCENT[event.era];
@@ -238,7 +256,7 @@ export default function EventDetailPanel({
                   {impact.icon} {impact.label}
                 </span>
               </div>
-              <h2 className="text-white text-2xl md:text-[26px] font-serif font-bold leading-tight">
+              <h2 className="text-white text-2xl md:text-[26px] font-serif font-bold leading-tight font-cinzel">
                 {event.title}
               </h2>
               <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5 text-[11px] font-mono text-zinc-400">
@@ -632,6 +650,58 @@ export default function EventDetailPanel({
                       </div>
                     </button>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── PLANETARY SYNCHRONICITY: MEANWHILE ACROSS THE GLOBE ── */}
+            {synchronousEvents.length > 0 && (
+              <section className="px-6 pb-5">
+                <div className="border border-[#00f0ff]/30 bg-[#00f0ff]/[0.04] rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5 text-[#00f0ff]" />
+                      <h3 className="text-[10px] font-mono text-[#00f0ff] uppercase tracking-widest font-bold font-cinzel">
+                        Meanwhile Across the Globe (c. {yearLabel})
+                      </h3>
+                    </div>
+                    <span className="text-[8.5px] font-mono text-zinc-500 uppercase">
+                      Synchronicity
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 font-serif leading-relaxed">
+                    While &ldquo;{event.title}&rdquo; unfolded, humanity was simultaneously making civilizational leaps across distant continents:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {synchronousEvents.map((syn) => (
+                      <button
+                        key={syn.id}
+                        onClick={() => onSelectEvent(syn.id)}
+                        className="p-3 rounded-xl bg-black/50 border border-zinc-800 hover:border-[#00f0ff]/50 transition-all text-left flex flex-col justify-between group"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-mono text-[#00f0ff] font-bold">
+                              {formatYear(syn.year)}
+                            </span>
+                            <span className="text-[8px] font-mono uppercase text-zinc-500">
+                              {syn.era}
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-white group-hover:text-[#00f0ff] transition-colors line-clamp-1 font-serif">
+                            {syn.title}
+                          </div>
+                          <p className="text-[10px] text-zinc-400 line-clamp-2 mt-1 leading-snug font-serif">
+                            {syn.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 text-[8.5px] font-mono text-zinc-500 group-hover:text-amber-300 mt-2">
+                          <Compass className="w-3 h-3" />
+                          <span>Rotate Earth to Site →</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </section>
             )}

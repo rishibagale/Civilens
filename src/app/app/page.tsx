@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -8,13 +8,14 @@ import CountryPanel from "@/components/CountryPanel";
 import LayerControl from "@/components/LayerControl";
 import TimelineSlider from "@/components/TimelineSlider";
 import EventDetailPanel from "@/components/EventDetailPanel";
-import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map, ArrowLeft } from "lucide-react";
+import { MessageSquare, Network, BookOpen, LayoutGrid, Search, X, Compass, Map, ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import { historicalEvents, type HistoricalEvent } from "@/data/historicalEvents";
 import { civilizationsData } from "@/data/civilizationsData";
 import { countriesData } from "@/data/countriesData";
-import MapLibreGlobeGlobe from "@/components/MapLibreGlobeGlobe";
+import MapLibreGlobe from "@/components/MapLibreGlobe";
 import HoloGlobe from "@/components/HoloGlobe";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import { ambientAudio } from "@/services/ambientAudio";
 import Fuse from "fuse.js";
 
 // Heavy components loaded client-side only
@@ -48,6 +49,75 @@ export default function AppDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   // Track which timeline event is selected (used for map fly-to)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
+  // Subscribe to procedural ambient audio state
+  useEffect(() => {
+    return ambientAudio.subscribe((enabled) => setSoundEnabled(enabled));
+  }, []);
+
+  // URL Deep-Linking: read initial event / country / era from URL query parameters
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const eventParam = params.get("event");
+    const countryParam = params.get("country");
+    const eraParam = params.get("era") as EraType | null;
+
+    if (eraParam && ["ancient", "medieval", "colonial", "modern", "future"].includes(eraParam)) {
+      setActiveEra(eraParam);
+    }
+    if (eventParam) {
+      const allEvents = Object.values(historicalEvents).flat();
+      const ev = allEvents.find((e) => e.id === eventParam);
+      if (ev) {
+        setActiveEra(ev.era);
+        setSelectedEventId(eventParam);
+        setActiveCountryId(null);
+      }
+    } else if (countryParam && countriesData[countryParam]) {
+      setActiveCountryId(countryParam);
+      setSelectedEventId(null);
+    }
+  }, []);
+
+  // Synchronize active selections with browser URL without reloading
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (activeEra && activeEra !== "ancient") params.set("era", activeEra);
+    if (selectedEventId) params.set("event", selectedEventId);
+    else if (activeCountryId) params.set("country", activeCountryId);
+
+    const queryStr = params.toString();
+    const nextUrl = queryStr ? `${window.location.pathname}?${queryStr}` : window.location.pathname;
+    window.history.replaceState(null, "", nextUrl);
+  }, [selectedEventId, activeCountryId, activeEra]);
+
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K / / to search)
+  useEffect(() => {
+    const handleGlobalKeys = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (window.innerWidth < 768) {
+          setMobileSearchOpen(true);
+        } else {
+          const searchInput = document.getElementById("civilens-desktop-search") as HTMLInputElement | null;
+          searchInput?.focus();
+        }
+      } else if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        if (window.innerWidth < 768) {
+          setMobileSearchOpen(true);
+        } else {
+          const searchInput = document.getElementById("civilens-desktop-search") as HTMLInputElement | null;
+          searchInput?.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeys);
+    return () => window.removeEventListener("keydown", handleGlobalKeys);
+  }, []);
 
   // Listen for toggle-timeline custom event from MobileBottomNav
   useEffect(() => {
@@ -71,7 +141,6 @@ export default function AppDashboard() {
     setTimelineExpanded(false);
     setSelectedEventId(null);
     setActiveCountryId(null);
-    // Don't close AI/Layers panels — those are intentional user choices
   }, []);
 
   // ESC key dismiss everything (Material Design + accessibility pattern)
@@ -94,17 +163,30 @@ export default function AppDashboard() {
     );
   };
 
-  const handleSearchSelect = (type: "country" | "civilization", id: string) => {
+  const handleSearchSelect = (type: "country" | "civilization" | "event", id: string) => {
     if (type === "country") {
       setActiveCountryId(id);
-      setMobileMenuOpen(false);
-      return;
+      setSelectedEventId(null);
+      ambientAudio.playArrivalChime();
+    } else if (type === "civilization") {
+      const civ = civilizationsData.find((c) => c.id === id);
+      if (civ) {
+        setActiveEra(civ.era);
+        setActiveCountryId(null);
+        setSelectedEventId(null);
+        ambientAudio.playArrivalChime();
+      }
+    } else if (type === "event") {
+      const allEvents = Object.values(historicalEvents).flat();
+      const ev = allEvents.find((e) => e.id === id);
+      if (ev) {
+        setActiveEra(ev.era);
+        setSelectedEventId(id);
+        setActiveCountryId(null);
+        ambientAudio.playArrivalChime();
+      }
     }
-    const civ = civilizationsData.find((c) => c.id === id);
-    if (civ) {
-      setActiveEra(civ.era);
-      setActiveCountryId(null);
-    }
+    setMobileSearchOpen(false);
     setMobileMenuOpen(false);
   };
 
@@ -115,14 +197,18 @@ export default function AppDashboard() {
 
   const handleSelectEvent = (id: string | null) => {
     setSelectedEventId(id);
-    // Mutually exclusive: opening an event closes any open country panel
-    if (id) setActiveCountryId(null);
+    if (id) {
+      setActiveCountryId(null);
+      ambientAudio.playArrivalChime();
+    }
   };
 
   const handleSelectCountry = (id: string | null) => {
     setActiveCountryId(id);
-    // Mutually exclusive: opening a country closes any open event panel
-    if (id) setSelectedEventId(null);
+    if (id) {
+      setSelectedEventId(null);
+      ambientAudio.playArrivalChime();
+    }
   };
 
   const handleAskAboutEvent = (event: HistoricalEvent) => {
@@ -130,36 +216,58 @@ export default function AppDashboard() {
     setActivePanel("ai");
   };
 
-  // Fuzzy search with fuse.js — handles typos, partial matches
-  const searchResults = (() => {
+  type SearchResultItem = {
+    id: string;
+    name: string;
+    type: "country" | "civilization" | "event";
+    subtitle: string;
+    tag: string;
+    tagClass: string;
+  };
+
+  // Comprehensive Fuzzy Omnisearch with fuse.js across countries, empires, and historical events
+  const searchResults: SearchResultItem[] = useMemo(() => {
     if (!searchQuery.trim()) return [];
 
-    const countryItems: Array<{ id: string; name: string; type: "country" | "civilization"; subtitle: string }> =
-      Object.values(countriesData).map((c) => ({
-        id: c.id,
-        name: c.name,
-        type: "country" as const,
-        subtitle: `Country • ${c.capital} • ${c.climate.type}`,
-      }));
-
-    const civItems = civilizationsData.map((civ) => ({
-      id: civ.id,
-      name: civ.name,
-      type: "civilization" as const,
-      subtitle: `Empire • ${civ.era} (${civ.timeSpan})`,
+    const countryItems: SearchResultItem[] = Object.values(countriesData).map((c) => ({
+      id: c.id,
+      name: c.name,
+      type: "country",
+      subtitle: `Country • ${c.capital} • ${c.climate.type}`,
+      tag: "COUNTRY",
+      tagClass: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
     }));
 
-    const allItems = [...countryItems, ...civItems];
+    const civItems: SearchResultItem[] = civilizationsData.map((civ) => ({
+      id: civ.id,
+      name: civ.name,
+      type: "civilization",
+      subtitle: `Empire • ${civ.era.toUpperCase()} (${civ.timeSpan})`,
+      tag: "EMPIRE",
+      tagClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    }));
+
+    const allEvents = Object.values(historicalEvents).flat();
+    const eventItems: SearchResultItem[] = allEvents.map((ev) => ({
+      id: ev.id,
+      name: ev.title,
+      type: "event",
+      subtitle: `${ev.year < 0 ? Math.abs(ev.year) + " BC" : ev.year + " CE"} • ${ev.era.toUpperCase()} • ${ev.impact.toUpperCase()}`,
+      tag: "EVENT",
+      tagClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    }));
+
+    const allItems = [...countryItems, ...civItems, ...eventItems];
 
     const fuse = new Fuse(allItems, {
-      keys: ["name", "subtitle"],
-      threshold: 0.4,
-      distance: 80,
+      keys: ["name", "subtitle", "id"],
+      threshold: 0.38,
+      distance: 90,
       minMatchCharLength: 1,
     });
 
     return fuse.search(searchQuery).map((r) => r.item).slice(0, 8);
-  })();
+  }, [searchQuery]);
 
   const sidebarItems = [
     { id: "ai" as PanelType, icon: MessageSquare, label: "ASK" },
@@ -168,14 +276,17 @@ export default function AppDashboard() {
     { id: "layers" as PanelType, icon: LayoutGrid, label: "LAYERS" },
   ];
 
-  // Remove the old getSearchResults call — now computed inline above
-
   return (
     <div className="flex flex-col bg-[#020204] overflow-hidden select-none relative selection:bg-[#f59e0b]/30" style={{ height: "100dvh" }}>
       
       {/* ── DESKTOP ONLY: TOP NAVBAR ── */}
       <div className="hidden md:block shrink-0">
-        <Navbar activeEra={activeEra} onSearchSelect={handleSearchSelect} />
+        <Navbar
+          activeEra={activeEra}
+          onSearchSelect={handleSearchSelect}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => ambientAudio.toggleSound()}
+        />
       </div>
 
       {/* ── MOBILE ONLY: FLOATING TOP SEARCH & ERA PILL (Overlays 100dvh Canvas) ── */}
@@ -187,6 +298,19 @@ export default function AppDashboard() {
         >
           <Search className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
           <span className="text-xs font-mono text-zinc-400 truncate">Search Civilens...</span>
+        </button>
+
+        {/* Quick Audio Pill on Mobile */}
+        <button
+          onClick={() => ambientAudio.toggleSound()}
+          className={`pointer-events-auto shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#060609]/85 backdrop-blur-xl border shadow-[0_4px_20px_rgba(0,0,0,0.6)] touch-manipulation active:scale-95 transition-all ${
+            soundEnabled
+              ? "border-[#00f0ff]/50 text-[#00f0ff]"
+              : "border-zinc-800/80 text-zinc-500"
+          }`}
+          title={soundEnabled ? "Mute ambient audio" : "Enable ambient audio"}
+        >
+          {soundEnabled ? <Volume2 className="w-3.5 h-3.5 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
         </button>
 
         {/* Quick Era Pill */}
@@ -221,7 +345,7 @@ export default function AppDashboard() {
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Search countries, empires, climates..."
+                  placeholder="Search countries, empires, events..."
                   className="bg-transparent text-sm text-white placeholder-zinc-500 outline-none w-full font-mono"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -233,16 +357,21 @@ export default function AppDashboard() {
                 <div className="p-3 space-y-1">
                   {searchResults.map((res) => (
                     <button
-                      key={res.id}
-                      className="w-full text-left px-4 py-3 hover:bg-[#f59e0b]/10 rounded-xl text-sm text-zinc-300 flex flex-col font-mono transition-all"
+                      key={`${res.type}-${res.id}`}
+                      className="w-full text-left px-4 py-3 hover:bg-[#f59e0b]/10 rounded-xl text-sm text-zinc-300 flex items-center justify-between font-mono transition-all group"
                       onClick={() => {
                         handleSearchSelect(res.type, res.id);
                         setSearchQuery("");
                         setMobileSearchOpen(false);
                       }}
                     >
-                      <span className="text-white font-semibold">{res.name}</span>
-                      <span className="text-[10px] text-zinc-500 mt-0.5">{res.subtitle}</span>
+                      <div className="flex flex-col min-w-0 mr-2">
+                        <span className="text-white font-semibold group-hover:text-[#f59e0b] transition-colors">{res.name}</span>
+                        <span className="text-[10px] text-zinc-500 mt-0.5">{res.subtitle}</span>
+                      </div>
+                      <span className={`text-[8px] font-mono px-2 py-0.5 rounded border uppercase font-bold shrink-0 ${res.tagClass}`}>
+                        {res.tag}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -348,7 +477,14 @@ export default function AppDashboard() {
                   onClearExternalQuery={() => setPendingQuery(null)}
                 />
               )}
-              {activePanel === "graph" && <KnowledgeGraph />}
+              {activePanel === "graph" && (
+                <KnowledgeGraph
+                  onAskAboutNode={(node) => {
+                    setPendingQuery(`Explain how ${node.label} (${node.category}) shapes civilizational development: ${node.description}`);
+                    setActivePanel("ai");
+                  }}
+                />
+              )}
               {activePanel === "cards" && <ExplorationCards />}
               {activePanel === "layers" && (
                 <LayerControl activeLayers={activeLayers} onToggleLayer={toggleLayer} />
@@ -383,7 +519,7 @@ export default function AppDashboard() {
                     panelOpen={Boolean(activeCountryId || selectedEventId)}
                   />
                 ) : (
-                  <MapLibreGlobeGlobe
+                  <MapLibreGlobe
                     activeEra={activeEra}
                     activeLayers={activeLayers}
                     activeCountryId={activeCountryId}
@@ -434,6 +570,7 @@ export default function AppDashboard() {
                   countryId={activeCountryId}
                   onClose={() => setActiveCountryId(null)}
                   onAskQuestion={handleAskQuestion}
+                  activeEra={activeEra}
                 />
               )}
             </AnimatePresence>
