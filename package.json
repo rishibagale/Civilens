@@ -2,6 +2,12 @@
   "name": "curios",
   "version": "0.1.0",
   "private": true,
+  "description": "Civilens (Curios) — Planetary 3D Earth exploration connecting geography, climate, anthropology, and civilization.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rishibagale/Civilens.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

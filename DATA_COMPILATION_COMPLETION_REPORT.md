@@ -39,7 +39,7 @@
 ```
 
 ### File Location
-- **Path:** `/c/Users/rushi/OneDrive/Desktop/curios/src/data/historicalEvents.ts`
+- **Path:** `./src/data/historicalEvents.ts`
 - **Size:** 21 KB
 - **Format:** Valid TypeScript export
 
@@ -339,4 +339,4 @@ The foundation is now in place for continuous expansion and integration with the
 
 **Report Generated:** June 1, 2026  
 **Status:** Phase 1 Complete - Ready for Phase 2 Expansion  
-**Data Files Location:** `/c/Users/rushi/OneDrive/Desktop/curios/src/data/`
+**Data Files Location:** `./src/data/`

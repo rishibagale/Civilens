@@ -52,3 +52,9 @@ npm run dev
 - **3D Visualization**: Three.js (HoloGlobe with custom Earth shader, clouds, and physics controls), MapLibre GL JS
 - **Styling & Animation**: Tailwind CSS 4, Framer Motion, Lucide Icons
 - **Data & Intelligence**: Curated historical events across 5 eras, civilization knowledge graphs, country narratives, and causal chains
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
